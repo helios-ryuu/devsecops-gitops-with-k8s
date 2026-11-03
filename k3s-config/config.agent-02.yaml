@@ -1,0 +1,6 @@
+server: "https://100.123.87.107:6443"
+token: "<Token from server-01>"
+node-name: "worker-02"
+node-ip: "100.71.200.76"
+node-external-ip: "100.71.200.76"
+flannel-iface: "tailscale0"

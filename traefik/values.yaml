@@ -1,0 +1,139 @@
+# ==============================================================================
+# TRAEFIK HELM VALUES - ĐỒ ÁN NT548: DEVSECOPS & GITOPS TRÊN K3S HYBRID
+# Target: Cụm K3s Hybrid (Control Plane Server + Workers On-Prem qua Tailscale)
+# Chart: traefik/traefik (https://traefik.github.io/charts - Schema v42+)
+# ==============================================================================
+# Add repo traefik: helm repo add traefik https://traefik.github.io/charts
+# Install release: helm install traefik traefik/traefik -n traefik --create-namespace -f values.yaml
+# ==============================================================================
+# PHẦN 1: CÁC CẤU HÌNH THEO MẪU TÀI LIỆU CHÍNH THỨC (TRAEFIK DOCS)
+# ==============================================================================
+
+# 1.1. Cấu hình cổng mạng và các điểm đón lưu lượng (Ports & EntryPoints)
+ports:
+  # Cổng tiếp nhận HTTP (tên: web)
+  web:
+    port: 8000
+    hostPort: 80 # Chiếm cổng 80 vật lý của Server để đón traffic từ Cloudflare
+    expose:
+      default: true
+    exposedPort: 80
+    allowACMEByPass: true # Cho phép cert-manager xác thực HTTP-01 nếu cần
+    # Tự động chuyển hướng toàn bộ traffic HTTP sang HTTPS
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+
+  # Cổng tiếp nhận HTTPS bảo mật (tên: websecure)
+  websecure:
+    port: 8443
+    hostPort: 443 # Chiếm cổng 443 vật lý của Server để đón traffic HTTPS từ Cloudflare
+    expose:
+      default: true
+    exposedPort: 443
+    http:
+      tls:
+        enabled: true
+
+  # Cổng tiếp nhận thu thập chỉ số giám sát nội bộ (tên: metrics)
+  metrics:
+    port: 9100
+    expose:
+      default: true # Bắt buộc bật để Service ClusterIP mở cổng 9100 cho Prometheus crawl
+    exposedPort: 9100
+  
+  # Cổng nội bộ phục vụ API và Dashboard
+  traefik:
+    port: 9000
+    expose:
+      default: false # Không expose ra Service ClusterIP bên ngoài
+    exposedPort: 9000 # Cần thiết để API lắng nghe trực tiếp trên cổng 9000 mà không cần IngressRoute
+
+# 1.2. Kích hoạt giao diện Dashboard ở chế độ an toàn (API & Dashboard)
+api:
+  dashboard: true
+  insecure: true
+
+# 1.3. Cấu hình IngressRoute cho Dashboard Traefik
+ingressRoute:
+  dashboard:
+    enabled: false # Tắt mở ra ngoài Internet; truy cập bảo mật qua kubectl port-forward
+
+# 1.4. Cấu hình lớp định tuyến IngressClass cho cụm Kubernetes
+ingressClass:
+  enabled: true
+  isDefaultClass: true # Đặt Traefik làm Ingress Controller mặc định cho cụm
+
+# 1.5. Cấu hình các nhà cung cấp định tuyến (Ingress Providers)
+providers:
+  kubernetesIngress:
+    enabled: true # Kích hoạt hỗ trợ tài nguyên Ingress chuẩn của Kubernetes
+    publishedService:
+      enabled: false # Tắt do sử dụng ClusterIP nội bộ, không dùng LoadBalancer
+  kubernetesCRD:
+    enabled: true # Hỗ trợ Custom Resource Definitions (IngressRoute, Middleware)
+
+# 1.6. Cấu hình nhật ký hoạt động hệ thống (System Log)
+log:
+  level: INFO # Mức độ ghi log (INFO, DEBUG, WARN, ERROR)
+
+# 1.7. Cấu hình nhật ký truy cập (Access Log) phục vụ giám sát và SIEM
+accessLog:
+  enabled: true
+  format: common # Định dạng log tiêu chuẩn (Common Log Format)
+
+# 1.8. Cấu hình chỉ số giám sát Prometheus (Metrics)
+metrics:
+  prometheus:
+    entryPoint: metrics # Gắn luồng metrics vào endpoint metrics (cổng 9100)
+    addEntryPointsLabels: true # Bổ sung nhãn entryPoint vào metrics
+    addRoutersLabels: true # Bổ sung nhãn router phục vụ đo đạc chi tiết
+    addServicesLabels: true # Bổ sung nhãn service phục vụ đo đạc chi tiết
+
+# ==============================================================================
+# PHẦN 2: CÁC CẤU HÌNH MỞ RỘNG (TỐI ƯU HẠ TẦNG K3S HYBRID & DEVSECOPS)
+# ==============================================================================
+
+# 2.1. Cấu hình Deployment và số lượng bản sao Pod
+deployment:
+  replicas: 1
+
+# 2.2. Chiến lược cập nhật Pod chống nghẽn kẹt cổng hostPort (Update Strategy)
+# Đảm bảo xóa Pod cũ trước khi tạo Pod mới để giải phóng ngay cổng 80 & 443 trên Server
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 0
+
+# 2.3. Cấu hình Kubernetes Service nội bộ dạng ClusterIP (Service)
+# Cung cấp DNS nội bộ ổn định cho Prometheus crawl mà không cần ServiceLB
+service:
+  enabled: true
+  spec:
+    type: ClusterIP
+
+# 2.4. Ghim cố định Pod Traefik lên Node Server có IP Public (Node Selector)
+nodeSelector:
+  node-role.kubernetes.io/control-plane: "true"
+
+# 2.5. Bỏ qua các Taint mặc định trên Node Control Plane (Tolerations)
+tolerations:
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Exists"
+    effect: "NoSchedule"
+  - key: "node-role.kubernetes.io/master"
+    operator: "Exists"
+    effect: "NoSchedule"
+
+# 2.6. Giới hạn tài nguyên phần cứng, tối ưu cho Server 6GB RAM (Resources)
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "300m"
+    memory: "256Mi"

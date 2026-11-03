@@ -1,0 +1,40 @@
+# --- Định danh & Mạng Node ---
+node-name: "server-01"
+bind-address: "100.123.87.107"
+advertise-address: "100.123.87.107"
+node-ip: "100.123.87.107"
+node-external-ip: "100.123.87.107"
+
+# --- SANs cho TLS Certificate ---
+tls-san:
+  - "100.123.87.107"
+  - "heliosvps"
+  - "127.0.0.1"
+  - "localhost"
+
+# --- Cấu hình CNI Mạng Flannel qua Tailscale ---
+flannel-iface: "tailscale0"
+flannel-backend: "vxlan"
+
+# --- Thông tin & Mạng Cluster (Tùy chọn nâng cao) ---
+# cluster-domain: "cluster.local"        # Tên miền DNS nội bộ của cluster (mặc định: cluster.local)
+# cluster-cidr: "10.42.0.0/16"           # Dải mạng cấp phát cho Pod
+# service-cidr: "10.43.0.0/16"           # Dải mạng cấp phát cho Service
+# cluster-dns: "10.43.0.10"             # IP CoreDNS của cluster
+
+# --- Metadata & Nhãn Node (Node Labels / Taints) ---
+# node-label:
+#   - "environment=production"
+#   - "topology.kubernetes.io/zone=tailscale"
+node-taint:
+  - "node-role.kubernetes.io/control-plane:NoSchedule"
+
+# --- Tinh chỉnh Dịch vụ & Add-ons ---
+disable:
+  - "traefik"
+  - "servicelb"
+
+# --- Bảo mật & Phân quyền ---
+secrets-encryption: true
+write-kubeconfig-mode: "0644"
+debug: false
