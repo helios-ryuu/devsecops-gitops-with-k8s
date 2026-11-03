@@ -152,3 +152,61 @@ Các bước thực hiện thiết lập hạ tầng thực tế:
 16. **Cấu hình quyền Workflow trên GitHub Repository**
     - Truy cập Settings $\rightarrow$ Actions $\rightarrow$ General $\rightarrow$ Workflow permissions.
     - Chọn **Read and write permissions** và tích chọn **Allow GitHub Actions to create and approve pull requests** (đảm bảo CI pipeline có quyền push Git tag mới).
+
+17. **Đẩy mã nguồn lên Remote & Kích hoạt Pipeline CI/DevSecOps**
+    - Thực hiện đẩy mã nguồn ứng dụng Web Next.js 16 và toàn bộ cấu hình GitOps/K8s lên nhánh `main` trên GitHub.
+    - Đường ống CI/DevSecOps [.github/workflows/ci-workflow.yml](file:///home/helios/main/projects/devsecops-gitops-with-k8s/.github/workflows/ci-workflow.yml) tự động kích hoạt và thực thi thành công 100% (Gitleaks $\rightarrow$ Trivy FS $\rightarrow$ Hardened Docker Build $\rightarrow$ Trivy Image Security Gate $\rightarrow$ Push GHCR $\rightarrow$ Auto-update GitOps tag).
+    - **Thành phẩm đạt được:**
+      - **Image Container Production:** Đã được đóng gói, hardening bảo mật (non-root UID `10001:10001`, triệt tiêu toàn bộ CVE HIGH/CRITICAL) và xuất bản thành công lên GitHub Container Registry tại `ghcr.io/helios-ryuu/devsecops-gitops-with-k8s:latest`.
+      - **Tự động hóa GitOps:** Pipeline tự động cập nhật image tag mới vào `k8s-manifests/base/kustomization.yaml` trên remote, sẵn sàng cho ArgoCD kéo về đồng bộ triển khai lên cụm K3s.
+
+18. **Kéo commit cập nhật GitOps tag mới về máy local**
+    - Thực hiện lệnh:
+      ```bash
+      git pull origin main
+      ```
+    - Kiểm tra file `k8s-manifests/base/kustomization.yaml` đã được cập nhật tag mới của image container.
+
+19. **Kích hoạt Web App trên cụm K8s qua ArgoCD GitOps**
+    - Khởi tạo ứng dụng trên ArgoCD bằng file argocd/app.yaml:
+      ```bash
+      kubectl apply -f argocd/app.yaml
+      ```
+    - ArgoCD sẽ tự động thực hiện ngay lập tức:
+      - Tự tạo namespace production-app.
+      - Kéo image ghcr.io/helios-ryuu/devsecops-gitops-with-k8s:c4ea872... từ GHCR về chạy trên Worker node.
+      - Triển khai cơ sở dữ liệu Redis LTS 8.2.11 kèm probe kiểm tra sức khỏe.
+      - Cấu hình Traefik Ingress và áp dụng NetworkPolicy cô lập an ninh.
+    - Kiểm tra trạng thái triển khai:
+      - Xem các Pod đã Running 1/1 chưa
+      ```bash
+      kubectl get pods -n production-app -o wide
+      ```
+      - Xem Ingress đã nhận IP/Host chưa
+      ```bash
+      kubectl get ingress -n production-app
+      ```
+      - Xem các tài nguyên còn lại đã được tạo chưa
+      ```bash
+      kubectl get svc,cm,secret,pvc -n production-app
+      ```
+      - Có thể mở trình duyệt truy cập domain web app: https://nt548.helios.id.vn (Hoặc domain khác) để kiểm tra giao diện Next.js hiển thị lượt truy cập.
+20. **Kích hoạt hệ thống Giám sát (Monitoring Stack)**
+    - Thực hiện triển khai Prometheus + Grafana + Loki + Tempo + Alertmanager bằng ArgoCD GitOps:
+      ```bash
+      kubectl apply -f argocd/monitoring.yaml
+      ```
+    - Kiểm tra trạng thái triển khai:
+      - Xem trạng thái tóm tắt (Sync Status & Health)
+      ```bash
+      kubectl get application -n argocd
+      ```
+      - Xem các Pod đã Running 1/1 chưa
+      ```bash
+      kubectl get pods -n monitoring -o wide
+      ```
+      - Xem Ingress đã nhận IP/Host chưa
+      ```bash
+      kubectl get ingress -n monitoring
+      ```
+    - Truy cập Grafana Dashboard: https://grafana.helios.id.vn (Hoặc domain khác) để kiểm tra các biểu đồ giám sát hệ thống.

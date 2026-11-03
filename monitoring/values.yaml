@@ -61,7 +61,7 @@ prometheus:
         memory: "256Mi"
       limits:
         cpu: "500m"
-        memory: "512Mi"
+        memory: "1024Mi"
 
     # 3.4. Ghim Prometheus chạy trên Worker Nodes on-prem (tránh chiếm RAM Server)
     affinity:
@@ -95,17 +95,17 @@ grafana:
   # 4.1. Cấu hình máy chủ Grafana (Tránh lỗi chuyển hướng và Mixed Content khi chạy sau Cloudflare / Traefik)
   grafana.ini:
     server:
-      root_url: https://nt548-grafana.helios.id.vn
+      root_url: https://grafana.helios.id.vn
       enforce_domain: false
 
-  # 4.2. Giới hạn tài nguyên cho Grafana
+  # 4.2. Giới hạn tài nguyên cho Grafana (Tăng RAM để tránh OOMKilled khi load dashboards)
   resources:
     requests:
-      cpu: "50m"
-      memory: "128Mi"
-    limits:
-      cpu: "200m"
+      cpu: "100m"
       memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
 
   # 4.3. Ghim Grafana chạy trên Worker Nodes on-prem
   affinity:
@@ -125,7 +125,7 @@ grafana:
     annotations:
       traefik.ingress.kubernetes.io/router.entrypoints: websecure
     hosts:
-      - nt548-grafana.helios.id.vn
+      - grafana.helios.id.vn
     path: /
     pathType: Prefix
 

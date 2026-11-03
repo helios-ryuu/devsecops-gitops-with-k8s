@@ -12,7 +12,7 @@
 
 global:
   # 1.1. Tên miền chính thức phục vụ Argo CD Web UI & API
-  domain: nt548-argocd.helios.id.vn
+  domain: argocd.helios.id.vn
 
   # 1.2. Đảm bảo toàn bộ các Pod ArgoCD ưu tiên triển khai lên Worker Nodes (tránh tải VPS Control Plane)
   affinity:
@@ -39,7 +39,7 @@ server:
       traefik.ingress.kubernetes.io/router.entrypoints: websecure
     # Sử dụng mảng hosts chuẩn theo schema của argo-cd Helm chart
     hosts:
-      - nt548-argocd.helios.id.vn
+      - argocd.helios.id.vn
     paths:
       - /
     pathType: Prefix
@@ -71,11 +71,12 @@ configs:
   # 3.1. Cấu hình thông số khởi động (tương ứng argocd-cmd-params-cm)
   params:
     server.insecure: true
+    controller.repo.server.timeout.seconds: "300"
 
   # 3.2. Cấu hình chung của hệ thống Argo CD (tương ứng argocd-cm)
   cm:
     # URL gốc để render chính xác liên kết và webhook
-    url: https://nt548-argocd.helios.id.vn
+    url: https://argocd.helios.id.vn
 
     # Nhãn theo dõi tài nguyên (tránh xung đột với nhãn của Helm Release)
     application.instanceLabelKey: argocd.argoproj.io/instance
@@ -113,7 +114,12 @@ controller:
 # ==============================================================================
 
 repoServer:
-  # 5.1. Giới hạn tài nguyên cho Repo Server (thực thi kustomize build / helm template)
+  # 5.1. Tăng timeout xử lý render các chart lớn như kube-prometheus-stack
+  env:
+    - name: ARGOCD_EXEC_TIMEOUT
+      value: "300s"
+
+  # 5.2. Giới hạn tài nguyên cho Repo Server (thực thi kustomize build / helm template)
   resources:
     requests:
       cpu: "100m"
