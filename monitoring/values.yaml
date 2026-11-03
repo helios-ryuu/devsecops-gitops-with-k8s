@@ -1,0 +1,142 @@
+# ==============================================================================
+# HELM VALUES: KUBE-PROMETHEUS-STACK - ĐỒ ÁN NT548
+# Target: Cụm K3s Hybrid (Control Plane Server + Workers On-Prem qua Tailscale)
+# Chart: prometheus-community/kube-prometheus-stack (Version 92.x)
+# ==============================================================================
+# Add repo: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+# Install release: helm install monitoring prometheus-community/kube-prometheus-stack -n monitoring --create-namespace -f values.yaml
+# ==============================================================================
+# PHẦN 1: VÔ HIỆU HÓA CÁC EXPORTER KHÔNG DÙNG TRÊN K3S (TRÁNH BÁO LỖI TARGET DOWN)
+# ==============================================================================
+
+# 1.1. K3s chạy nhúng etcd/sqlite, không mở cổng metrics etcd tiêu chuẩn
+kubeEtcd:
+  enabled: false
+
+# 1.2. K3s chạy Controller Manager dạng nhúng, không mở cổng riêng
+kubeControllerManager:
+  enabled: false
+
+# 1.3. K3s chạy Scheduler dạng nhúng, không mở cổng riêng
+kubeScheduler:
+  enabled: false
+
+# 1.4. K3s không dùng kube-proxy độc lập (dùng iptables/ipvs tích hợp của K3s)
+kubeProxy:
+  enabled: false
+
+# ==============================================================================
+# PHẦN 2: CẤU HÌNH NODE-EXPORTER (ĐO THÔNG SỐ PHẦN CỨNG CPU/RAM TOÀN CỤM)
+# ==============================================================================
+
+prometheus-node-exporter:
+  enabled: true
+  # 2.1. Bắt buộc gắn Tolerations để DaemonSet chạy được trên cả node Server (Control Plane)
+  tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
+    - key: "node-role.kubernetes.io/master"
+      operator: "Exists"
+      effect: "NoSchedule"
+
+# ==============================================================================
+# PHẦN 3: CẤU HÌNH PROMETHEUS OPERATOR & PROMETHEUS SERVER
+# ==============================================================================
+
+prometheus:
+  enabled: true
+  prometheusSpec:
+    # 3.1. Tự động nhận diện mọi ServiceMonitor/PodMonitor trong cụm (của Traefik & Web App)
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+
+    # 3.2. Thời gian lưu trữ dữ liệu metrics (phù hợp bộ nhớ cụm)
+    retention: 7d
+
+    # 3.3. Giới hạn tài nguyên phần cứng cho Prometheus
+    resources:
+      requests:
+        cpu: "150m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+
+    # 3.4. Ghim Prometheus chạy trên Worker Nodes on-prem (tránh chiếm RAM Server)
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: "node-role.kubernetes.io/control-plane"
+                  operator: "DoesNotExist"
+                - key: "node-role.kubernetes.io/master"
+                  operator: "DoesNotExist"
+
+    # 3.5. Cấu hình Persistent Volume Claim (PVC) lưu trữ dữ liệu Prometheus
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: local-path
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+
+# ==============================================================================
+# PHẦN 4: CẤU HÌNH GRAFANA DASHBOARD & INGRESS TRAEFIK
+# ==============================================================================
+
+grafana:
+  enabled: true
+  adminPassword: "admin" # Đổi mật khẩu này trước khi nghiệm thu
+
+  # 4.1. Cấu hình máy chủ Grafana (Tránh lỗi chuyển hướng và Mixed Content khi chạy sau Cloudflare / Traefik)
+  grafana.ini:
+    server:
+      root_url: https://nt548-grafana.helios.id.vn
+      enforce_domain: false
+
+  # 4.2. Giới hạn tài nguyên cho Grafana
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "128Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+  # 4.3. Ghim Grafana chạy trên Worker Nodes on-prem
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: "node-role.kubernetes.io/control-plane"
+                operator: "DoesNotExist"
+              - key: "node-role.kubernetes.io/master"
+                operator: "DoesNotExist"
+
+  # 4.4. Cấu hình Traefik Ingress cho Grafana (Tận dụng Cloudflare Origin CA)
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    hosts:
+      - nt548-grafana.helios.id.vn
+    path: /
+    pathType: Prefix
+
+  # 4.5. Cấu hình Persistent Volume Claim (PVC) lưu trữ dữ liệu Grafana
+  persistence:
+    enabled: true
+    storageClassName: local-path
+    size: 5Gi
+# ==============================================================================
+# PHẦN 5: CẤU HÌNH ALERTMANAGER (TÙY CHỌN BẬT / TẮT)
+# ==============================================================================
+
+alertmanager:
+  enabled: false # Tắt Alertmanager nếu chưa cần cấu hình bắn tin nhắn Telegram/Slack để tiết kiệm RAM

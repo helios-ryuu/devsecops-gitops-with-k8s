@@ -1,0 +1,170 @@
+# ==============================================================================
+# HELM VALUES: ARGO CD - ĐỒ ÁN NT548: DEVSECOPS & GITOPS TRÊN K3S HYBRID
+# Target: Cụm K3s Hybrid (Control Plane Server + Workers On-Prem qua Tailscale)
+# Ingress Controller: Traefik (HTTPS Termination qua Cloudflare Origin TLS)
+# Chart: argo/argo-cd (https://argoproj.github.io/argo-helm)
+# ==============================================================================
+# Add repo: helm repo add argo https://argoproj.github.io/argo-helm && helm repo update
+# Install release: helm install argocd argo/argo-cd -n argocd --create-namespace -f values.yaml
+# ==============================================================================
+# PHẦN 1: CẤU HÌNH TOÀN CỤC & TÊN MIỀN (GLOBAL SETTINGS)
+# ==============================================================================
+
+global:
+  # 1.1. Tên miền chính thức phục vụ Argo CD Web UI & API
+  domain: nt548-argocd.helios.id.vn
+
+  # 1.2. Đảm bảo toàn bộ các Pod ArgoCD ưu tiên triển khai lên Worker Nodes (tránh tải VPS Control Plane)
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: DoesNotExist
+              - key: node-role.kubernetes.io/master
+                operator: DoesNotExist
+
+# ==============================================================================
+# PHẦN 2: CẤU HÌNH ARGO CD SERVER & TRAEFIK INGRESS
+# ==============================================================================
+
+server:
+  # 2.1. Cấu hình Ingress định tuyến lưu lượng HTTPS từ Traefik vào ArgoCD Server
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      # Định tuyến qua EntryPoint websecure (443) của Traefik
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    # Sử dụng mảng hosts chuẩn theo schema của argo-cd Helm chart
+    hosts:
+      - nt548-argocd.helios.id.vn
+    paths:
+      - /
+    pathType: Prefix
+    # Khai báo mảng rỗng để không tạo khối TLS trong Ingress (Traefik TLSStore default xử lý)
+    tls: []
+
+  # 2.2. Giới hạn tài nguyên phần cứng cho ArgoCD Server Pod
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  # 2.3. Xuất thông số metrics phục vụ giám sát
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: monitoring
+
+# ==============================================================================
+# PHẦN 3: CẤU HÌNH THÔNG SỐ VẬN HÀNH (ARGO CD CONFIGURATIONS)
+# ==============================================================================
+
+configs:
+  # 3.1. Cấu hình thông số khởi động (tương ứng argocd-cmd-params-cm)
+  params:
+    server.insecure: true
+
+  # 3.2. Cấu hình chung của hệ thống Argo CD (tương ứng argocd-cm)
+  cm:
+    # URL gốc để render chính xác liên kết và webhook
+    url: https://nt548-argocd.helios.id.vn
+
+    # Nhãn theo dõi tài nguyên (tránh xung đột với nhãn của Helm Release)
+    application.instanceLabelKey: argocd.argoproj.io/instance
+
+    # Chu kỳ tự động kiểm tra thay đổi trên Git repository (mặc định 180s = 3 phút)
+    timeout.reconciliation: 180s
+
+    # Bật/tắt tính năng Web Terminal vào trong Pod qua Web UI (tắt để tăng cường bảo mật)
+    exec.enabled: false
+
+# ==============================================================================
+# PHẦN 4: ARGO CD APPLICATION CONTROLLER (BỘ ĐIỀU PHỐI ĐỒNG BỘ GITOPS)
+# ==============================================================================
+
+controller:
+  # 4.1. Giới hạn tài nguyên cho Application Controller (thành phần xử lý GitOps cốt lõi)
+  resources:
+    requests:
+      cpu: "150m"
+      memory: "256Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1024Mi"
+
+  # 4.2. Xuất metrics Controller cho Prometheus
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: monitoring
+
+# ==============================================================================
+# PHẦN 5: ARGO CD REPO SERVER (CLONE GIT REPO & BUILD KUSTOMIZE / HELM)
+# ==============================================================================
+
+repoServer:
+  # 5.1. Giới hạn tài nguyên cho Repo Server (thực thi kustomize build / helm template)
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  # 5.2. Xuất metrics Repo Server cho Prometheus
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: monitoring
+
+# ==============================================================================
+# PHẦN 6: BỘ NHỚ ĐỆM DỮ LIỆU NỘI BỘ (ARGO CD REDIS)
+# ==============================================================================
+
+redis:
+  enabled: true
+  # 6.1. Giới hạn tài nguyên cho Redis đệm trạng thái Git & Kubernetes
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+# ==============================================================================
+# PHẦN 7: TỐI ƯU HÓA CÁC THÀNH PHẦN PHỤ TRỢ (DEX & NOTIFICATIONS)
+# ==============================================================================
+
+# 7.1. Vô hiệu hóa Dex SSO nếu chỉ dùng tài khoản nội bộ (tiết kiệm ~150MB RAM)
+dex:
+  enabled: false
+
+# 7.2. Tắt Argo CD Notifications nếu chưa tích hợp Slack / Discord / Webhook thông báo
+notifications:
+  enabled: false
+
+# 7.3. Kích hoạt ApplicationSet Controller để hỗ trợ tự sinh Application hàng loạt (nếu cần)
+applicationSet:
+  enabled: true
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
