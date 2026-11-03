@@ -164,30 +164,44 @@
 devsecops-gitops-with-k8s/
 ├── README.md                           # Tài liệu tổng quan dự án
 ├── WBS.md                              # Cấu trúc phân rã công việc (WBS) & timeline chi tiết (dùng cho Sheet)
-├── argocd/                             # Cấu hình Application CRD cho ArgoCD (Sỹ phụ trách)
-│   ├── app.yaml                        # Application triển khai Web App & Redis (directory: {recurse: true})
-│   └── monitoring.yaml                 # Application triển khai kube-prometheus-stack (ServerSideApply=true)
-├── app/                                # Mã nguồn ứng dụng Web 2 tầng (Phúc phụ trách)
-│   ├── src/                            # Express API + Redis visitor counter + /metrics (prom-client)
-│   ├── package.json
-│   ├── package-lock.json
-│   └── Dockerfile                      # Multi-stage build (node:24-alpine, USER 10001 non-root)
-├── k8s-manifests/                      # Thư mục GitOps quản lý trạng thái ứng dụng (Sỹ phụ trách)
-│   ├── base/                           # Tài nguyên Web App (namespace: production-app)
-│   │   ├── deployment.yaml             # Web App Deployment (SecurityContext non-root UID 10001)
-│   │   ├── service.yaml                # Web App Service
-│   │   ├── configmap.yaml              # Biến môi trường (REDIS_HOST, PORT)
-│   │   └── ingress.yaml                # Traefik Ingress
-│   ├── database/                       # Tài nguyên Database (namespace: database)
-│   │   └── redis.yaml                  # Redis Deployment & Service
-│   └── security/                       # Tài nguyên an ninh (namespace: database)
-│       └── network-policy.yaml         # Cô lập traffic vào Redis
+├── LOG.md                              # Nhật ký triển khai thực tế chi tiết từng bước
+├── argocd/                             # Cấu hình Application CRD & Values cho ArgoCD (Sỹ phụ trách)
+│   ├── app.yaml                        # Application triển khai GitOps Kustomize cho Web App & Redis
+│   ├── monitoring.yaml                 # Application triển khai kube-prometheus-stack (Multiple Sources)
+│   └── values.yaml                     # Helm values tùy biến ArgoCD (Ingress Traefik, Worker Affinity)
+├── app/                                # Mã nguồn ứng dụng Next.js 16 App Router (Phúc phụ trách)
+│   ├── src/app/                        # Next.js App Router (kèm API probe /healthz, /ready)
+│   ├── package.json                    # Khai báo pnpm, Next.js 16, React 19, Tailwind CSS v4
+│   ├── next.config.ts                  # Cấu hình output: standalone
+│   └── Dockerfile                      # Multi-stage build (node:26.13.0-alpine3.23, pnpm, non-root UID 10001)
+├── k8s-manifests/                      # Thư mục GitOps Kustomize quản lý ứng dụng (Sỹ phụ trách)
+│   ├── kustomization.yaml              # Root Kustomization: áp namespace production-app lên toàn bộ resources
+│   ├── base/                           # Tài nguyên Web App
+│   │   ├── kustomization.yaml          # Quản lý Image tag, ConfigMap, Deployment, Service, Ingress
+│   │   ├── deployment.yaml             # Web App Deployment (SecurityContext non-root UID 10001, probes)
+│   │   ├── service.yaml                # Web App Service ClusterIP cổng 3000
+│   │   ├── configmap.yaml              # Biến môi trường (REDIS_HOST: redis-service, PORT: 3000)
+│   │   └── ingress.yaml                # Traefik Ingress định tuyến nt548.helios.id.vn
+│   ├── database/                       # Tài nguyên Database
+│   │   ├── kustomization.yaml
+│   │   └── redis.yaml                  # Redis Deployment (LTS 8.2.11-alpine3.22, probes) & Service
+│   └── security/                       # Tài nguyên an ninh
+│       ├── kustomization.yaml
+│       └── network-policy.yaml         # Zero-trust cô lập traffic vào Redis
+├── k3s-config/                         # Cấu hình K3s Server & Agent nodes qua Tailscale
+│   ├── config.server-01.yaml           # Cấu hình Control Plane (disable traefik, flannel tailscale0)
+│   ├── config.agent-01.yaml            # Cấu hình Worker 01
+│   └── config.agent-02.yaml            # Cấu hình Worker 02
 ├── monitoring/                         # Cấu hình giám sát (Sỹ setup, Huy khai thác)
-│   └── values.yaml                     # Values cho Helm (tắt component K3s không dùng)
+│   └── values.yaml                     # Values cho kube-prometheus-stack (tắt component K3s không dùng)
+├── traefik/                            # Cấu hình Traefik Ingress Controller qua Helm (Sỹ phụ trách)
+│   ├── values.yaml                     # Values Helm Traefik: HostPort 80/443, Metrics 9100, ClusterIP
+│   ├── tlsstore.yaml                   # TLSStore default nạp Cloudflare Origin CA cert
+│   └── cloudflare-origin-tls-secret.yaml # Secret TLS lưu cert & key
 ├── scripts/                            # Kịch bản kiểm chứng tự động (Long & Sỹ phụ trách)
-│   └── demo.sh                         # Script hỗ trợ thực nghiệm 2 kịch bản demo
+│   └── demo.sh                         # Script hướng dẫn thuyết trình 3 kịch bản demo (Read-only)
 └── .github/workflows/                  # Đường ống CI/DevSecOps (Sỹ phụ trách)
-    └── ci-devsecops.yml                # Workflow: Gitleaks + Trivy (FS & Image) + Build & Push GHCR
+    └── ci-devsecops.yml                # Workflow: Gitleaks + Trivy + Build & Push GHCR + Kustomize Tag update
 ```
 
 ---
