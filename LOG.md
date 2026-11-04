@@ -155,7 +155,7 @@ Các bước thực hiện thiết lập hạ tầng thực tế:
 
 17. **Đẩy mã nguồn lên Remote & Kích hoạt Pipeline CI/DevSecOps**
     - Thực hiện đẩy mã nguồn ứng dụng Web Next.js 16 và toàn bộ cấu hình GitOps/K8s lên nhánh `main` trên GitHub.
-    - Đường ống CI/DevSecOps [.github/workflows/ci-workflow.yml](file:///home/helios/main/projects/devsecops-gitops-with-k8s/.github/workflows/ci-workflow.yml) tự động kích hoạt và thực thi thành công 100% (Gitleaks $\rightarrow$ Trivy FS $\rightarrow$ Hardened Docker Build $\rightarrow$ Trivy Image Security Gate $\rightarrow$ Push GHCR $\rightarrow$ Auto-update GitOps tag).
+    - Đường ống CI/DevSecOps [.github/workflows/ci-pipe.yml](file:///home/helios/main/projects/devsecops-gitops-with-k8s/.github/workflows/ci-pipe.yml) tự động kích hoạt và thực thi thành công 100% (Gitleaks $\rightarrow$ Trivy FS $\rightarrow$ Hardened Docker Build $\rightarrow$ Trivy Image Security Gate $\rightarrow$ Push GHCR $\rightarrow$ Auto-update GitOps tag).
     - **Thành phẩm đạt được:**
       - **Image Container Production:** Đã được đóng gói, hardening bảo mật (non-root UID `10001:10001`, triệt tiêu toàn bộ CVE HIGH/CRITICAL) và xuất bản thành công lên GitHub Container Registry tại `ghcr.io/helios-ryuu/devsecops-gitops-with-k8s:latest`.
       - **Tự động hóa GitOps:** Pipeline tự động cập nhật image tag mới vào `k8s-manifests/base/kustomization.yaml` trên remote, sẵn sàng cho ArgoCD kéo về đồng bộ triển khai lên cụm K3s.

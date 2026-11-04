@@ -87,6 +87,12 @@ configs:
     # Bật/tắt tính năng Web Terminal vào trong Pod qua Web UI (tắt để tăng cường bảo mật)
     exec.enabled: false
 
+    # Bỏ qua yêu cầu IP LoadBalancer cho Ingress trên K3s/Traefik (tránh bị kẹt Progressing)
+    resource.customizations.health.networking.k8s.io_Ingress: |
+      hs = {}
+      hs.status = "Healthy"
+      return hs
+
 # ==============================================================================
 # PHẦN 4: ARGO CD APPLICATION CONTROLLER (BỘ ĐIỀU PHỐI ĐỒNG BỘ GITOPS)
 # ==============================================================================

@@ -201,7 +201,7 @@ devsecops-gitops-with-k8s/
 ├── scripts/                            # Kịch bản kiểm chứng tự động (Long & Sỹ phụ trách)
 │   └── demo.sh                         # Script hướng dẫn thuyết trình 3 kịch bản demo (Read-only)
 └── .github/workflows/                  # Đường ống CI/DevSecOps (Sỹ phụ trách)
-    └── ci-workflow.yml                 # Workflow: Gitleaks + Trivy + Build & Push GHCR + Kustomize Tag update
+    └── ci-pipe.yml                     # Workflow: Gitleaks + Trivy + Build & Push GHCR + Kustomize Tag update
 ```
 
 ---
