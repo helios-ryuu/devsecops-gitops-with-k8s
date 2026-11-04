@@ -9,4 +9,4 @@ resources:
 
 images:
   - name: ghcr.io/helios-ryuu/devsecops-gitops-with-k8s
-    newTag: c4ea872a360e4325ecc5b6ff49c7827cf0cf9d19
+    newTag: ab9e132a77c01e189593dafeb3cec77f35e3815e
