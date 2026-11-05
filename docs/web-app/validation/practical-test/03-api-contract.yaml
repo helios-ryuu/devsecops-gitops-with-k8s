@@ -1,0 +1,262 @@
+openapi: 3.1.1
+info:
+  title: AI Agent Office Monitor — operational contract draft
+  version: 0.1.0
+  description: >-
+    DRAFT framework-independent partial contract. Health and successful readiness
+    bodies preserve code-observed Next handlers. Dependency-aware readiness and
+    metrics are proposed. This is not an approved public-access or deployment contract.
+x-document-control:
+  document-id: PT-API
+  document-version: 0.1.0
+  status: DRAFT
+  date: '2026-11-05'
+  owner-role: Web Fullstack Dev; acceptance authority TBD Q-100
+  upstream-versions:
+    PT-BRD: 0.1.0
+    PT-FRD: 0.1.0
+  source-refs:
+    - E-100 user practical evaluation, Mandatory scope
+    - E-101 README section 1.2, healthz/ready/metrics
+    - E-103 app/src/app/healthz/route.ts and app/src/app/ready/route.ts at 2110eddec91bc3e34137c86fef693095c4afb677
+  architecture-ref: 04-architecture.md ADR-100, ADR-102, ADR-104
+  change-log:
+    - '0.1.0: partial draft; no visitor or agent HTTP API invented.'
+  security-decision: >-
+    BLOCKED Q-102. No security scheme or security: [] is asserted. OpenAPI tools
+    may render these operations as unsecured; this artifact must not be used for
+    deployment until probe, scrape and browser exposure policies are resolved.
+x-evidence:
+  - id: E-103
+    kind: Fact
+    provenance: code-observed, not runtime-tested
+    finding: Only GET /healthz and GET /ready observed; ready always returns 200.
+  - id: ADR-102
+    kind: Decision
+    status: proposed
+    finding: Readiness includes initialization, Redis check and draining; 503 is a proposed delta.
+  - id: ADR-104
+    kind: Decision
+    status: proposed
+    finding: Metrics remain scrapeable without Redis; registry-local HTTP/process data only.
+x-open-questions:
+  - id: Q-101
+    blocking-fr-ids: [FR-101]
+    question: Define visit trigger, uniqueness, refresh/bots/retry semantics before designing counter operations.
+    owner: Web owner
+  - id: Q-102
+    blocking-fr-ids: [FR-102, FR-103, FR-104]
+    question: Approve integration access boundary, origins and exposure; future product auth does not settle this.
+    owner: Web owner and Platform Lead
+  - id: Q-104
+    question: Redis readiness deadline, shutdown/drain and NFR thresholds remain TBD.
+    owner: Web and Platform and QA
+  - id: Q-106
+    question: Approve metric names, units, label vocabulary and scrape integration.
+    owner: Web and QA and Platform
+x-coverage:
+  included:
+    FR-102: getLiveness
+    FR-103: getReadiness
+    FR-104: getApplicationMetrics
+  blocked:
+    FR-101: No route until Q-101 resolved; GET must not increment visitor state.
+  not-http:
+    FR-100: HTML page, not JSON API
+    FR-105: Packaging and runtime configuration
+    FR-106: Conditional UI in-browser snapshot, ADR-101
+    FR-107: Conditional internal browser simulator
+    FR-108: Conditional internal reducer
+    FR-109: Conditional 3D UI
+    FR-110: Conditional derived animations
+    FR-111: Conditional recent browser activity
+x-wire-rules:
+  - No request bodies or path parameters in the specified GET operations.
+  - No defined query parameters or business headers; consumers must not depend on unspecified parameter behavior.
+  - Required response fields never null. Unknown response fields allowed for compatible additions; consumers ignore them.
+  - UTC timestamps use RFC3339 date-time strings with Z; uptime is nonnegative seconds and may be fractional.
+  - Pagination, sorting and idempotency keys are N/A for these reads. Rate limits/access failures await Q-102.
+  - JSON errors described here are application-generated; ingress/network/404/405 behavior is not baselined.
+  - No agent CRUD, simulator control, event ingestion, authentication or streaming operation is specified.
+x-optional-streaming:
+  status: deferred
+  rationale: SSE is optional, not selected; no event-stream endpoint or replay guarantee.
+  gates: >-
+    If selected, first define identity/access, envelope, event names, cursor scope,
+    ordering, heartbeat, retry, Last-Event-ID, resnapshot/replay and retained source,
+    pre-header versus in-stream errors, proxy buffering/timeouts, fan-out and drain.
+    Redis Pub/Sub alone cannot provide replay. Reference /stream is not adopted.
+x-validation:
+  checked-scope: See evaluation-report.md VAL-110 for executed validators and versions.
+  unchecked-scope: Runtime conformance, deployment security, counter API and optional streaming.
+  findings:
+    - 'BLOCKED: release/access/counter decisions Q-100/Q-101/Q-102.'
+    - 'Draft additions are not implementation evidence.'
+paths:
+  /healthz:
+    get:
+      operationId: getLiveness
+      x-fr-ids: [FR-102]
+      x-scope-class: Mandatory
+      x-design-status: code-observed response; untested
+      x-access-status: BLOCKED Q-102, technical probe consumer
+      summary: Process liveness independent of Redis
+      description: No business state mutation. A nonresponding process is detected by caller timeout, not a promised JSON response.
+      responses:
+        '200':
+          description: HTTP process can answer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Liveness'
+              example:
+                status: ok
+                uptime: 12.5
+                timestamp: '2026-11-05T03:00:00.000Z'
+  /ready:
+    get:
+      operationId: getReadiness
+      x-fr-ids: [FR-103]
+      x-scope-class: Mandatory
+      x-design-status: proposed dependency semantics; current implementation always 200
+      x-access-status: BLOCKED Q-102, technical readiness consumer
+      summary: Check serving prerequisites
+      description: >-
+        Proposed 200 only after initialization and successful bounded Redis check,
+        while not draining. No counter increment or initialization/reset of business
+        keys. Exact Redis deadline TBD Q-104; connection-only versus write-check
+        depth requires approval. Proposed PING is not proof of successful writes.
+      responses:
+        '200':
+          description: Serving prerequisites satisfied at check time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Readiness'
+              example:
+                status: ready
+                timestamp: '2026-11-05T03:00:00.000Z'
+        '503':
+          description: Proposed dependency failure, initialization incomplete or draining.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                redisUnavailable:
+                  value:
+                    error:
+                      code: DEPENDENCY_UNAVAILABLE
+                      message: Serving dependency unavailable
+                draining:
+                  value:
+                    error:
+                      code: NOT_READY
+                      message: Application not ready
+  /metrics:
+    get:
+      operationId: getApplicationMetrics
+      x-fr-ids: [FR-104]
+      x-scope-class: Mandatory
+      x-design-status: proposed; source-stated route, not implemented
+      x-access-status: BLOCKED Q-102, infrastructure scraper only proposed
+      summary: Export application metrics
+      description: >-
+        Proposed text exposition version 0.0.4. Process uptime gauge in seconds
+        and completed HTTP request counter, collected per process. No global
+        aggregate visitor total derived from process counters. Redis failure
+        does not prevent registry export. Metric vocabulary below awaits Q-106.
+      x-metric-catalog:
+        - name: web_app_process_uptime_seconds
+          type: gauge
+          unit: seconds
+          labels: []
+          source: monotonic process lifetime
+        - name: web_app_http_requests_total
+          type: counter
+          unit: requests
+          labels: [method, route, status_code]
+          source: completed requests per process
+          allowed-values: >-
+            method from registered HTTP methods with OTHER bucket; route from
+            registered templates with unmatched bucket; status_code valid HTTP
+            status. Never use raw URL/query, agent IDs or task IDs. Reset on restart.
+      responses:
+        '200':
+          description: Scrapeable process registry, even if Redis is unavailable.
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                const: 'text/plain; version=0.0.4; charset=utf-8'
+              description: Proposed explicit exposition format.
+          content:
+            text/plain:
+              schema:
+                type: string
+                minLength: 1
+              example: |
+                # HELP web_app_process_uptime_seconds Process uptime in seconds.
+                # TYPE web_app_process_uptime_seconds gauge
+                web_app_process_uptime_seconds 12.5
+                # HELP web_app_http_requests_total Completed HTTP requests.
+                # TYPE web_app_http_requests_total counter
+                web_app_http_requests_total{method="GET",route="/healthz",status_code="200"} 1
+        '503':
+          description: Registry temporarily unavailable, proposed application error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: METRICS_UNAVAILABLE
+                  message: Metrics unavailable
+components:
+  schemas:
+    UtcTimestamp:
+      type: string
+      format: date-time
+      pattern: 'Z$'
+      description: UTC timestamp; examples are synthetic, not observed traffic.
+    Liveness:
+      type: object
+      required: [status, uptime, timestamp]
+      additionalProperties: true
+      properties:
+        status:
+          type: string
+          const: ok
+        uptime:
+          type: number
+          minimum: 0
+          description: Seconds since process start, possibly fractional.
+        timestamp:
+          $ref: '#/components/schemas/UtcTimestamp'
+    Readiness:
+      type: object
+      required: [status, timestamp]
+      additionalProperties: true
+      properties:
+        status:
+          type: string
+          const: ready
+        timestamp:
+          $ref: '#/components/schemas/UtcTimestamp'
+    Error:
+      type: object
+      required: [error]
+      additionalProperties: true
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          additionalProperties: true
+          properties:
+            code:
+              type: string
+              enum: [DEPENDENCY_UNAVAILABLE, NOT_READY, METRICS_UNAVAILABLE]
+            message:
+              type: string
+              minLength: 1
+              description: Human-readable, no secrets or dependency address; clients use code.

@@ -1,0 +1,216 @@
+{
+  "mode": "guided sequential application by the same agent in this session",
+  "provenance": "agent-authored record; not independent model/harness trace",
+  "time_semantics": "recorded_at is recording time after output creation; not invocation latency",
+  "steps": [
+    {
+      "sequence": 1,
+      "skill": "brd-authoring",
+      "recorded_at_utc": "2026-11-05T04:16:21.695167+00:00",
+      "prompt_case": "T-04",
+      "runtime_catalog": "runtime-discovery.json",
+      "instructions": "C:/Users/84352/.agents/skills/business-analyst-skill/skills/brd-authoring/SKILL.md",
+      "supporting_inputs": [
+        "shared documentation-standard.md",
+        "per-skill asset template",
+        "evidence.json",
+        "evidence-register.md"
+      ],
+      "upstream_outputs": [],
+      "output": {
+        "path": "smoke/BRD.md",
+        "sha256": "06ec2d3734cc6d58ecc5b1d206e8ec114599690d4d0f2a55a77b34009b3046eb"
+      },
+      "result_scope": "Draft produced; conclusions and blocked checks are recorded in output/report, not inferred from file existence"
+    },
+    {
+      "sequence": 2,
+      "skill": "frd-authoring",
+      "recorded_at_utc": "2026-11-05T04:16:21.816632+00:00",
+      "prompt_case": "T-05",
+      "runtime_catalog": "runtime-discovery.json",
+      "instructions": "C:/Users/84352/.agents/skills/business-analyst-skill/skills/frd-authoring/SKILL.md",
+      "supporting_inputs": [
+        "shared documentation-standard.md",
+        "per-skill asset template",
+        "evidence.json",
+        "evidence-register.md"
+      ],
+      "upstream_outputs": [
+        {
+          "path": "smoke/BRD.md",
+          "sha256": "06ec2d3734cc6d58ecc5b1d206e8ec114599690d4d0f2a55a77b34009b3046eb"
+        }
+      ],
+      "output": {
+        "path": "smoke/FRD.md",
+        "sha256": "d5b108dd1e61a984697286b7eb1b14752b68b2daf142c43060a582b67eb4939c"
+      },
+      "result_scope": "Draft produced; conclusions and blocked checks are recorded in output/report, not inferred from file existence"
+    },
+    {
+      "sequence": 3,
+      "skill": "api-contract-design",
+      "recorded_at_utc": "2026-11-05T04:17:17.690927+00:00",
+      "prompt_case": "T-06",
+      "runtime_catalog": "runtime-discovery.json",
+      "instructions": "C:/Users/84352/.agents/skills/business-analyst-skill/skills/api-contract-design/SKILL.md",
+      "supporting_inputs": [
+        "shared documentation-standard.md",
+        "per-skill asset template",
+        "evidence.json",
+        "evidence-register.md"
+      ],
+      "upstream_outputs": [
+        {
+          "path": "smoke/BRD.md",
+          "sha256": "06ec2d3734cc6d58ecc5b1d206e8ec114599690d4d0f2a55a77b34009b3046eb"
+        },
+        {
+          "path": "smoke/FRD.md",
+          "sha256": "d5b108dd1e61a984697286b7eb1b14752b68b2daf142c43060a582b67eb4939c"
+        }
+      ],
+      "output": {
+        "path": "smoke/api-contract.yaml",
+        "sha256": "3d59c412a113fe74f2ae046e41581e59c2d3fc3ffb50dbdc6a91c61fc75fbf85"
+      },
+      "result_scope": "Draft produced; conclusions and blocked checks are recorded in output/report, not inferred from file existence"
+    },
+    {
+      "sequence": 4,
+      "skill": "architecture-design",
+      "recorded_at_utc": "2026-11-05T04:18:52.023002+00:00",
+      "prompt_case": "T-07",
+      "runtime_catalog": "runtime-discovery.json",
+      "instructions": "C:/Users/84352/.agents/skills/business-analyst-skill/skills/architecture-design/SKILL.md",
+      "supporting_inputs": [
+        "shared documentation-standard.md",
+        "per-skill asset template",
+        "evidence.json",
+        "evidence-register.md"
+      ],
+      "upstream_outputs": [
+        {
+          "path": "smoke/BRD.md",
+          "sha256": "06ec2d3734cc6d58ecc5b1d206e8ec114599690d4d0f2a55a77b34009b3046eb"
+        },
+        {
+          "path": "smoke/FRD.md",
+          "sha256": "d5b108dd1e61a984697286b7eb1b14752b68b2daf142c43060a582b67eb4939c"
+        },
+        {
+          "path": "smoke/api-contract.yaml",
+          "sha256": "3d59c412a113fe74f2ae046e41581e59c2d3fc3ffb50dbdc6a91c61fc75fbf85"
+        }
+      ],
+      "output": {
+        "path": "smoke/architecture.md",
+        "sha256": "1f34969fa814c2a636555548eaad4128a3bc1c0a971747db06dbb195f4841b3f"
+      },
+      "result_scope": "Draft produced; conclusions and blocked checks are recorded in output/report, not inferred from file existence"
+    },
+    {
+      "sequence": 5,
+      "skill": "data-contract-design",
+      "recorded_at_utc": "2026-11-05T04:20:09.675920+00:00",
+      "prompt_case": "T-08",
+      "runtime_catalog": "runtime-discovery.json",
+      "instructions": "C:/Users/84352/.agents/skills/business-analyst-skill/skills/data-contract-design/SKILL.md",
+      "supporting_inputs": [
+        "shared documentation-standard.md",
+        "per-skill asset template",
+        "evidence.json",
+        "evidence-register.md"
+      ],
+      "upstream_outputs": [
+        {
+          "path": "smoke/BRD.md",
+          "sha256": "06ec2d3734cc6d58ecc5b1d206e8ec114599690d4d0f2a55a77b34009b3046eb"
+        },
+        {
+          "path": "smoke/FRD.md",
+          "sha256": "d5b108dd1e61a984697286b7eb1b14752b68b2daf142c43060a582b67eb4939c"
+        },
+        {
+          "path": "smoke/api-contract.yaml",
+          "sha256": "3d59c412a113fe74f2ae046e41581e59c2d3fc3ffb50dbdc6a91c61fc75fbf85"
+        },
+        {
+          "path": "smoke/architecture.md",
+          "sha256": "1f34969fa814c2a636555548eaad4128a3bc1c0a971747db06dbb195f4841b3f"
+        }
+      ],
+      "output": {
+        "path": "smoke/data-contract.md",
+        "sha256": "e887b9a797e217693033c071e667fa074bafa6e403ddf6a51bd8830f6c6489ff"
+      },
+      "result_scope": "Draft produced; conclusions and blocked checks are recorded in output/report, not inferred from file existence"
+    },
+    {
+      "sequence": 6,
+      "skill": "backend-migration-planning",
+      "recorded_at_utc": "2026-11-05T04:21:24.378654+00:00",
+      "prompt_case": "T-09",
+      "runtime_catalog": "runtime-discovery.json",
+      "instructions": "C:/Users/84352/.agents/skills/business-analyst-skill/skills/backend-migration-planning/SKILL.md",
+      "supporting_inputs": [
+        "shared documentation-standard.md",
+        "per-skill asset template",
+        "evidence.json",
+        "evidence-register.md"
+      ],
+      "upstream_outputs": [
+        {
+          "path": "smoke/BRD.md",
+          "sha256": "06ec2d3734cc6d58ecc5b1d206e8ec114599690d4d0f2a55a77b34009b3046eb"
+        },
+        {
+          "path": "smoke/FRD.md",
+          "sha256": "d5b108dd1e61a984697286b7eb1b14752b68b2daf142c43060a582b67eb4939c"
+        },
+        {
+          "path": "smoke/api-contract.yaml",
+          "sha256": "3d59c412a113fe74f2ae046e41581e59c2d3fc3ffb50dbdc6a91c61fc75fbf85"
+        },
+        {
+          "path": "smoke/architecture.md",
+          "sha256": "1f34969fa814c2a636555548eaad4128a3bc1c0a971747db06dbb195f4841b3f"
+        },
+        {
+          "path": "smoke/data-contract.md",
+          "sha256": "e887b9a797e217693033c071e667fa074bafa6e403ddf6a51bd8830f6c6489ff"
+        }
+      ],
+      "output": {
+        "path": "smoke/migration-plan.md",
+        "sha256": "85f930edd6a825750da6f9e7fa29d71e3988a199f5bb811e5d9c4aa6197d79a3"
+      },
+      "result_scope": "Draft produced; conclusions and blocked checks are recorded in output/report, not inferred from file existence"
+    }
+  ],
+  "review_revisions": [
+    {
+      "path": "smoke/architecture.md",
+      "recorded_at_utc": "2026-11-05T04:27:55.529994+00:00",
+      "version": "0.1.0",
+      "status": "draft",
+      "sha256_before": "1f34969fa814c2a636555548eaad4128a3bc1c0a971747db06dbb195f4841b3f",
+      "sha256_after": "04a02ba3d4935ab703a24751000a6d57ca3534bc7a5657fed68c2111b5894f7b",
+      "reason": "QA first run found no explicit Validation heading; add heading without changing technical meaning.",
+      "initial_check_report": "document-checks.initial.json",
+      "impact": "Draft clarity/traceability; no source, contracts, commitments or technical behavior changed."
+    },
+    {
+      "path": "smoke/migration-plan.md",
+      "recorded_at_utc": "2026-11-05T04:27:55.530098+00:00",
+      "version": "0.1.0",
+      "status": "draft",
+      "sha256_before": "85f930edd6a825750da6f9e7fa29d71e3988a199f5bb811e5d9c4aa6197d79a3",
+      "sha256_after": "171ba9262340365f822fb9954110aa7e1bd312405b6dff5a79c8f94719db5d94",
+      "reason": "QA first run found abbreviated parity IDs; expand AC/ENT references to complete stable IDs.",
+      "initial_check_report": "document-checks.initial.json",
+      "impact": "Draft clarity/traceability; no source, contracts, commitments or technical behavior changed."
+    }
+  ]
+}

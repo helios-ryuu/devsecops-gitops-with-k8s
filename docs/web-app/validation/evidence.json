@@ -1,0 +1,3132 @@
+{
+  "captured_at_utc": "2026-11-05T04:10:56.631386+00:00",
+  "inspection_date": "2026-11-05",
+  "project": {
+    "remote": "https://github.com/helios-ryuu/devsecops-gitops-with-k8s.git",
+    "branch": "ba/documentation",
+    "head": "2110eddec91bc3e34137c86fef693095c4afb677",
+    "origin_main": "2110eddec91bc3e34137c86fef693095c4afb677",
+    "main": "2110eddec91bc3e34137c86fef693095c4afb677",
+    "worktrees": "worktree D:/Phuc/Dai hoc/Nam bon/DEVOPS/devsecops-gitops-with-k8s\nHEAD 2110eddec91bc3e34137c86fef693095c4afb677\nbranch refs/heads/ba/documentation"
+  },
+  "initial_git_observation": {
+    "provenance": "agent observation of tool output before writes; not a saved terminal transcript",
+    "status": "## main...origin/main; no changed/untracked paths",
+    "branch_before": "main",
+    "ba_documentation_existed": false,
+    "fetch": "git fetch origin main; successful after .git/FETCH_HEAD permission escalation",
+    "switch": "git switch -c ba/documentation origin/main; exit 0"
+  },
+  "skill_bundle": {
+    "remote": "https://github.com/Nobita534/BA-skill-documentation.git",
+    "head": "3f0127b33bc6612f743c1aec4862079eea3adb9e",
+    "working_tree_status": "M README.md\n M docs/environment-and-project-notes.md\n M validation/report.md\n?? scripts/build-nt548-doc-update.py\n?? updates/",
+    "skills_diff": "",
+    "files": {
+      "skills/_ba-shared/references/documentation-standard.md": {
+        "sha256": "cbaf12260922ff3612e0ab17666771af145842785a7dd52ab748c1dfd898172b",
+        "git_blob": "3dd5f58d35c01f423f636096f17bcb2b48f2ca5f",
+        "head_blob": "3dd5f58d35c01f423f636096f17bcb2b48f2ca5f"
+      },
+      "skills/api-contract-design/assets/api-contract.template.yaml": {
+        "sha256": "d0290a1c98623bc7d4669ed4d0e78a1a806ccfc572041d0fcaea29b626e0ea75",
+        "git_blob": "0660f79872cb02edd8f2a629cd647f6352933aff",
+        "head_blob": "0660f79872cb02edd8f2a629cd647f6352933aff"
+      },
+      "skills/api-contract-design/SKILL.md": {
+        "sha256": "8ef5b8d53d3d73ebe4b22fa0080c4b2b6807ed7348bd00c390d2dd83e567e4d8",
+        "git_blob": "fdaf9fab4f59b3ed25ff5f7d4321c242e50ab109",
+        "head_blob": "fdaf9fab4f59b3ed25ff5f7d4321c242e50ab109"
+      },
+      "skills/architecture-design/assets/architecture.template.md": {
+        "sha256": "0d310f2470a5e6f358a26e32ee34f7cf523c00b4d1da02d40f73a5451dffbb8e",
+        "git_blob": "13f5a0dee11a7f7f94d58677b62a6a5f0cd442e5",
+        "head_blob": "13f5a0dee11a7f7f94d58677b62a6a5f0cd442e5"
+      },
+      "skills/architecture-design/SKILL.md": {
+        "sha256": "af2d9e63893d82334500bf6a9401626522546a7be2e72e4ba282a5fd00425be8",
+        "git_blob": "179c5c565bf424d440a31606a076e828707dabf8",
+        "head_blob": "179c5c565bf424d440a31606a076e828707dabf8"
+      },
+      "skills/backend-migration-planning/assets/migration-plan.template.md": {
+        "sha256": "9905a4aae3a6fbc53435b12b81c421b553cecdcf336432efec74940407ac4d09",
+        "git_blob": "35ec37ace1de48694a7267ec1bbaa868533d3da4",
+        "head_blob": "35ec37ace1de48694a7267ec1bbaa868533d3da4"
+      },
+      "skills/backend-migration-planning/SKILL.md": {
+        "sha256": "b6b15af35e18d8ad31bd1a28afaef6e0c6c2f25461b8a2fb4da60789194586a6",
+        "git_blob": "abbab06811bf700df64176580c2ee925e180f22d",
+        "head_blob": "abbab06811bf700df64176580c2ee925e180f22d"
+      },
+      "skills/brd-authoring/assets/brd.template.md": {
+        "sha256": "6ad0997ac7e38d2753cf0e4d9afb00c203f074bec2f843f5f4dbcb9738b17f66",
+        "git_blob": "7dfa1a9ed2cafd5d56597da14f1a210b24d11b92",
+        "head_blob": "7dfa1a9ed2cafd5d56597da14f1a210b24d11b92"
+      },
+      "skills/brd-authoring/SKILL.md": {
+        "sha256": "9bf3944f0f311d30d49d36081a6a88ee0267e66a6de4b0c53892e7e94d8aba0d",
+        "git_blob": "099c84f614691f911e09ecc3e955a629ea5934ea",
+        "head_blob": "099c84f614691f911e09ecc3e955a629ea5934ea"
+      },
+      "skills/data-contract-design/assets/data-contract.template.md": {
+        "sha256": "78ce41f489a4570404fc72e1a8dfdc60ee89f9a5867aada6b211e00a8db4d0c1",
+        "git_blob": "27eaa3438aff7f33519ad5784ee1a2133d0f1171",
+        "head_blob": "27eaa3438aff7f33519ad5784ee1a2133d0f1171"
+      },
+      "skills/data-contract-design/SKILL.md": {
+        "sha256": "7b84370f4d5fb7bf637e08b639e0b7c6cf4a6d8fc7d19a5f3f95934aa7d0b8f1",
+        "git_blob": "5de4b0897e1960a0eb9a754c64b896d052984047",
+        "head_blob": "5de4b0897e1960a0eb9a754c64b896d052984047"
+      },
+      "skills/frd-authoring/assets/frd.template.md": {
+        "sha256": "95776bb3868b0e58802470a0a3c7b401696d5d3f6de7166bbf1acf4f7ae3888a",
+        "git_blob": "07214f71874fdec1efe0846ed1aeb388993ef6d5",
+        "head_blob": "07214f71874fdec1efe0846ed1aeb388993ef6d5"
+      },
+      "skills/frd-authoring/SKILL.md": {
+        "sha256": "5ff9b7670532727fe38ba68dc86adf80ad75619e232090bc0cd9f80dc52641e8",
+        "git_blob": "047be354e75a7cf47210f4642522d9920ebff4ec",
+        "head_blob": "047be354e75a7cf47210f4642522d9920ebff4ec"
+      }
+    },
+    "limit": "External repository has pre-existing edits outside skills; not changed here. No latest-remote-bundle assertion."
+  },
+  "sources": {
+    "E-01": [
+      {
+        "path": "README.md",
+        "sha256": "72275dc3d836af5adaabc6e3bbaa607a5cd0132d347e1a1b4f31851841650aff",
+        "git_blob": "dd1b56565ed46f6811675e773a1e23e16e550ac1",
+        "lines": [
+          {
+            "line": 1,
+            "text": "<p align=\"center\">"
+          },
+          {
+            "line": 2,
+            "text": "  <a href=\"https://www.uit.edu.vn/\" title=\"Trường Đại học Công nghệ Thông tin\">"
+          },
+          {
+            "line": 3,
+            "text": "    <img src=\"https://i.imgur.com/WmMnSRt.png\" alt=\"Trường Đại học Công nghệ Thông tin | University of Information Technology\">"
+          },
+          {
+            "line": 4,
+            "text": "  </a>"
+          },
+          {
+            "line": 5,
+            "text": "</p>"
+          },
+          {
+            "line": 6,
+            "text": "<h1 align=\"center\"><b>NT548.R12 - CÔNG NGHỆ DEVOPS VÀ ỨNG DỤNG</b></h1>"
+          },
+          {
+            "line": 7,
+            "text": "<p align=\"center\"><b>ĐỒ ÁN MÔN HỌC: HỆ THỐNG DEVSECOPS & GITOPS TRÊN HẠ TẦNG KUBERNETES HYBRID</b></p>"
+          },
+          {
+            "line": 8,
+            "text": "<p align=\"center\">"
+          },
+          {
+            "line": 9,
+            "text": "  <i>Repository: <code>devsecops-gitops-with-k8s</code></i>"
+          },
+          {
+            "line": 10,
+            "text": "</p>"
+          },
+          {
+            "line": 11,
+            "text": ""
+          },
+          {
+            "line": 12,
+            "text": "<p align=\"center\">"
+          },
+          {
+            "line": 13,
+            "text": "  <img src=\"https://img.shields.io/badge/Kubernetes-K3s-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white\" alt=\"K3s\" />"
+          },
+          {
+            "line": 14,
+            "text": "  <img src=\"https://img.shields.io/badge/Cloudflare-DNS_SSL-F38020?style=for-the-badge&logo=cloudflare&logoColor=white\" alt=\"Cloudflare\" />"
+          },
+          {
+            "line": 15,
+            "text": "  <img src=\"https://img.shields.io/badge/Tailscale-Mesh_VPN-000000?style=for-the-badge&logo=tailscale&logoColor=white\" alt=\"Tailscale\" />"
+          },
+          {
+            "line": 16,
+            "text": "  <img src=\"https://img.shields.io/badge/ArgoCD-GitOps-EF6B48?style=for-the-badge&logo=argo&logoColor=white\" alt=\"ArgoCD\" />"
+          },
+          {
+            "line": 17,
+            "text": "  <img src=\"https://img.shields.io/badge/GitHub_Actions-CI-2088FF?style=for-the-badge&logo=github-actions&logoColor=white\" alt=\"GitHub Actions\" />"
+          },
+          {
+            "line": 18,
+            "text": "  <img src=\"https://img.shields.io/badge/Trivy-CVE_Scan-00A4A6?style=for-the-badge&logo=aqua&logoColor=white\" alt=\"Trivy\" />"
+          },
+          {
+            "line": 19,
+            "text": "  <img src=\"https://img.shields.io/badge/Gitleaks-Secret_Scan-red?style=for-the-badge\" alt=\"Gitleaks\" />"
+          },
+          {
+            "line": 20,
+            "text": "  <img src=\"https://img.shields.io/badge/Node.js-24_Alpine-339933?style=for-the-badge&logo=node.js&logoColor=white\" alt=\"Node.js 24\" />"
+          },
+          {
+            "line": 21,
+            "text": "  <img src=\"https://img.shields.io/badge/Prometheus-Monitoring-E6522C?style=for-the-badge&logo=prometheus&logoColor=white\" alt=\"Prometheus\" />"
+          },
+          {
+            "line": 22,
+            "text": "  <img src=\"https://img.shields.io/badge/Grafana-Dashboard-F46800?style=for-the-badge&logo=grafana&logoColor=white\" alt=\"Grafana\" />"
+          },
+          {
+            "line": 23,
+            "text": "</p>"
+          },
+          {
+            "line": 24,
+            "text": ""
+          },
+          {
+            "line": 25,
+            "text": "---"
+          },
+          {
+            "line": 26,
+            "text": ""
+          },
+          {
+            "line": 27,
+            "text": "## MỤC LỤC"
+          },
+          {
+            "line": 28,
+            "text": "- [1. Giới thiệu & Phân công nhóm](#1-giới-thiệu--phân-công-nhóm)"
+          },
+          {
+            "line": 29,
+            "text": "- [2. Tổng quan đề tài](#2-tổng-quan-đề-tài)"
+          },
+          {
+            "line": 30,
+            "text": "- [3. Kiến trúc hệ thống & Luồng hoạt động](#3-kiến-trúc-hệ-thống--luồng-hoạt-động)"
+          },
+          {
+            "line": 31,
+            "text": "- [4. Bảng tổng hợp công nghệ & Kỹ năng](#4-bảng-tổng-hợp-công-nghệ--kỹ-năng)"
+          },
+          {
+            "line": 32,
+            "text": "- [5. Cấu trúc Repository (Monorepo)](#5-cấu-trúc-repository-monorepo)"
+          },
+          {
+            "line": 33,
+            "text": "- [6. Kế hoạch triển khai 5 giai đoạn](#6-kế-hoạch-triển-khai-5-giai-đoạn-hoàn-thành-trước-05122026)"
+          },
+          {
+            "line": 34,
+            "text": "- [7. Kịch bản Demo kiểm chứng](#7-kịch-bản-demo-kiểm-chứng)"
+          },
+          {
+            "line": 35,
+            "text": "- [8. Tài liệu tham khảo](#8-tài-liệu-tham-khảo)"
+          },
+          {
+            "line": 36,
+            "text": ""
+          },
+          {
+            "line": 37,
+            "text": "---"
+          },
+          {
+            "line": 38,
+            "text": ""
+          },
+          {
+            "line": 39,
+            "text": "## 1. Giới thiệu & Phân công nhóm"
+          },
+          {
+            "line": 40,
+            "text": ""
+          },
+          {
+            "line": 41,
+            "text": "### 1.1 Thông tin chung"
+          },
+          {
+            "line": 42,
+            "text": "- **Môn học:** NT548 - Công nghệ DevOps và Ứng dụng"
+          },
+          {
+            "line": 43,
+            "text": "- **Lớp:** NT548.R12 — HK1 2026-2027"
+          },
+          {
+            "line": 44,
+            "text": "- **Đơn vị:** Khoa Mạng máy tính và Truyền thông — Trường Đại học Công nghệ Thông tin, ĐHQG-HCM (UIT)"
+          },
+          {
+            "line": 45,
+            "text": "- **Đề tài:** Xây dựng hệ thống DevSecOps và GitOps tự động hóa triển khai, bảo mật và giám sát ứng dụng trên hạ tầng Kubernetes Hybrid"
+          },
+          {
+            "line": 46,
+            "text": "- **Repository:** `devsecops-gitops-with-k8s`"
+          },
+          {
+            "line": 47,
+            "text": ""
+          },
+          {
+            "line": 48,
+            "text": "### 1.2 Thành viên nhóm & Phân chia công việc"
+          },
+          {
+            "line": 49,
+            "text": ""
+          },
+          {
+            "line": 50,
+            "text": "| STT | MSSV | Họ và Tên | Vai trò chính | Nhiệm vụ đảm nhiệm | Môi trường làm việc |"
+          },
+          {
+            "line": 51,
+            "text": "|:---:|:---:|:---|:---|:---|:---|"
+          },
+          {
+            "line": 52,
+            "text": "| 1 | 23521367 | **Ngô Tiến Sỹ** | **Platform & DevOps Lead** | • Quản trị cụm K3s 3-node qua Tailscale Mesh Network, cấu hình Taints/Tolerations.<br>• Cấu hình Traefik Ingress và trỏ DNS Cloudflare.<br>• Khởi tạo ArgoCD GitOps quản lý 2 Application (App & Monitoring).<br>• Xây dựng GitHub Actions: Gitleaks $\\rightarrow$ Trivy Scan $\\rightarrow$ Build Docker $\\rightarrow$ GHCR $\\rightarrow$ Git tag.<br>• Soạn thảo Kubernetes Manifests chuẩn và triển khai kube-prometheus-stack. | Toàn quyền Server (VPS & K3s Cluster), GitHub Actions & Git |"
+          },
+          {
+            "line": 53,
+            "text": "| 2 | 23521222 | **Trần Hồng Phúc** | **Web Fullstack Dev** | • Phát triển Web 2 tầng (Node.js 24 Express + Redis đếm lượt truy cập).<br>• Xây dựng endpoints `/healthz`, `/ready` và `/metrics` (`prom-client`).<br>• Đóng gói `Dockerfile` (`node:24-alpine`, `USER 10001` non-root). | 100% Localhost & Git (Thư mục `app/`) |"
+          },
+          {
+            "line": 54,
+            "text": "| 3 | 23520600 | **Điền Quốc Huy** | **QA & Observability Report** | • Thiết kế testcases và thực hiện kiểm thử tải Web (Autocannon / Postman).<br>• Khai thác Grafana Web UI, theo dõi metrics CPU, RAM, HTTP traffic.<br>• Soạn thảo Báo cáo Quan sát (Observability) và đánh giá hiệu năng hệ thống. | 100% Postman/Autocannon & Grafana Web UI |"
+          },
+          {
+            "line": 55,
+            "text": "| 4 | 22520804 | **Đặng Thế Long** | **Documentation & Demo Support** | • Hỗ trợ thực nghiệm và thu thập log/ảnh minh chứng 2 kịch bản demo.<br>• Chủ trì soạn thảo tài liệu Báo cáo đồ án môn học NT548 hoàn chỉnh.<br>• Thiết kế bộ Slide thuyết trình nghiệm thu đồ án. | 100% Google Docs / Word / Slide & Git |"
+          },
+          {
+            "line": 56,
+            "text": ""
+          },
+          {
+            "line": 57,
+            "text": "---"
+          },
+          {
+            "line": 58,
+            "text": ""
+          },
+          {
+            "line": 59,
+            "text": "## 2. Tổng quan đề tài"
+          },
+          {
+            "line": 60,
+            "text": ""
+          },
+          {
+            "line": 61,
+            "text": "### 2.1 Tên chủ đề"
+          },
+          {
+            "line": 62,
+            "text": ""
+          },
+          {
+            "line": 63,
+            "text": "> **Xây dựng hệ thống DevSecOps và GitOps tự động hóa triển khai, bảo mật và giám sát ứng dụng trên hạ tầng Kubernetes Hybrid.**"
+          },
+          {
+            "line": 64,
+            "text": ""
+          },
+          {
+            "line": 65,
+            "text": "### 2.2 Nội dung thực hiện (5 nội dung cốt lõi)"
+          },
+          {
+            "line": 66,
+            "text": ""
+          },
+          {
+            "line": 67,
+            "text": "1. **Quản trị hạ tầng mạng & cụm Kubernetes Hybrid:**  "
+          },
+          {
+            "line": 68,
+            "text": "   Cấu hình DNS Cloudflare và SSL/TLS trỏ tên miền về VPS Public IP. Vận hành cụm K3s 3-node (1 Control Plane VPS 6GB RAM + 2 Worker nodes on-premises 2x 8GB = 16GB, tổng 22GB RAM) kết nối bảo mật qua mạng Tailscale Overlay."
+          },
+          {
+            "line": 69,
+            "text": "2. **Thiết lập đường ống CI & DevSecOps tự động hóa:**  "
+          },
+          {
+            "line": 70,
+            "text": "   Xây dựng GitHub Actions tích hợp rà soát bí mật mã nguồn (Gitleaks), quét lỗ hổng thư viện và container image (Trivy), tự động đóng gói image chuẩn `node:24-alpine` với user non-root UID 10001 (`USER 10001`), lưu trữ an toàn trên GitHub Container Registry (GHCR) và tự động cập nhật tag GitOps."
+          },
+          {
+            "line": 71,
+            "text": "3. **Triển khai Continuous Deployment (CD) theo mô hình GitOps:**  "
+          },
+          {
+            "line": 72,
+            "text": "   Cấu hình ArgoCD tự động đồng bộ cấu hình ứng dụng từ Git repository xuống Kubernetes (`directory: {recurse: true}`), kích hoạt cơ chế tự phục hồi (Self-healing: `prune: true`, `selfHeal: true`) và hỗ trợ Rollback an toàn qua `git revert`."
+          },
+          {
+            "line": 73,
+            "text": "4. **Bảo mật Kubernetes (Runtime Security & NetworkPolicy):**  "
+          },
+          {
+            "line": 74,
+            "text": "   Áp dụng Pod SecurityContext (`runAsNonRoot: true`, `runAsUser: 10001`, `allowPrivilegeEscalation: false`, `capabilities: {drop: [ALL]}`). Xây dựng NetworkPolicy cô lập namespace `database`, đảm bảo chỉ cho phép duy nhất Pod Web App truy cập cổng 6379 của Redis."
+          },
+          {
+            "line": 75,
+            "text": "5. **Hệ thống Giám sát & Báo cáo Quan sát (Observability):**  "
+          },
+          {
+            "line": 76,
+            "text": "   Triển khai `kube-prometheus-stack` thông qua Helm/ArgoCD (`ServerSideApply=true`, vô hiệu hóa các exporter không dùng của K3s), ứng dụng tích hợp `prom-client` xuất metrics `/metrics`, khai thác giao diện Grafana Web UI để theo dõi tài nguyên và lập Báo cáo Quan sát & Đánh giá hiệu năng hệ thống."
+          },
+          {
+            "line": 77,
+            "text": ""
+          },
+          {
+            "line": 78,
+            "text": "### 2.3 Kết quả dự kiến đạt được"
+          },
+          {
+            "line": 79,
+            "text": ""
+          },
+          {
+            "line": 80,
+            "text": "1. Hệ thống DNS Cloudflare và cụm Kubernetes Hybrid 3-node vận hành ổn định qua Tailscale, phân tách rõ vai trò Control Plane và Worker nodes."
+          },
+          {
+            "line": 81,
+            "text": "2. Pipeline CI/DevSecOps vận hành tự động, chặn kịp thời mọi commit làm rò rỉ secret (Gitleaks) hoặc chứa lỗ hổng CVE nghiêm trọng có bản vá (Trivy)."
+          },
+          {
+            "line": 82,
+            "text": "3. Ứng dụng Web 2 tầng (Node.js 24 + Redis) được triển khai tự động (Zero-touch deployment) qua ArgoCD với khả năng tự phục hồi trạng thái tức thì."
+          },
+          {
+            "line": 83,
+            "text": "4. Container ứng dụng vận hành an toàn ở chế độ non-root với đầy đủ SecurityContext bảo vệ."
+          },
+          {
+            "line": 84,
+            "text": "5. Dashboard Grafana hiển thị trực quan thông số CPU, RAM, trạng thái Pod và HTTP metrics ứng dụng thời gian thực; có tài liệu Báo cáo Quan sát & Đo kiểm tải chi tiết."
+          },
+          {
+            "line": 85,
+            "text": ""
+          },
+          {
+            "line": 86,
+            "text": "---"
+          },
+          {
+            "line": 87,
+            "text": ""
+          },
+          {
+            "line": 88,
+            "text": "## 3. Kiến trúc hệ thống & Luồng hoạt động"
+          },
+          {
+            "line": 89,
+            "text": ""
+          },
+          {
+            "line": 90,
+            "text": "### 3.1 Sơ đồ kiến trúc tổng thể (Architecture Blueprint)"
+          },
+          {
+            "line": 91,
+            "text": ""
+          },
+          {
+            "line": 92,
+            "text": "```"
+          },
+          {
+            "line": 93,
+            "text": "[Developer] ──(git push)──► [GitHub: Monorepo /app]"
+          },
+          {
+            "line": 94,
+            "text": "                                   │"
+          },
+          {
+            "line": 95,
+            "text": "                                   ▼"
+          },
+          {
+            "line": 96,
+            "text": "                     [CI & DevSecOps Pipeline: GitHub Actions]"
+          },
+          {
+            "line": 97,
+            "text": "                     ├─ 1. Gitleaks (Secret Leak Detection)"
+          },
+          {
+            "line": 98,
+            "text": "                     ├─ 2. Trivy FS Scan (Dependency CVE Check)"
+          },
+          {
+            "line": 99,
+            "text": "                     ├─ 3. Docker Multi-stage Build (node:24-alpine, USER 10001)"
+          },
+          {
+            "line": 100,
+            "text": "                     ├─ 4. Trivy Image Scan (--severity HIGH,CRITICAL --ignore-unfixed)"
+          },
+          {
+            "line": 101,
+            "text": "                     ├─ 5. Push Image ──► [GitHub Container Registry: ghcr.io]"
+          },
+          {
+            "line": 102,
+            "text": "                     └─ 6. Auto-update Image Tag (commit [skip ci])"
+          },
+          {
+            "line": 103,
+            "text": "                                   │"
+          },
+          {
+            "line": 104,
+            "text": "                                   ▼"
+          },
+          {
+            "line": 105,
+            "text": "                     [GitOps Folder: /k8s-manifests]"
+          },
+          {
+            "line": 106,
+            "text": "                                   │"
+          },
+          {
+            "line": 107,
+            "text": "                                   ▼ (ArgoCD Auto-Sync with recurse: true)"
+          },
+          {
+            "line": 108,
+            "text": "+---------------------------------------------------------------------------------+"
+          },
+          {
+            "line": 109,
+            "text": "| Multi-node Kubernetes Cluster (K3s - Tailscale Mesh Network - 22GB RAM)         |"
+          },
+          {
+            "line": 110,
+            "text": "|                                                                                 |"
+          },
+          {
+            "line": 111,
+            "text": "|  [Control Plane: VPS 6GB RAM, Public IP] (Tainted: NoSchedule)                  |"
+          },
+          {
+            "line": 112,
+            "text": "|  Internet Traffic ──► [Cloudflare DNS + SSL] ──► [Traefik Ingress on VPS]       |"
+          },
+          {
+            "line": 113,
+            "text": "|                                                              │ (toleration)     |"
+          },
+          {
+            "line": 114,
+            "text": "|  [Worker Nodes: 2x On-Premises Servers (2x 8GB = 16GB RAM)]  │                  |"
+          },
+          {
+            "line": 115,
+            "text": "|  +───────────────────────────────────────────────────────────┼───────────────+  |"
+          },
+          {
+            "line": 116,
+            "text": "|  |  • [argocd]         : ArgoCD Application Controller       │               |  |"
+          },
+          {
+            "line": 117,
+            "text": "|  |  • [production-app] : Web App Pods (Node.js 24) ◄─────────┘               |  |"
+          },
+          {
+            "line": 118,
+            "text": "|  |                       │ (SecurityContext: non-root 10001, drop ALL)       |  |"
+          },
+          {
+            "line": 119,
+            "text": "|  |                       ▼ (Allow Port 6379 via NetworkPolicy)               |  |"
+          },
+          {
+            "line": 120,
+            "text": "|  |  • [database]       : Redis Pod (Blocked from all unauthorized pods)      |  |"
+          },
+          {
+            "line": 121,
+            "text": "|  |  • [monitoring]     : Prometheus + Grafana Dashboard as Code (ConfigMap)  |  |"
+          },
+          {
+            "line": 122,
+            "text": "|  +───────────────────────────────────────────────────────────────────────────+  |"
+          },
+          {
+            "line": 123,
+            "text": "+---------------------------------------------------------------------------------+"
+          },
+          {
+            "line": 124,
+            "text": "```"
+          },
+          {
+            "line": 125,
+            "text": ""
+          },
+          {
+            "line": 126,
+            "text": "### 3.2 Luồng vận hành chi tiết"
+          },
+          {
+            "line": 127,
+            "text": ""
+          },
+          {
+            "line": 128,
+            "text": "1. **Giai đoạn 1 (Code & Security Scan):** Lập trình viên push code vào thư mục `app/`. GitHub Actions kích hoạt:"
+          },
+          {
+            "line": 129,
+            "text": "   - Gitleaks kiểm tra không để lộ secret/token trong commit."
+          },
+          {
+            "line": 130,
+            "text": "   - Trivy quét dependencies để phát hiện lỗ hổng CVE thư viện."
+          },
+          {
+            "line": 131,
+            "text": "2. **Giai đoạn 2 (Build & Container Hardening):**"
+          },
+          {
+            "line": 132,
+            "text": "   - Đóng gói container bằng `node:24-alpine`, chạy với user non-root UID 10001 (`USER 10001`)."
+          },
+          {
+            "line": 133,
+            "text": "   - Trivy quét container image với cờ `--severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed`."
+          },
+          {
+            "line": 134,
+            "text": "   - Đẩy image lên GitHub Container Registry (`ghcr.io` public) kèm tag commit SHA."
+          },
+          {
+            "line": 135,
+            "text": "3. **Giai đoạn 3 (GitOps Sync via ArgoCD):**"
+          },
+          {
+            "line": 136,
+            "text": "   - Pipeline CI cập nhật tag image mới vào `k8s-manifests/base/deployment.yaml`."
+          },
+          {
+            "line": 137,
+            "text": "   - ArgoCD phát hiện thay đổi và tự động đồng bộ (Auto-sync) xuống cụm K3s theo cấu hình đệ quy (`directory: {recurse: true}`)."
+          },
+          {
+            "line": 138,
+            "text": "4. **Giai đoạn 4 (Traffic Routing & NetworkPolicy Isolation):**"
+          },
+          {
+            "line": 139,
+            "text": "   - Traefik Ingress tiếp nhận traffic HTTPS từ Cloudflare, định tuyến vào Web App ở namespace `production-app`."
+          },
+          {
+            "line": 140,
+            "text": "   - Web App chạy với Pod SecurityContext non-root an toàn."
+          },
+          {
+            "line": 141,
+            "text": "   - NetworkPolicy tại namespace `database` kiểm soát chặt chẽ: chỉ cho phép Pod mang label `app: web` thuộc namespace `production-app` kết nối cổng 6379 của Redis, chặn mọi Pod lạ khác."
+          },
+          {
+            "line": 142,
+            "text": "5. **Giai đoạn 5 (Continuous Monitoring):**"
+          },
+          {
+            "line": 143,
+            "text": "   - Prometheus tự động scrape chỉ số từ Node Exporter và endpoint `/metrics` của Web App."
+          },
+          {
+            "line": 144,
+            "text": "   - Grafana tự động nạp dashboard từ ConfigMap để hiển thị thông số CPU, RAM và số lượng truy cập."
+          },
+          {
+            "line": 145,
+            "text": ""
+          },
+          {
+            "line": 146,
+            "text": "---"
+          },
+          {
+            "line": 147,
+            "text": ""
+          },
+          {
+            "line": 148,
+            "text": "## 4. Bảng tổng hợp công nghệ & Kỹ năng"
+          },
+          {
+            "line": 149,
+            "text": ""
+          },
+          {
+            "line": 150,
+            "text": "| Thành phần | Công cụ sử dụng | Kỹ năng đạt được / Trọng tâm chứng chỉ |"
+          },
+          {
+            "line": 151,
+            "text": "|:---|:---|:---|"
+          },
+          {
+            "line": 152,
+            "text": "| **Networking & DNS** | Cloudflare DNS, Tailscale Mesh VPN | Quản trị định tuyến tên miền, SSL/TLS, kết nối mạng Overlay an toàn giữa VPS và Worker nodes on-premises. |"
+          },
+          {
+            "line": 153,
+            "text": "| **Cluster Setup** | Linux (Ubuntu), K3s, Tailscale Mesh | **Trọng tâm CKA**: Cấu hình mạng Overlay, Taints/Tolerations, phân bổ tải đa node. |"
+          },
+          {
+            "line": 154,
+            "text": "| **CI & DevSecOps** | GitHub Actions, Gitleaks, Trivy, GHCR | **Nền tảng CKS & DevSecOps**: Secret scanning, Quét CVE mã nguồn và Container image, Container Hardening non-root. |"
+          },
+          {
+            "line": 155,
+            "text": "| **CD & GitOps** | ArgoCD | **Trọng tâm CKAD & GitOps**: Declarative Delivery, Auto-sync, Self-healing & Rollback. |"
+          },
+          {
+            "line": 156,
+            "text": "| **K8s Security** | Traefik Ingress, Kubernetes NetworkPolicy, SecurityContext | **Trọng tâm CKAD & CKS**: Định tuyến Ingress HTTPS, SecurityContext non-root, cô lập mạng tầng database. |"
+          },
+          {
+            "line": 157,
+            "text": "| **Observability** | Prometheus, Grafana (Helm `kube-prometheus-stack`) | Giám sát hạ tầng & ứng dụng (`prom-client`), trực quan hóa chỉ số qua Grafana Web UI và lập Báo cáo Quan sát. |"
+          },
+          {
+            "line": 158,
+            "text": ""
+          },
+          {
+            "line": 159,
+            "text": "---"
+          },
+          {
+            "line": 160,
+            "text": ""
+          },
+          {
+            "line": 161,
+            "text": "## 5. Cấu trúc Repository (Monorepo)"
+          },
+          {
+            "line": 162,
+            "text": ""
+          },
+          {
+            "line": 163,
+            "text": "```text"
+          },
+          {
+            "line": 164,
+            "text": "devsecops-gitops-with-k8s/"
+          },
+          {
+            "line": 165,
+            "text": "├── README.md                           # Tài liệu tổng quan dự án"
+          },
+          {
+            "line": 166,
+            "text": "├── WBS.md                              # Cấu trúc phân rã công việc (WBS) & timeline chi tiết (dùng cho Sheet)"
+          },
+          {
+            "line": 167,
+            "text": "├── LOG.md                              # Nhật ký triển khai thực tế chi tiết từng bước"
+          },
+          {
+            "line": 168,
+            "text": "├── argocd/                             # Cấu hình Application CRD & Values cho ArgoCD (Sỹ phụ trách)"
+          },
+          {
+            "line": 169,
+            "text": "│   ├── app.yaml                        # Application triển khai GitOps Kustomize cho Web App & Redis"
+          },
+          {
+            "line": 170,
+            "text": "│   ├── monitoring.yaml                 # Application triển khai kube-prometheus-stack (Multiple Sources)"
+          },
+          {
+            "line": 171,
+            "text": "│   └── values.yaml                     # Helm values tùy biến ArgoCD (Ingress Traefik, Worker Affinity)"
+          },
+          {
+            "line": 172,
+            "text": "├── app/                                # Mã nguồn ứng dụng Next.js 16 App Router (Phúc phụ trách)"
+          },
+          {
+            "line": 173,
+            "text": "│   ├── src/app/                        # Next.js App Router (kèm API probe /healthz, /ready)"
+          },
+          {
+            "line": 174,
+            "text": "│   ├── package.json                    # Khai báo pnpm, Next.js 16, React 19, Tailwind CSS v4"
+          },
+          {
+            "line": 175,
+            "text": "│   ├── next.config.ts                  # Cấu hình output: standalone"
+          },
+          {
+            "line": 176,
+            "text": "│   └── Dockerfile                      # Multi-stage build (node:26.13.0-alpine3.23, pnpm, non-root UID 10001)"
+          },
+          {
+            "line": 177,
+            "text": "├── k8s-manifests/                      # Thư mục GitOps Kustomize quản lý ứng dụng (Sỹ phụ trách)"
+          },
+          {
+            "line": 178,
+            "text": "│   ├── kustomization.yaml              # Root Kustomization: áp namespace production-app lên toàn bộ resources"
+          },
+          {
+            "line": 179,
+            "text": "│   ├── base/                           # Tài nguyên Web App"
+          },
+          {
+            "line": 180,
+            "text": "│   │   ├── kustomization.yaml          # Quản lý Image tag, ConfigMap, Deployment, Service, Ingress"
+          },
+          {
+            "line": 181,
+            "text": "│   │   ├── deployment.yaml             # Web App Deployment (SecurityContext non-root UID 10001, probes)"
+          },
+          {
+            "line": 182,
+            "text": "│   │   ├── service.yaml                # Web App Service ClusterIP cổng 3000"
+          },
+          {
+            "line": 183,
+            "text": "│   │   ├── configmap.yaml              # Biến môi trường (REDIS_HOST: redis-service, PORT: 3000)"
+          },
+          {
+            "line": 184,
+            "text": "│   │   └── ingress.yaml                # Traefik Ingress định tuyến nt548.helios.id.vn"
+          },
+          {
+            "line": 185,
+            "text": "│   ├── database/                       # Tài nguyên Database"
+          },
+          {
+            "line": 186,
+            "text": "│   │   ├── kustomization.yaml"
+          },
+          {
+            "line": 187,
+            "text": "│   │   └── redis.yaml                  # Redis Deployment (LTS 8.2.11-alpine3.22, probes) & Service"
+          },
+          {
+            "line": 188,
+            "text": "│   └── security/                       # Tài nguyên an ninh"
+          },
+          {
+            "line": 189,
+            "text": "│       ├── kustomization.yaml"
+          },
+          {
+            "line": 190,
+            "text": "│       └── network-policy.yaml         # Zero-trust cô lập traffic vào Redis"
+          },
+          {
+            "line": 191,
+            "text": "├── k3s-config/                         # Cấu hình K3s Server & Agent nodes qua Tailscale"
+          },
+          {
+            "line": 192,
+            "text": "│   ├── config.server-01.yaml           # Cấu hình Control Plane (disable traefik, flannel tailscale0)"
+          },
+          {
+            "line": 193,
+            "text": "│   ├── config.agent-01.yaml            # Cấu hình Worker 01"
+          },
+          {
+            "line": 194,
+            "text": "│   └── config.agent-02.yaml            # Cấu hình Worker 02"
+          },
+          {
+            "line": 195,
+            "text": "├── monitoring/                         # Cấu hình giám sát (Sỹ setup, Huy khai thác)"
+          },
+          {
+            "line": 196,
+            "text": "│   └── values.yaml                     # Values cho kube-prometheus-stack (tắt component K3s không dùng)"
+          },
+          {
+            "line": 197,
+            "text": "├── traefik/                            # Cấu hình Traefik Ingress Controller qua Helm (Sỹ phụ trách)"
+          },
+          {
+            "line": 198,
+            "text": "│   ├── values.yaml                     # Values Helm Traefik: HostPort 80/443, Metrics 9100, ClusterIP"
+          },
+          {
+            "line": 199,
+            "text": "│   ├── tlsstore.yaml                   # TLSStore default nạp Cloudflare Origin CA cert"
+          },
+          {
+            "line": 200,
+            "text": "│   └── cloudflare-origin-tls-secret.yaml # Secret TLS lưu cert & key"
+          },
+          {
+            "line": 201,
+            "text": "├── scripts/                            # Kịch bản kiểm chứng tự động (Long & Sỹ phụ trách)"
+          },
+          {
+            "line": 202,
+            "text": "│   └── demo.sh                         # Script hướng dẫn thuyết trình 3 kịch bản demo (Read-only)"
+          },
+          {
+            "line": 203,
+            "text": "└── .github/workflows/                  # Đường ống CI/DevSecOps (Sỹ phụ trách)"
+          },
+          {
+            "line": 204,
+            "text": "    └── ci-pipe.yml                     # Workflow: Gitleaks + Trivy + Build & Push GHCR + Kustomize Tag update"
+          },
+          {
+            "line": 205,
+            "text": "```"
+          },
+          {
+            "line": 206,
+            "text": ""
+          },
+          {
+            "line": 207,
+            "text": "---"
+          },
+          {
+            "line": 208,
+            "text": ""
+          },
+          {
+            "line": 209,
+            "text": "## 6. Kế hoạch triển khai 5 giai đoạn (Hoàn thành trước 05/12/2026)"
+          },
+          {
+            "line": 210,
+            "text": ""
+          },
+          {
+            "line": 211,
+            "text": "| Giai đoạn | Thời gian | Mục tiêu hoàn thành (Definition of Done) | Người phụ trách chính |"
+          },
+          {
+            "line": 212,
+            "text": "|:---|:---:|:---|:---|"
+          },
+          {
+            "line": 213,
+            "text": "| **Phase 1: Khởi động** | Trước 01/11 | Chốt đề tài & phạm vi tinh giản; thống nhất tech stack; phân định trách nhiệm các thành viên. | Cả nhóm (Sỹ chủ trì) |"
+          },
+          {
+            "line": 214,
+            "text": "| **Phase 2: Thiết kế & Setup** | 01/11 - 05/11 | Lập WBS đưa lên Sheet; vẽ topology K3s Hybrid & luồng GitOps; thống nhất API contract Web <-> K8s. | Sỹ, Long, Phúc |"
+          },
+          {
+            "line": 215,
+            "text": "| **Phase 3: Triển khai & Tích hợp** | 06/11 - 20/11 | Dựng K3s 3-node qua Tailscale; trỏ DNS Cloudflare; vibe code Web Node.js + Redis; build Dockerfile non-root; viết CI GitHub Actions (Trivy/Gitleaks); cài ArgoCD sync tự động. | Sỹ (DevOps), Phúc (Web App) |"
+          },
+          {
+            "line": 216,
+            "text": "| **Phase 4: Đo kiểm & Giám sát** | 21/11 - 28/11 | Dựng kube-prometheus-stack qua ArgoCD; kiểm thử tải Web (Autocannon/Postman); chụp biểu đồ Grafana viết Báo cáo Quan sát; lấy log 2 kịch bản demo. | Sỹ, Huy, Long |"
+          },
+          {
+            "line": 217,
+            "text": "| **Phase 5: Báo cáo & Nghiệm thu** | 29/11 - 05/12 | Hoàn thiện Báo cáo đồ án môn học NT548; thiết kế Slide thuyết trình; nghiệm thu nội bộ và sẵn sàng trước ngày 06/12/2026. | Long, Huy, Cả nhóm |"
+          },
+          {
+            "line": 218,
+            "text": ""
+          },
+          {
+            "line": 219,
+            "text": "---"
+          },
+          {
+            "line": 220,
+            "text": ""
+          },
+          {
+            "line": 221,
+            "text": "## 7. Kịch bản Demo kiểm chứng"
+          },
+          {
+            "line": 222,
+            "text": ""
+          },
+          {
+            "line": 223,
+            "text": "Khi báo cáo đồ án, nhóm chứng minh tính hiệu quả của hệ thống thông qua 2 kịch bản thực tế trực quan và trọng tâm:"
+          },
+          {
+            "line": 224,
+            "text": ""
+          },
+          {
+            "line": 225,
+            "text": "### Kịch bản 1: Kiểm chứng DevSecOps Pipeline (Trivy Gate)"
+          },
+          {
+            "line": 226,
+            "text": "- **Hành động:** Cố tình thêm một thư viện có lỗ hổng CVE nghiêm trọng đã có bản vá (ví dụ `lodash@4.17.20`) vào `package.json` và commit lên Git."
+          },
+          {
+            "line": 227,
+            "text": "- **Kết quả:** Pipeline GitHub Actions dừng lại ở bước Trivy Image Scan với exit code 1 (báo đỏ), từ chối đẩy image lên GHCR và từ chối cập nhật GitOps manifest."
+          },
+          {
+            "line": 228,
+            "text": ""
+          },
+          {
+            "line": 229,
+            "text": "### Kịch bản 2: Kiểm chứng GitOps Self-healing & Rollback (ArgoCD)"
+          },
+          {
+            "line": 230,
+            "text": "- **Tự phục hồi (Self-healing):**"
+          },
+          {
+            "line": 231,
+            "text": "  - Thử nghiệm xóa Pod hoặc Deployment trên cụm: `kubectl delete deploy web -n production-app`."
+          },
+          {
+            "line": 232,
+            "text": "  - $\\rightarrow$ ArgoCD phát hiện sai lệch trạng thái mong muốn và tự động tái tạo lại Deployment ngay lập tức."
+          },
+          {
+            "line": 233,
+            "text": "- **Rollback tự động:**"
+          },
+          {
+            "line": 234,
+            "text": "  - Thực hiện lệnh `git revert HEAD` trên repository Git."
+          },
+          {
+            "line": 235,
+            "text": "  - $\\rightarrow$ ArgoCD phát hiện commit hoàn tác và tự động rollback ứng dụng về phiên bản ổn định trước đó trong vài giây."
+          },
+          {
+            "line": 236,
+            "text": ""
+          },
+          {
+            "line": 237,
+            "text": "---"
+          },
+          {
+            "line": 238,
+            "text": ""
+          },
+          {
+            "line": 239,
+            "text": "## 8. Tài liệu tham khảo"
+          },
+          {
+            "line": 240,
+            "text": ""
+          },
+          {
+            "line": 241,
+            "text": "1. [Tài liệu chính thức K3s - Lightweight Kubernetes](https://docs.k3s.io/)"
+          },
+          {
+            "line": 242,
+            "text": "2. [Tài liệu chính thức ArgoCD GitOps](https://argo-cd.readthedocs.io/en/stable/)"
+          },
+          {
+            "line": 243,
+            "text": "3. [Tài liệu Aqua Security Trivy](https://aquasecurity.github.io/trivy/)"
+          },
+          {
+            "line": 244,
+            "text": "4. [Tài liệu Gitleaks Secret Scanner](https://github.com/gitleaks/gitleaks)"
+          },
+          {
+            "line": 245,
+            "text": "5. [Tài liệu Cloudflare DNS & SSL/TLS](https://developers.cloudflare.com/dns/)"
+          },
+          {
+            "line": 246,
+            "text": "6. [Tài liệu Tailscale Mesh VPN](https://tailscale.com/kb)"
+          },
+          {
+            "line": 247,
+            "text": "7. [Tài liệu Prometheus Operator & Kube-Prometheus-Stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack)"
+          },
+          {
+            "line": 248,
+            "text": "8. Giáo trình & bài giảng học phần NT548 - Công nghệ DevOps và Ứng dụng (UIT)."
+          }
+        ]
+      }
+    ],
+    "E-02": [
+      {
+        "path": "WBS.md",
+        "sha256": "b7d4d869ed84ded703c7319ef34ec0f04f0ca0b672dedbc1daf8196bd01374a6",
+        "git_blob": "66810ec1c95da0a13ef5213a03dd92f4eea4badd",
+        "lines": [
+          {
+            "line": 1,
+            "text": "# WORK BREAKDOWN STRUCTURE (WBS) - TINH GIẢN"
+          },
+          {
+            "line": 2,
+            "text": "## ĐỒ ÁN MÔN HỌC: HỆ THỐNG DEVSECOPS & GITOPS TRÊN HẠ TẦNG KUBERNETES HYBRID"
+          },
+          {
+            "line": 3,
+            "text": "- **Môn học:** NT548 - Công nghệ DevOps và Ứng dụng (Lớp: NT548.R12 - HK1 2026-2027)"
+          },
+          {
+            "line": 4,
+            "text": "- **Đơn vị:** Khoa Mạng máy tính và Truyền thông — Trường Đại học Công nghệ Thông tin, ĐHQG-HCM (UIT)"
+          },
+          {
+            "line": 5,
+            "text": "- **Thời gian thực hiện:** Bắt đầu Phase 2 từ **01/11/2026**, hoàn thành toàn bộ trước **06/12/2026** (Chốt nghiệm thu: **05/12/2026**)"
+          },
+          {
+            "line": 6,
+            "text": "- **Phân công trách nhiệm:**"
+          },
+          {
+            "line": 7,
+            "text": "  1. **Ngô Tiến Sỹ** (23521367) - **Platform & DevOps Lead**: Quản trị K3s Hybrid, Traefik Ingress, ArgoCD GitOps, CI/CD DevSecOps (GitHub Actions + Trivy/Gitleaks), dựng K8s manifests base và triển khai Prometheus stack 1 lần."
+          },
+          {
+            "line": 8,
+            "text": "  2. **Trần Hồng Phúc** (23521222) - **Web Fullstack Dev**: Viết code ứng dụng Web 2 tầng (Giao diện UI Next.js 16 App Router + Tailwind CSS + Redis đếm view), tích hợp endpoint `/healthz`, `/ready`, đóng gói Dockerfile non-root."
+          },
+          {
+            "line": 9,
+            "text": "  3. **Điền Quốc Huy** (23520600) - **QA & Observability Report**: Viết testcases, chạy kiểm thử tải nhẹ (Autocannon / Postman), khai thác Grafana UI chụp màn hình dashboard CPU/RAM/traffic và soạn thảo *Báo cáo quan sát & Hiệu năng hệ thống*."
+          },
+          {
+            "line": 10,
+            "text": "  4. **Đặng Thế Long** (22520804) - **Documentation & Demo Support**: Hỗ trợ Sỹ chạy & lấy log 2 kịch bản Demo (Trivy Gate và ArgoCD Rollback), chủ trì soạn thảo *Báo cáo đồ án môn học NT548* và thiết kế bộ *Slide thuyết trình*."
+          },
+          {
+            "line": 11,
+            "text": ""
+          },
+          {
+            "line": 12,
+            "text": "---"
+          },
+          {
+            "line": 13,
+            "text": ""
+          },
+          {
+            "line": 14,
+            "text": "## Bảng WBS Chi Tiết Kèm Ngày Tháng (Chuẩn Markdown)"
+          },
+          {
+            "line": 15,
+            "text": ""
+          },
+          {
+            "line": 16,
+            "text": "| Giai đoạn (Phase) | Tên công việc (Task Name) | Mô tả (Description) | Người thực hiện (Assignee) | Ngày bắt đầu | Ngày kết thúc | Trạng thái (Status) |"
+          },
+          {
+            "line": 17,
+            "text": "| :--- | :--- | :--- | :--- | :---: | :---: | :--- |"
+          },
+          {
+            "line": 18,
+            "text": "| **Phase 1: Khởi động dự án** | | | | | | **Đã hoàn thành** |"
+          },
+          {
+            "line": 19,
+            "text": "| 1.1 | Chọn ý tưởng & Chốt đề tài | Lựa chọn đề tài Xây dựng hệ thống DevSecOps và GitOps trên hạ tầng K8s Hybrid; tinh giản phạm vi phù hợp năng lực nhóm. | Cả nhóm | 25/10/2026 | 26/10/2026 | Đã hoàn thành |"
+          },
+          {
+            "line": 20,
+            "text": "| 1.2 | Thống nhất công nghệ sử dụng | Chốt stack: K3s, Tailscale, Cloudflare DNS (UI), GitHub Actions (Trivy, Gitleaks), ArgoCD, Prometheus/Grafana, Next.js + Redis. | Cả nhóm | 27/10/2026 | 28/10/2026 | Đã hoàn thành |"
+          },
+          {
+            "line": 21,
+            "text": "| 1.3 | Phân định trách nhiệm & Vai trò | Phân công mới: Sỹ làm 85-90% DevOps/K8s/CI/CD, Phúc làm Web App, Huy làm QA/Observability, Long làm Báo cáo/Slide. | Ngô Tiến Sỹ | 29/10/2026 | 31/10/2026 | Đã hoàn thành |"
+          },
+          {
+            "line": 22,
+            "text": "| **Phase 2: Phân tích & Thiết kế** | | | | | | **Đã hoàn thành** |"
+          },
+          {
+            "line": 23,
+            "text": "| 2.1 | Tạo cấu trúc phân rã công việc (WBS) | Lập kế hoạch chi tiết, phân rã công việc tinh giản, thiết lập mốc hoàn thành trước 05/12/2026 và đưa lên Sheet. | Ngô Tiến Sỹ | 01/11/2026 | 02/11/2026 | Đã hoàn thành |"
+          },
+          {
+            "line": 24,
+            "text": "| 2.2 | Thiết kế kiến trúc K3s Hybrid & GitOps | Vẽ sơ đồ kiến trúc tổng thể (Control Plane VPS + 2 Worker On-prem qua Tailscale Overlay, Traefik Ingress, GitOps ArgoCD). | Ngô Tiến Sỹ | 03/11/2026 | 03/11/2026 | Đã hoàn thành |"
+          },
+          {
+            "line": 25,
+            "text": "| 2.3 | Thiết kế Monorepo & Quy trình Git | Chuẩn hóa cấu trúc thư mục repo: `app/`, `k8s-manifests/`, `argocd/`, `monitoring/`, `scripts/`, `.github/`, `secrets/`, `traefik`. | Ngô Tiến Sỹ | 04/11/2026 | 04/11/2026 | Đã hoàn thành |"
+          },
+          {
+            "line": 26,
+            "text": "| 2.4 | Thống nhất API Contract & Môi trường cấu hình | Chốt giao thức kết nối Web <-> Redis, biến môi trường (ConfigMap), endpoints `/healthz`, `/ready`. | Trần Hồng Phúc, Ngô Tiến Sỹ | 05/11/2026 | 05/11/2026 | Đã hoàn thành |"
+          },
+          {
+            "line": 27,
+            "text": "| **Phase 3: Triển khai & Tích hợp** | | | | | | **Đang thực hiện** |"
+          },
+          {
+            "line": 28,
+            "text": "| 3.1 | Cài đặt & Kết nối cụm K3s Hybrid 3-Node | Dựng K3s Control Plane trên VPS Ubuntu (6GB RAM), nối 2 Worker Node on-prem (16GB RAM) qua Tailscale Mesh Network; cấu hình Taints. | Ngô Tiến Sỹ | 06/11/2026 | 08/11/2026 | Đã hoàn thành |"
+          },
+          {
+            "line": 29,
+            "text": "| 3.2 | Cấu hình DNS Cloudflare & Traefik Ingress | Trỏ 3 bản ghi Proxied DNS (A: nt548 - Target: IP PUBLIC của Server, CNAME: nt548-grafana, CNAME: nt548-argocd); cấu hình Traefik Helm, TLSStore Cloudflare Origin cert. | Ngô Tiến Sỹ | 09/11/2026 | 10/11/2026 | Đã hoàn thành |"
+          },
+          {
+            "line": 30,
+            "text": "| 3.3 | Phát triển ứng dụng Web 2 tầng (Next.js + Redis) | Khởi tạo Next.js 16 App Router + Tailwind CSS; Phúc tiếp quản hoàn thiện giao diện hiển thị lượt truy cập và kết nối Redis đếm view. | Trần Hồng Phúc, Ngô Tiến Sỹ | 07/11/2026 | 11/11/2026 | Đang thực hiện |"
+          },
+          {
+            "line": 31,
+            "text": "| 3.4 | Hardening Container & Đóng gói Dockerfile non-root | Đóng gói multi-stage Dockerfile dựa trên `node:26.13.0-alpine3.23`, pnpm, `output: standalone`, chạy quyền non-root UID 10001:10001, tạo `.dockerignore`. | Ngô Tiến Sỹ | 12/11/2026 | 13/11/2026 | Đã hoàn thành |"
+          },
+          {
+            "line": 32,
+            "text": "| 3.5 | Xây dựng Pipeline CI & DevSecOps (GitHub Actions) | Tích hợp Gitleaks quét secret; Trivy quét CVE dependencies & Container image; build & push image lên GHCR; tự động update Kustomize tag; phân quyền repo. | Ngô Tiến Sỹ | 14/11/2026 | 16/11/2026 | Đã hoàn thành |"
+          },
+          {
+            "line": 33,
+            "text": "| 3.6 | Soạn thảo Kubernetes Manifests chuẩn (GitOps Base) | Viết Kustomize manifests: Web App Deployment (UID 10001, seccomp), Service, ConfigMap, Redis LTS 8.2.11 (probes), Ingress Traefik và NetworkPolicy. | Ngô Tiến Sỹ | 17/11/2026 | 18/11/2026 | Đã hoàn thành |"
+          },
+          {
+            "line": 34,
+            "text": "| 3.7 | Khởi tạo & Cấu hình ArgoCD GitOps Continuous Delivery | Cài đặt ArgoCD lên K3s qua Helm, ghim Worker affinity, cấu hình Ingress Traefik, tạo Application CRD (`app.yaml`) với `ServerSideApply` và auto-create namespace. | Ngô Tiến Sỹ | 19/11/2026 | 20/11/2026 | Đã hoàn thành |"
+          },
+          {
+            "line": 35,
+            "text": "| **Phase 4: Đo kiểm, Bảo mật & Giám sát** | | | | | | **Đang thực hiện** |"
+          },
+          {
+            "line": 36,
+            "text": "| 4.1 | Triển khai Hệ thống Giám sát kube-prometheus-stack | Cấu hình Helm values và ArgoCD Application `monitoring.yaml` theo cơ chế Multiple Sources ($values từ Git + chart Prometheus) với `ServerSideApply=true`. | Ngô Tiến Sỹ | 21/11/2026 | 22/11/2026 | Đang thực hiện (Đã hoàn thiện file values & app CRD - Chờ kích hoạt) |"
+          },
+          {
+            "line": 37,
+            "text": "| 4.2 | Đo kiểm chức năng & Kiểm thử tải Web | Viết testcases và chạy kiểm thử tải cơ bản bằng Autocannon hoặc Postman để kích thích phát sinh traffic và metrics. | Điền Quốc Huy | 23/11/2026 | 24/11/2026 | Chưa bắt đầu |"
+          },
+          {
+            "line": 38,
+            "text": "| 4.3 | Khai thác Grafana & Soạn Báo cáo Quan sát | Đăng nhập Grafana UI, chụp ảnh biểu đồ CPU, RAM, HTTP request rate, trạng thái Pod và viết Báo cáo Quan sát (Observability). | Điền Quốc Huy | 25/11/2026 | 26/11/2026 | Chưa bắt đầu |"
+          },
+          {
+            "line": 39,
+            "text": "| 4.4 | Thực nghiệm & Thu thập log 2 kịch bản Demo | Chuẩn bị script `demo.sh` chế độ non-destructive; chạy thử và ghi nhận log/ảnh minh chứng: (1) Trivy Gate chặn commit dính CVE, (2) ArgoCD Self-healing & Git Rollback. | Đặng Thế Long, Ngô Tiến Sỹ | 27/11/2026 | 28/11/2026 | Đang thực hiện (Script demo đã sẵn sàng) |"
+          },
+          {
+            "line": 40,
+            "text": "| **Phase 5: Báo cáo & Nghiệm thu** | | | | | | **Chưa bắt đầu** |"
+          },
+          {
+            "line": 41,
+            "text": "| 5.1 | Soạn thảo Báo cáo đồ án môn học hoàn chỉnh | Viết tài liệu báo cáo NT548: kiến trúc K3s Hybrid, DevSecOps pipeline, ArgoCD GitOps, kết quả đo kiểm tải và giám sát Grafana. | Đặng Thế Long, Cả nhóm | 29/11/2026 | 01/12/2026 | Chưa bắt đầu |"
+          },
+          {
+            "line": 42,
+            "text": "| 5.2 | Thiết kế Slide thuyết trình & Kịch bản Demo | Thiết kế bộ slide báo cáo tổng kết, chuẩn bị flow thuyết trình và kịch bản demo live ngắn gọn, trực quan. | Đặng Thế Long, Điền Quốc Huy | 02/12/2026 | 03/12/2026 | Chưa bắt đầu |"
+          },
+          {
+            "line": 43,
+            "text": "| 5.3 | Nghiệm thu nội bộ & Đóng gói sản phẩm trước 05/12 | Diễn tập thuyết trình thử, rà soát mã nguồn repo, kiểm tra tính sẵn sàng của cụm K3s và đóng gói sản phẩm hoàn tất trước 05/12/2026. | Cả nhóm | 04/12/2026 | 05/12/2026 | Chưa bắt đầu |"
+          }
+        ]
+      }
+    ],
+    "E-03": [
+      {
+        "path": "app/package.json",
+        "sha256": "4ee85a2f38237d7b0c2a740bb0feb41241850b90c263453eaba3d27b604b1e10",
+        "git_blob": "dee48a7c2e556710b78b57daed6bb5ce1d23f15e",
+        "lines": [
+          {
+            "line": 1,
+            "text": "{"
+          },
+          {
+            "line": 2,
+            "text": "  \"name\": \"app\","
+          },
+          {
+            "line": 3,
+            "text": "  \"version\": \"0.1.0\","
+          },
+          {
+            "line": 4,
+            "text": "  \"private\": true,"
+          },
+          {
+            "line": 5,
+            "text": "  \"scripts\": {"
+          },
+          {
+            "line": 6,
+            "text": "    \"dev\": \"next dev\","
+          },
+          {
+            "line": 7,
+            "text": "    \"build\": \"next build\","
+          },
+          {
+            "line": 8,
+            "text": "    \"start\": \"next start\","
+          },
+          {
+            "line": 9,
+            "text": "    \"lint\": \"eslint\""
+          },
+          {
+            "line": 10,
+            "text": "  },"
+          },
+          {
+            "line": 11,
+            "text": "  \"dependencies\": {"
+          },
+          {
+            "line": 12,
+            "text": "    \"next\": \"16.4.3\","
+          },
+          {
+            "line": 13,
+            "text": "    \"react\": \"19.3.0\","
+          },
+          {
+            "line": 14,
+            "text": "    \"react-dom\": \"19.3.0\""
+          },
+          {
+            "line": 15,
+            "text": "  },"
+          },
+          {
+            "line": 16,
+            "text": "  \"devDependencies\": {"
+          },
+          {
+            "line": 17,
+            "text": "    \"@tailwindcss/turbopack\": \"^4\","
+          },
+          {
+            "line": 18,
+            "text": "    \"@types/node\": \"^20\","
+          },
+          {
+            "line": 19,
+            "text": "    \"@types/react\": \"^19\","
+          },
+          {
+            "line": 20,
+            "text": "    \"@types/react-dom\": \"^19\","
+          },
+          {
+            "line": 21,
+            "text": "    \"eslint\": \"^9\","
+          },
+          {
+            "line": 22,
+            "text": "    \"eslint-config-next\": \"16.4.3\","
+          },
+          {
+            "line": 23,
+            "text": "    \"tailwindcss\": \"^4\","
+          },
+          {
+            "line": 24,
+            "text": "    \"typescript\": \"^5\""
+          },
+          {
+            "line": 25,
+            "text": "  },"
+          },
+          {
+            "line": 26,
+            "text": "  \"packageManager\": \"pnpm@12.16.1\""
+          },
+          {
+            "line": 27,
+            "text": "}"
+          }
+        ]
+      },
+      {
+        "path": "app/pnpm-lock.yaml",
+        "sha256": "309d183db81768d20632caa698b298cd5f0f3130af049fa0cac7045b508104ce",
+        "git_blob": "bc7fa1a457827473796a14c448e7fb830aaeabcd"
+      }
+    ],
+    "E-04": [
+      {
+        "path": "app/src/app/page.tsx",
+        "sha256": "a8f15dbb21380d5c7898d087dd5f409ff94ac8c6afc158e4b25340e1571a95ef",
+        "git_blob": "c887311c6a3904ef8b109f67effd5cad7def8b04",
+        "lines": [
+          {
+            "line": 1,
+            "text": "import Image from \"next/image\";"
+          },
+          {
+            "line": 2,
+            "text": ""
+          },
+          {
+            "line": 3,
+            "text": "export default function Home() {"
+          },
+          {
+            "line": 4,
+            "text": "  return ("
+          },
+          {
+            "line": 5,
+            "text": "    <div className=\"flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black\">"
+          },
+          {
+            "line": 6,
+            "text": "      <main className=\"flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start\">"
+          },
+          {
+            "line": 7,
+            "text": "        <Image"
+          },
+          {
+            "line": 8,
+            "text": "          className=\"dark:invert h-5 w-[100px]\""
+          },
+          {
+            "line": 9,
+            "text": "          src=\"/next.svg\""
+          },
+          {
+            "line": 10,
+            "text": "          alt=\"Next.js logo\""
+          },
+          {
+            "line": 11,
+            "text": "          width={100}"
+          },
+          {
+            "line": 12,
+            "text": "          height={20}"
+          },
+          {
+            "line": 13,
+            "text": "          priority"
+          },
+          {
+            "line": 14,
+            "text": "        />"
+          },
+          {
+            "line": 15,
+            "text": "        <div className=\"flex flex-col items-center gap-6 text-center sm:items-start sm:text-left\">"
+          },
+          {
+            "line": 16,
+            "text": "          <h1 className=\"max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50\">"
+          },
+          {
+            "line": 17,
+            "text": "            To get started, edit the{\" \"}"
+          },
+          {
+            "line": 18,
+            "text": "            <code className=\"rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]\">"
+          },
+          {
+            "line": 19,
+            "text": "              page.tsx"
+          },
+          {
+            "line": 20,
+            "text": "            </code>{\" \"}"
+          },
+          {
+            "line": 21,
+            "text": "            file."
+          },
+          {
+            "line": 22,
+            "text": "          </h1>"
+          },
+          {
+            "line": 23,
+            "text": "          <p className=\"max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400\">"
+          },
+          {
+            "line": 24,
+            "text": "            Looking for a starting point or more instructions? Head over to{\" \"}"
+          },
+          {
+            "line": 25,
+            "text": "            <a"
+          },
+          {
+            "line": 26,
+            "text": "              href=\"https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app\""
+          },
+          {
+            "line": 27,
+            "text": "              className=\"font-medium text-zinc-950 dark:text-zinc-50\""
+          },
+          {
+            "line": 28,
+            "text": "            >"
+          },
+          {
+            "line": 29,
+            "text": "              Templates"
+          },
+          {
+            "line": 30,
+            "text": "            </a>{\" \"}"
+          },
+          {
+            "line": 31,
+            "text": "            or the{\" \"}"
+          },
+          {
+            "line": 32,
+            "text": "            <a"
+          },
+          {
+            "line": 33,
+            "text": "              href=\"https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app\""
+          },
+          {
+            "line": 34,
+            "text": "              className=\"font-medium text-zinc-950 dark:text-zinc-50\""
+          },
+          {
+            "line": 35,
+            "text": "            >"
+          },
+          {
+            "line": 36,
+            "text": "              Learning"
+          },
+          {
+            "line": 37,
+            "text": "            </a>{\" \"}"
+          },
+          {
+            "line": 38,
+            "text": "            center."
+          },
+          {
+            "line": 39,
+            "text": "          </p>"
+          },
+          {
+            "line": 40,
+            "text": "        </div>"
+          },
+          {
+            "line": 41,
+            "text": "        <div className=\"flex flex-col gap-4 text-base font-medium sm:flex-row\">"
+          },
+          {
+            "line": 42,
+            "text": "          <a"
+          },
+          {
+            "line": 43,
+            "text": "            className=\"flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]\""
+          },
+          {
+            "line": 44,
+            "text": "            href=\"https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app\""
+          },
+          {
+            "line": 45,
+            "text": "            target=\"_blank\""
+          },
+          {
+            "line": 46,
+            "text": "            rel=\"noopener noreferrer\""
+          },
+          {
+            "line": 47,
+            "text": "          >"
+          },
+          {
+            "line": 48,
+            "text": "            <Image"
+          },
+          {
+            "line": 49,
+            "text": "              className=\"dark:invert h-[14px] w-4\""
+          },
+          {
+            "line": 50,
+            "text": "              src=\"/vercel.svg\""
+          },
+          {
+            "line": 51,
+            "text": "              alt=\"Vercel logomark\""
+          },
+          {
+            "line": 52,
+            "text": "              width={16}"
+          },
+          {
+            "line": 53,
+            "text": "              height={14}"
+          },
+          {
+            "line": 54,
+            "text": "            />"
+          },
+          {
+            "line": 55,
+            "text": "            Deploy Now"
+          },
+          {
+            "line": 56,
+            "text": "          </a>"
+          },
+          {
+            "line": 57,
+            "text": "          <a"
+          },
+          {
+            "line": 58,
+            "text": "            className=\"flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]\""
+          },
+          {
+            "line": 59,
+            "text": "            href=\"https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app\""
+          },
+          {
+            "line": 60,
+            "text": "            target=\"_blank\""
+          },
+          {
+            "line": 61,
+            "text": "            rel=\"noopener noreferrer\""
+          },
+          {
+            "line": 62,
+            "text": "          >"
+          },
+          {
+            "line": 63,
+            "text": "            Documentation"
+          },
+          {
+            "line": 64,
+            "text": "          </a>"
+          },
+          {
+            "line": 65,
+            "text": "        </div>"
+          },
+          {
+            "line": 66,
+            "text": "      </main>"
+          },
+          {
+            "line": 67,
+            "text": "    </div>"
+          },
+          {
+            "line": 68,
+            "text": "  );"
+          },
+          {
+            "line": 69,
+            "text": "}"
+          }
+        ]
+      },
+      {
+        "path": "app/src/app/layout.tsx",
+        "sha256": "66664f58175ae99218248456ae33c50deb26f6d3b681d0c1914577ebdd7babfc",
+        "git_blob": "9852c15349db239dd8a0712ffa70eccb731c9c88",
+        "lines": [
+          {
+            "line": 1,
+            "text": "import type { Metadata } from \"next\";"
+          },
+          {
+            "line": 2,
+            "text": "import { Geist, Geist_Mono } from \"next/font/google\";"
+          },
+          {
+            "line": 3,
+            "text": "import \"./globals.css\";"
+          },
+          {
+            "line": 4,
+            "text": ""
+          },
+          {
+            "line": 5,
+            "text": "const geistSans = Geist({"
+          },
+          {
+            "line": 6,
+            "text": "  variable: \"--font-geist-sans\","
+          },
+          {
+            "line": 7,
+            "text": "  subsets: [\"latin\"],"
+          },
+          {
+            "line": 8,
+            "text": "});"
+          },
+          {
+            "line": 9,
+            "text": ""
+          },
+          {
+            "line": 10,
+            "text": "const geistMono = Geist_Mono({"
+          },
+          {
+            "line": 11,
+            "text": "  variable: \"--font-geist-mono\","
+          },
+          {
+            "line": 12,
+            "text": "  subsets: [\"latin\"],"
+          },
+          {
+            "line": 13,
+            "text": "});"
+          },
+          {
+            "line": 14,
+            "text": ""
+          },
+          {
+            "line": 15,
+            "text": "export const metadata: Metadata = {"
+          },
+          {
+            "line": 16,
+            "text": "  title: \"Create Next App\","
+          },
+          {
+            "line": 17,
+            "text": "  description: \"Generated by create next app\","
+          },
+          {
+            "line": 18,
+            "text": "};"
+          },
+          {
+            "line": 19,
+            "text": ""
+          },
+          {
+            "line": 20,
+            "text": "export default function RootLayout({ children }: LayoutProps<\"/\">) {"
+          },
+          {
+            "line": 21,
+            "text": "  return ("
+          },
+          {
+            "line": 22,
+            "text": "    <html"
+          },
+          {
+            "line": 23,
+            "text": "      lang=\"en\""
+          },
+          {
+            "line": 24,
+            "text": "      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}"
+          },
+          {
+            "line": 25,
+            "text": "    >"
+          },
+          {
+            "line": 26,
+            "text": "      <body className=\"min-h-full flex flex-col\">{children}</body>"
+          },
+          {
+            "line": 27,
+            "text": "    </html>"
+          },
+          {
+            "line": 28,
+            "text": "  );"
+          },
+          {
+            "line": 29,
+            "text": "}"
+          }
+        ]
+      }
+    ],
+    "E-05": [
+      {
+        "path": "app/src/app/healthz/route.ts",
+        "sha256": "e2b2a703d72b100f5168cb4930956d6aad156ba98231be48e41c69baabc719b3",
+        "git_blob": "79a041b87129e576e1af27025832b703aa93f9e1",
+        "lines": [
+          {
+            "line": 1,
+            "text": "export async function GET() {"
+          },
+          {
+            "line": 2,
+            "text": "  return Response.json("
+          },
+          {
+            "line": 3,
+            "text": "    {"
+          },
+          {
+            "line": 4,
+            "text": "      status: \"ok\","
+          },
+          {
+            "line": 5,
+            "text": "      uptime: process.uptime(),"
+          },
+          {
+            "line": 6,
+            "text": "      timestamp: new Date().toISOString(),"
+          },
+          {
+            "line": 7,
+            "text": "    },"
+          },
+          {
+            "line": 8,
+            "text": "    { status: 200 }"
+          },
+          {
+            "line": 9,
+            "text": "  );"
+          },
+          {
+            "line": 10,
+            "text": "}"
+          },
+          {
+            "line": 11,
+            "text": ""
+          }
+        ]
+      }
+    ],
+    "E-06": [
+      {
+        "path": "app/src/app/ready/route.ts",
+        "sha256": "4f3b9dff08c431cea0772b0ee17381336703d0400231a9e9d675137a7bd3a446",
+        "git_blob": "0c3c0b6890e25c1bf2e625c009a5a06441692c4b",
+        "lines": [
+          {
+            "line": 1,
+            "text": "export async function GET() {"
+          },
+          {
+            "line": 2,
+            "text": "  return Response.json("
+          },
+          {
+            "line": 3,
+            "text": "    {"
+          },
+          {
+            "line": 4,
+            "text": "      status: \"ready\","
+          },
+          {
+            "line": 5,
+            "text": "      timestamp: new Date().toISOString(),"
+          },
+          {
+            "line": 6,
+            "text": "    },"
+          },
+          {
+            "line": 7,
+            "text": "    { status: 200 }"
+          },
+          {
+            "line": 8,
+            "text": "  );"
+          },
+          {
+            "line": 9,
+            "text": "}"
+          },
+          {
+            "line": 10,
+            "text": ""
+          }
+        ]
+      }
+    ],
+    "E-07": [
+      {
+        "path": "app/next.config.ts",
+        "sha256": "b78347fcff257e3f225f4e0c7cb59406bf93ec10825709b1c04d75991f4b275f",
+        "git_blob": "ba611a93b288bf79b2339d355c0e6480464cba16",
+        "lines": [
+          {
+            "line": 1,
+            "text": "import type { NextConfig } from \"next\";"
+          },
+          {
+            "line": 2,
+            "text": ""
+          },
+          {
+            "line": 3,
+            "text": "const nextConfig: NextConfig = {"
+          },
+          {
+            "line": 4,
+            "text": "  /* Bắt buộc cho Docker Container & Kubernetes */"
+          },
+          {
+            "line": 5,
+            "text": "  output: \"standalone\","
+          },
+          {
+            "line": 6,
+            "text": "  cacheComponents: true,"
+          },
+          {
+            "line": 7,
+            "text": "  partialPrefetching: true,"
+          },
+          {
+            "line": 8,
+            "text": "  turbopack: {"
+          },
+          {
+            "line": 9,
+            "text": "    rules: {"
+          },
+          {
+            "line": 10,
+            "text": "      \"*.css\": {"
+          },
+          {
+            "line": 11,
+            "text": "        loaders: [\"@tailwindcss/turbopack\"],"
+          },
+          {
+            "line": 12,
+            "text": "        as: \"*.css\","
+          },
+          {
+            "line": 13,
+            "text": "      },"
+          },
+          {
+            "line": 14,
+            "text": "    },"
+          },
+          {
+            "line": 15,
+            "text": "  },"
+          },
+          {
+            "line": 16,
+            "text": "};"
+          },
+          {
+            "line": 17,
+            "text": ""
+          },
+          {
+            "line": 18,
+            "text": "export default nextConfig;"
+          }
+        ]
+      },
+      {
+        "path": "app/Dockerfile",
+        "sha256": "caf2dbff99225587451344a17e17437250ed76d1d0e7cf3235c166f79ce8e9ef",
+        "git_blob": "12bfaf2bfed44983d71d797f62d89a2e7e6795c4",
+        "lines": [
+          {
+            "line": 1,
+            "text": "# =============================================================================="
+          },
+          {
+            "line": 2,
+            "text": "# DOCKERFILE: NEXT.JS STANDALONE MULTI-STAGE BUILD (PNPM)"
+          },
+          {
+            "line": 3,
+            "text": "# Optimized for Kubernetes, Minimal Image Size & Non-Root Security (Trivy Scan)"
+          },
+          {
+            "line": 4,
+            "text": "# =============================================================================="
+          },
+          {
+            "line": 5,
+            "text": ""
+          },
+          {
+            "line": 6,
+            "text": "# --- Stage 1: Install Dependencies ---"
+          },
+          {
+            "line": 7,
+            "text": "FROM node:26.13.0-alpine3.23 AS deps"
+          },
+          {
+            "line": 8,
+            "text": "# Cần thiết cho một số thư viện C++ bindings trên Alpine (libc6-compat)"
+          },
+          {
+            "line": 9,
+            "text": "RUN apk add --no-cache libc6-compat"
+          },
+          {
+            "line": 10,
+            "text": "WORKDIR /app"
+          },
+          {
+            "line": 11,
+            "text": ""
+          },
+          {
+            "line": 12,
+            "text": "# Cài đặt pnpm theo đúng version trong package.json"
+          },
+          {
+            "line": 13,
+            "text": "RUN npm install -g pnpm@12.16.1"
+          },
+          {
+            "line": 14,
+            "text": ""
+          },
+          {
+            "line": 15,
+            "text": "COPY package.json pnpm-lock.yaml pnpm-workspace.yaml* ./"
+          },
+          {
+            "line": 16,
+            "text": "RUN pnpm i --frozen-lockfile"
+          },
+          {
+            "line": 17,
+            "text": ""
+          },
+          {
+            "line": 18,
+            "text": "# --- Stage 2: Build Application ---"
+          },
+          {
+            "line": 19,
+            "text": "FROM node:26.13.0-alpine3.23 AS builder"
+          },
+          {
+            "line": 20,
+            "text": "WORKDIR /app"
+          },
+          {
+            "line": 21,
+            "text": ""
+          },
+          {
+            "line": 22,
+            "text": "RUN npm install -g pnpm@12.16.1"
+          },
+          {
+            "line": 23,
+            "text": ""
+          },
+          {
+            "line": 24,
+            "text": "COPY --from=deps /app/node_modules ./node_modules"
+          },
+          {
+            "line": 25,
+            "text": "COPY . ."
+          },
+          {
+            "line": 26,
+            "text": ""
+          },
+          {
+            "line": 27,
+            "text": "ENV NEXT_TELEMETRY_DISABLED=1"
+          },
+          {
+            "line": 28,
+            "text": "ENV NODE_ENV=production"
+          },
+          {
+            "line": 29,
+            "text": ""
+          },
+          {
+            "line": 30,
+            "text": "RUN pnpm run build"
+          },
+          {
+            "line": 31,
+            "text": ""
+          },
+          {
+            "line": 32,
+            "text": "# --- Stage 3: Production Runtime ---"
+          },
+          {
+            "line": 33,
+            "text": "FROM node:26.13.0-alpine3.23 AS runner"
+          },
+          {
+            "line": 34,
+            "text": "WORKDIR /app"
+          },
+          {
+            "line": 35,
+            "text": ""
+          },
+          {
+            "line": 36,
+            "text": "# Hardening: Gỡ bỏ npm, npx, corepack không cần thiết trong runtime standalone"
+          },
+          {
+            "line": 37,
+            "text": "# Loại bỏ triệt để CVE (như brace-expansion trong bundled npm) và giảm attack surface"
+          },
+          {
+            "line": 38,
+            "text": "RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack"
+          },
+          {
+            "line": 39,
+            "text": ""
+          },
+          {
+            "line": 40,
+            "text": "ENV NODE_ENV=production"
+          },
+          {
+            "line": 41,
+            "text": "ENV NEXT_TELEMETRY_DISABLED=1"
+          },
+          {
+            "line": 42,
+            "text": "ENV PORT=3000"
+          },
+          {
+            "line": 43,
+            "text": "ENV HOSTNAME=\"0.0.0.0\""
+          },
+          {
+            "line": 44,
+            "text": ""
+          },
+          {
+            "line": 45,
+            "text": "# Non-root user với UID:GID 10001 (khớp với runAsUser / runAsGroup trong K8s manifest)"
+          },
+          {
+            "line": 46,
+            "text": "RUN addgroup -g 10001 -S appgroup && \\"
+          },
+          {
+            "line": 47,
+            "text": "    adduser -u 10001 -S appuser -G appgroup"
+          },
+          {
+            "line": 48,
+            "text": ""
+          },
+          {
+            "line": 49,
+            "text": "# Sao chép public và standalone output với chown số 10001:10001 đồng bộ"
+          },
+          {
+            "line": 50,
+            "text": "COPY --from=builder --chown=10001:10001 /app/public ./public"
+          },
+          {
+            "line": 51,
+            "text": "COPY --from=builder --chown=10001:10001 /app/.next/standalone ./"
+          },
+          {
+            "line": 52,
+            "text": "COPY --from=builder --chown=10001:10001 /app/.next/static ./.next/static"
+          },
+          {
+            "line": 53,
+            "text": ""
+          },
+          {
+            "line": 54,
+            "text": "# Khai báo dạng số UID:GID để Trivy Scan và Kubernetes SecurityContext xác thực tuyệt đối"
+          },
+          {
+            "line": 55,
+            "text": "USER 10001:10001"
+          },
+          {
+            "line": 56,
+            "text": "EXPOSE 3000"
+          },
+          {
+            "line": 57,
+            "text": ""
+          },
+          {
+            "line": 58,
+            "text": "CMD [\"node\", \"server.js\"]"
+          }
+        ]
+      }
+    ],
+    "E-08": [
+      {
+        "path": "k8s-manifests/base/configmap.yaml",
+        "sha256": "65b343c87d5df700149cbd8b5dbceec09a3b2adf104178b5bce02e570d3cfd95",
+        "git_blob": "52d85587978ccc12ba6203e36eca3b1ab034c2d1",
+        "lines": [
+          {
+            "line": 1,
+            "text": "apiVersion: v1"
+          },
+          {
+            "line": 2,
+            "text": "kind: ConfigMap"
+          },
+          {
+            "line": 3,
+            "text": "metadata:"
+          },
+          {
+            "line": 4,
+            "text": "  name: web-config"
+          },
+          {
+            "line": 5,
+            "text": "data:"
+          },
+          {
+            "line": 6,
+            "text": "  PORT: \"3000\""
+          },
+          {
+            "line": 7,
+            "text": "  REDIS_HOST: \"redis-service\""
+          },
+          {
+            "line": 8,
+            "text": "  REDIS_PORT: \"6379\""
+          }
+        ]
+      },
+      {
+        "path": "k8s-manifests/base/deployment.yaml",
+        "sha256": "a865922b7c2b3cabce1cdda156541d40273022b75d6a33bfb074c8dc0f084524",
+        "git_blob": "8762de7e19d7039180537fb889d243437576f8bc",
+        "lines": [
+          {
+            "line": 1,
+            "text": "apiVersion: apps/v1"
+          },
+          {
+            "line": 2,
+            "text": "kind: Deployment"
+          },
+          {
+            "line": 3,
+            "text": "metadata:"
+          },
+          {
+            "line": 4,
+            "text": "  name: web-deployment"
+          },
+          {
+            "line": 5,
+            "text": "  labels:"
+          },
+          {
+            "line": 6,
+            "text": "    app: web"
+          },
+          {
+            "line": 7,
+            "text": "spec:"
+          },
+          {
+            "line": 8,
+            "text": "  replicas: 2"
+          },
+          {
+            "line": 9,
+            "text": "  selector:"
+          },
+          {
+            "line": 10,
+            "text": "    matchLabels:"
+          },
+          {
+            "line": 11,
+            "text": "      app: web"
+          },
+          {
+            "line": 12,
+            "text": "  template:"
+          },
+          {
+            "line": 13,
+            "text": "    metadata:"
+          },
+          {
+            "line": 14,
+            "text": "      labels:"
+          },
+          {
+            "line": 15,
+            "text": "        app: web"
+          },
+          {
+            "line": 16,
+            "text": "    spec:"
+          },
+          {
+            "line": 17,
+            "text": "      securityContext:"
+          },
+          {
+            "line": 18,
+            "text": "        runAsNonRoot: true"
+          },
+          {
+            "line": 19,
+            "text": "        runAsUser: 10001"
+          },
+          {
+            "line": 20,
+            "text": "        runAsGroup: 10001"
+          },
+          {
+            "line": 21,
+            "text": "        fsGroup: 10001"
+          },
+          {
+            "line": 22,
+            "text": "        seccompProfile:"
+          },
+          {
+            "line": 23,
+            "text": "          type: RuntimeDefault"
+          },
+          {
+            "line": 24,
+            "text": "      containers:"
+          },
+          {
+            "line": 25,
+            "text": "        - name: web"
+          },
+          {
+            "line": 26,
+            "text": "          image: ghcr.io/helios-ryuu/devsecops-gitops-with-k8s:1.0.0"
+          },
+          {
+            "line": 27,
+            "text": "          imagePullPolicy: IfNotPresent"
+          },
+          {
+            "line": 28,
+            "text": "          ports:"
+          },
+          {
+            "line": 29,
+            "text": "            - containerPort: 3000"
+          },
+          {
+            "line": 30,
+            "text": "          envFrom:"
+          },
+          {
+            "line": 31,
+            "text": "            - configMapRef:"
+          },
+          {
+            "line": 32,
+            "text": "                name: web-config"
+          },
+          {
+            "line": 33,
+            "text": "          securityContext:"
+          },
+          {
+            "line": 34,
+            "text": "            allowPrivilegeEscalation: false"
+          },
+          {
+            "line": 35,
+            "text": "            readOnlyRootFilesystem: false"
+          },
+          {
+            "line": 36,
+            "text": "            capabilities:"
+          },
+          {
+            "line": 37,
+            "text": "              drop:"
+          },
+          {
+            "line": 38,
+            "text": "                - ALL"
+          },
+          {
+            "line": 39,
+            "text": "          resources:"
+          },
+          {
+            "line": 40,
+            "text": "            requests:"
+          },
+          {
+            "line": 41,
+            "text": "              cpu: 50m"
+          },
+          {
+            "line": 42,
+            "text": "              memory: 64Mi"
+          },
+          {
+            "line": 43,
+            "text": "            limits:"
+          },
+          {
+            "line": 44,
+            "text": "              cpu: 200m"
+          },
+          {
+            "line": 45,
+            "text": "              memory: 128Mi"
+          },
+          {
+            "line": 46,
+            "text": "          livenessProbe:"
+          },
+          {
+            "line": 47,
+            "text": "            httpGet:"
+          },
+          {
+            "line": 48,
+            "text": "              path: /healthz"
+          },
+          {
+            "line": 49,
+            "text": "              port: 3000"
+          },
+          {
+            "line": 50,
+            "text": "            initialDelaySeconds: 10"
+          },
+          {
+            "line": 51,
+            "text": "            periodSeconds: 15"
+          },
+          {
+            "line": 52,
+            "text": "          readinessProbe:"
+          },
+          {
+            "line": 53,
+            "text": "            httpGet:"
+          },
+          {
+            "line": 54,
+            "text": "              path: /ready"
+          },
+          {
+            "line": 55,
+            "text": "              port: 3000"
+          },
+          {
+            "line": 56,
+            "text": "            initialDelaySeconds: 5"
+          },
+          {
+            "line": 57,
+            "text": "            periodSeconds: 10"
+          }
+        ]
+      }
+    ],
+    "E-09": [
+      {
+        "path": "k8s-manifests/database/redis.yaml",
+        "sha256": "3a43349d317143f1d67840caca1c7bc0ede8344e77ee1dddf208cc22b58fe908",
+        "git_blob": "71be7fcb505d006a2049d3bae217c8eb4ac76aaa",
+        "lines": [
+          {
+            "line": 1,
+            "text": "apiVersion: apps/v1"
+          },
+          {
+            "line": 2,
+            "text": "kind: Deployment"
+          },
+          {
+            "line": 3,
+            "text": "metadata:"
+          },
+          {
+            "line": 4,
+            "text": "  name: redis-deployment"
+          },
+          {
+            "line": 5,
+            "text": "  labels:"
+          },
+          {
+            "line": 6,
+            "text": "    app: redis"
+          },
+          {
+            "line": 7,
+            "text": "spec:"
+          },
+          {
+            "line": 8,
+            "text": "  replicas: 1"
+          },
+          {
+            "line": 9,
+            "text": "  selector:"
+          },
+          {
+            "line": 10,
+            "text": "    matchLabels:"
+          },
+          {
+            "line": 11,
+            "text": "      app: redis"
+          },
+          {
+            "line": 12,
+            "text": "  template:"
+          },
+          {
+            "line": 13,
+            "text": "    metadata:"
+          },
+          {
+            "line": 14,
+            "text": "      labels:"
+          },
+          {
+            "line": 15,
+            "text": "        app: redis"
+          },
+          {
+            "line": 16,
+            "text": "    spec:"
+          },
+          {
+            "line": 17,
+            "text": "      containers:"
+          },
+          {
+            "line": 18,
+            "text": "        - name: redis"
+          },
+          {
+            "line": 19,
+            "text": "          image: redis:8.2.11-alpine3.22"
+          },
+          {
+            "line": 20,
+            "text": "          ports:"
+          },
+          {
+            "line": 21,
+            "text": "            - containerPort: 6379"
+          },
+          {
+            "line": 22,
+            "text": "          resources:"
+          },
+          {
+            "line": 23,
+            "text": "            requests:"
+          },
+          {
+            "line": 24,
+            "text": "              cpu: 50m"
+          },
+          {
+            "line": 25,
+            "text": "              memory: 32Mi"
+          },
+          {
+            "line": 26,
+            "text": "            limits:"
+          },
+          {
+            "line": 27,
+            "text": "              cpu: 100m"
+          },
+          {
+            "line": 28,
+            "text": "              memory: 64Mi"
+          },
+          {
+            "line": 29,
+            "text": "          livenessProbe:"
+          },
+          {
+            "line": 30,
+            "text": "            exec:"
+          },
+          {
+            "line": 31,
+            "text": "              command:"
+          },
+          {
+            "line": 32,
+            "text": "                - redis-cli"
+          },
+          {
+            "line": 33,
+            "text": "                - ping"
+          },
+          {
+            "line": 34,
+            "text": "            initialDelaySeconds: 5"
+          },
+          {
+            "line": 35,
+            "text": "            periodSeconds: 10"
+          },
+          {
+            "line": 36,
+            "text": "          readinessProbe:"
+          },
+          {
+            "line": 37,
+            "text": "            exec:"
+          },
+          {
+            "line": 38,
+            "text": "              command:"
+          },
+          {
+            "line": 39,
+            "text": "                - redis-cli"
+          },
+          {
+            "line": 40,
+            "text": "                - ping"
+          },
+          {
+            "line": 41,
+            "text": "            initialDelaySeconds: 5"
+          },
+          {
+            "line": 42,
+            "text": "            periodSeconds: 10"
+          },
+          {
+            "line": 43,
+            "text": "---"
+          },
+          {
+            "line": 44,
+            "text": "apiVersion: v1"
+          },
+          {
+            "line": 45,
+            "text": "kind: Service"
+          },
+          {
+            "line": 46,
+            "text": "metadata:"
+          },
+          {
+            "line": 47,
+            "text": "  name: redis-service"
+          },
+          {
+            "line": 48,
+            "text": "  labels:"
+          },
+          {
+            "line": 49,
+            "text": "    app: redis"
+          },
+          {
+            "line": 50,
+            "text": "spec:"
+          },
+          {
+            "line": 51,
+            "text": "  type: ClusterIP"
+          },
+          {
+            "line": 52,
+            "text": "  selector:"
+          },
+          {
+            "line": 53,
+            "text": "    app: redis"
+          },
+          {
+            "line": 54,
+            "text": "  ports:"
+          },
+          {
+            "line": 55,
+            "text": "    - name: redis"
+          },
+          {
+            "line": 56,
+            "text": "      port: 6379"
+          },
+          {
+            "line": 57,
+            "text": "      targetPort: 6379"
+          }
+        ]
+      }
+    ],
+    "E-10": [
+      {
+        "path": "k8s-manifests/kustomization.yaml",
+        "sha256": "32087bbf36af1bd7ce25ffb1176a5fa4a5986cf6427e3321088b125c67970532",
+        "git_blob": "152952160217c60ba233e61251f6ea0f2da80dfd",
+        "lines": [
+          {
+            "line": 1,
+            "text": "apiVersion: kustomize.config.k8s.io/v1beta1"
+          },
+          {
+            "line": 2,
+            "text": "kind: Kustomization"
+          },
+          {
+            "line": 3,
+            "text": ""
+          },
+          {
+            "line": 4,
+            "text": "namespace: production-app"
+          },
+          {
+            "line": 5,
+            "text": ""
+          },
+          {
+            "line": 6,
+            "text": "resources:"
+          },
+          {
+            "line": 7,
+            "text": "  - base"
+          },
+          {
+            "line": 8,
+            "text": "  - database"
+          },
+          {
+            "line": 9,
+            "text": "  - security"
+          }
+        ]
+      },
+      {
+        "path": "k8s-manifests/base/kustomization.yaml",
+        "sha256": "065f6bf2df4180ac10ace3cff09ebcc7c409cff174198aee16117ad65c3462fc",
+        "git_blob": "cc4332ab3c080fda822e588aacd3fec35bd270b1",
+        "lines": [
+          {
+            "line": 1,
+            "text": "apiVersion: kustomize.config.k8s.io/v1beta1"
+          },
+          {
+            "line": 2,
+            "text": "kind: Kustomization"
+          },
+          {
+            "line": 3,
+            "text": ""
+          },
+          {
+            "line": 4,
+            "text": "resources:"
+          },
+          {
+            "line": 5,
+            "text": "  - configmap.yaml"
+          },
+          {
+            "line": 6,
+            "text": "  - deployment.yaml"
+          },
+          {
+            "line": 7,
+            "text": "  - service.yaml"
+          },
+          {
+            "line": 8,
+            "text": "  - ingress.yaml"
+          },
+          {
+            "line": 9,
+            "text": ""
+          },
+          {
+            "line": 10,
+            "text": "images:"
+          },
+          {
+            "line": 11,
+            "text": "  - name: ghcr.io/helios-ryuu/devsecops-gitops-with-k8s"
+          },
+          {
+            "line": 12,
+            "text": "    newTag: ab9e132a77c01e189593dafeb3cec77f35e3815e"
+          }
+        ]
+      },
+      {
+        "path": "k8s-manifests/database/kustomization.yaml",
+        "sha256": "9edaaa899c21ae4c3ae5c030c97a94eea6d69551d8028fc5f6b42b7b897d1a93",
+        "git_blob": "367e19fb7416a749cc51c657140a15f364e6b03c",
+        "lines": [
+          {
+            "line": 1,
+            "text": "apiVersion: kustomize.config.k8s.io/v1beta1"
+          },
+          {
+            "line": 2,
+            "text": "kind: Kustomization"
+          },
+          {
+            "line": 3,
+            "text": ""
+          },
+          {
+            "line": 4,
+            "text": "resources:"
+          },
+          {
+            "line": 5,
+            "text": "  - redis.yaml"
+          }
+        ]
+      },
+      {
+        "path": "k8s-manifests/security/kustomization.yaml",
+        "sha256": "20f72a536c5a6bc29c3fd7b63f350242a1e77c547813ffd4f076f7dadf71be68",
+        "git_blob": "a07c2513b1285cdbad0a281d871928832f89168d",
+        "lines": [
+          {
+            "line": 1,
+            "text": "apiVersion: kustomize.config.k8s.io/v1beta1"
+          },
+          {
+            "line": 2,
+            "text": "kind: Kustomization"
+          },
+          {
+            "line": 3,
+            "text": ""
+          },
+          {
+            "line": 4,
+            "text": "resources:"
+          },
+          {
+            "line": 5,
+            "text": "  - network-policy.yaml"
+          }
+        ]
+      },
+      {
+        "path": "k8s-manifests/security/network-policy.yaml",
+        "sha256": "0eabcb7d94bcdb73abb29ad866e0d0ceba4dbed79f1520e3db7923ccc131f099",
+        "git_blob": "46ee5f1557cf326725672de59cbc2d014c2ec836",
+        "lines": [
+          {
+            "line": 1,
+            "text": "apiVersion: networking.k8s.io/v1"
+          },
+          {
+            "line": 2,
+            "text": "kind: NetworkPolicy"
+          },
+          {
+            "line": 3,
+            "text": "metadata:"
+          },
+          {
+            "line": 4,
+            "text": "  name: allow-web-to-redis"
+          },
+          {
+            "line": 5,
+            "text": "spec:"
+          },
+          {
+            "line": 6,
+            "text": "  podSelector:"
+          },
+          {
+            "line": 7,
+            "text": "    matchLabels:"
+          },
+          {
+            "line": 8,
+            "text": "      app: redis"
+          },
+          {
+            "line": 9,
+            "text": "  policyTypes:"
+          },
+          {
+            "line": 10,
+            "text": "    - Ingress"
+          },
+          {
+            "line": 11,
+            "text": "  ingress:"
+          },
+          {
+            "line": 12,
+            "text": "    # Chỉ cho phép các Pod mang nhãn app: web truy cập cổng 6379 của Redis"
+          },
+          {
+            "line": 13,
+            "text": "    - from:"
+          },
+          {
+            "line": 14,
+            "text": "        - podSelector:"
+          },
+          {
+            "line": 15,
+            "text": "            matchLabels:"
+          },
+          {
+            "line": 16,
+            "text": "              app: web"
+          },
+          {
+            "line": 17,
+            "text": "      ports:"
+          },
+          {
+            "line": 18,
+            "text": "        - protocol: TCP"
+          },
+          {
+            "line": 19,
+            "text": "          port: 6379"
+          }
+        ]
+      }
+    ],
+    "E-11": [
+      {
+        "path": "argocd/app.yaml",
+        "sha256": "4bf95ee82738f0aba3eea08526dbdd8dfcb68adf7ef66e205374da38a9e9a1f4",
+        "git_blob": "7c3bda95ad4e78e88346051de58be8185b08127b",
+        "lines": [
+          {
+            "line": 1,
+            "text": "apiVersion: argoproj.io/v1alpha1"
+          },
+          {
+            "line": 2,
+            "text": "kind: Application"
+          },
+          {
+            "line": 3,
+            "text": "metadata:"
+          },
+          {
+            "line": 4,
+            "text": "  name: production-web-app"
+          },
+          {
+            "line": 5,
+            "text": "  namespace: argocd"
+          },
+          {
+            "line": 6,
+            "text": "  finalizers:"
+          },
+          {
+            "line": 7,
+            "text": "    - resources-finalizer.argocd.argoproj.io"
+          },
+          {
+            "line": 8,
+            "text": "spec:"
+          },
+          {
+            "line": 9,
+            "text": "  project: default"
+          },
+          {
+            "line": 10,
+            "text": "  source:"
+          },
+          {
+            "line": 11,
+            "text": "    repoURL: https://github.com/helios-ryuu/devsecops-gitops-with-k8s.git # Thay đổi thành repo của bạn nếu cần"
+          },
+          {
+            "line": 12,
+            "text": "    targetRevision: main"
+          },
+          {
+            "line": 13,
+            "text": "    path: k8s-manifests"
+          },
+          {
+            "line": 14,
+            "text": "  destination:"
+          },
+          {
+            "line": 15,
+            "text": "    server: https://kubernetes.default.svc"
+          },
+          {
+            "line": 16,
+            "text": "    namespace: production-app"
+          },
+          {
+            "line": 17,
+            "text": "  syncPolicy:"
+          },
+          {
+            "line": 18,
+            "text": "    automated:"
+          },
+          {
+            "line": 19,
+            "text": "      prune: true"
+          },
+          {
+            "line": 20,
+            "text": "      selfHeal: true"
+          },
+          {
+            "line": 21,
+            "text": "    syncOptions:"
+          },
+          {
+            "line": 22,
+            "text": "      - CreateNamespace=true"
+          }
+        ]
+      }
+    ]
+  },
+  "tracked_baseline_sha256": {
+    ".github/workflows/ci-pipe.yml": "e723ca042d69525ad1135dac4f29598fd0b85054888f6901e4c80c6f4a2fed02",
+    ".gitignore": "50dacfa27ba1e4f2df8476b6d8d4c5a07c9f24099edea36f4806daa2899da845",
+    "LOG.md": "c943c7765894c0acec48ca4697975cd342c741b2a7b7195ac37867f96692570e",
+    "README.md": "72275dc3d836af5adaabc6e3bbaa607a5cd0132d347e1a1b4f31851841650aff",
+    "WBS.md": "b7d4d869ed84ded703c7319ef34ec0f04f0ca0b672dedbc1daf8196bd01374a6",
+    "app/.dockerignore": "08f4df18eae20263d2227dadb4158a8e7d97128a91b828d37137b0e3ff9b7bfe",
+    "app/.gitignore": "cfdbd5a321f3ba279e434c025fc9a44bf2d3bd3a1af5affb8429d79bd18af054",
+    "app/AGENTS.md": "d273860cb120cdc0c127d565b196d6846274ad3933d5848932659c2a0b193898",
+    "app/Dockerfile": "caf2dbff99225587451344a17e17437250ed76d1d0e7cf3235c166f79ce8e9ef",
+    "app/README.md": "3b3ed71ebf50e973209bc634f6849e8ecf235a6c0686c285e1f36af5caa1c2cc",
+    "app/eslint.config.mjs": "275a07c13fc7c83a652efcfa9fb6a207c451a2f5088e6793415ce44281285720",
+    "app/next.config.ts": "b78347fcff257e3f225f4e0c7cb59406bf93ec10825709b1c04d75991f4b275f",
+    "app/package.json": "4ee85a2f38237d7b0c2a740bb0feb41241850b90c263453eaba3d27b604b1e10",
+    "app/pnpm-lock.yaml": "309d183db81768d20632caa698b298cd5f0f3130af049fa0cac7045b508104ce",
+    "app/pnpm-workspace.yaml": "ec73ecb12f41216dc86297ccfb13442b28a2a5f67ceb6e64ae1c4065b153f666",
+    "app/public/file.svg": "2b67812c325c199a02536cdbeea0c593a72f707d323b72ee3e08dbab06753bd4",
+    "app/public/globe.svg": "b614b9bf183925957661ac851498fe1d8029fd43a62fbfed86f9e2624a57e7cf",
+    "app/public/next.svg": "55995dfad6ecb4945a1e856ddca03c5e16aa5bf13fd21b4df6a74ae79357bcfc",
+    "app/public/vercel.svg": "f081337b2fee635b455b63275406a3e7f39d6a014e25ad90dab5a67e62a12ac4",
+    "app/public/window.svg": "644768c4aaeb4767bce293344eeb0c125fb804a94d801440424072202d85e3a1",
+    "app/src/app/favicon.ico": "c28fdd2a4f31e2dc64f653962286da5c82a4cdfc518b242d32812c624e9a19a4",
+    "app/src/app/globals.css": "94d307fb925a3264dd331975b5e17170b1d887f361669cf839bdf37cc7a40db8",
+    "app/src/app/healthz/route.ts": "e2b2a703d72b100f5168cb4930956d6aad156ba98231be48e41c69baabc719b3",
+    "app/src/app/layout.tsx": "66664f58175ae99218248456ae33c50deb26f6d3b681d0c1914577ebdd7babfc",
+    "app/src/app/page.tsx": "a8f15dbb21380d5c7898d087dd5f409ff94ac8c6afc158e4b25340e1571a95ef",
+    "app/src/app/ready/route.ts": "4f3b9dff08c431cea0772b0ee17381336703d0400231a9e9d675137a7bd3a446",
+    "app/tsconfig.json": "dbacf04aa5f38c1ce4b0f030fbb84e5adff19306fb785b2e4aafef9c58705658",
+    "argocd/app.yaml": "4bf95ee82738f0aba3eea08526dbdd8dfcb68adf7ef66e205374da38a9e9a1f4",
+    "argocd/monitoring.yaml": "5ba21f5874ef996752f794bd0bb1c8a0cce4b90532219c2663e7812972ccd26f",
+    "argocd/values.yaml": "269b15ce7cbe77fab289f074b4eed08cfeaa40a207bfc605a6fdc5dc2a29cb4d",
+    "k3s-config/config.agent-01.yaml": "876cad50161ab008a29a12c0a49dd7b9421007ba9e4b295baf9e6bcdeedb5ba5",
+    "k3s-config/config.agent-02.yaml": "b373b80860875c87dbd50235db6dfcc80a6287209443ab0118441db1fb603191",
+    "k3s-config/config.server-01.yaml": "908f5a6389c5d821e0cc90a00726195fe473be173f340881a6919b5059d0e5b1",
+    "k8s-manifests/base/configmap.yaml": "65b343c87d5df700149cbd8b5dbceec09a3b2adf104178b5bce02e570d3cfd95",
+    "k8s-manifests/base/deployment.yaml": "a865922b7c2b3cabce1cdda156541d40273022b75d6a33bfb074c8dc0f084524",
+    "k8s-manifests/base/ingress.yaml": "1130c9f90b642bd7dcde13eb04737662144e5b1fb2f18ed7f879df67d89d3d5b",
+    "k8s-manifests/base/kustomization.yaml": "065f6bf2df4180ac10ace3cff09ebcc7c409cff174198aee16117ad65c3462fc",
+    "k8s-manifests/base/service.yaml": "8b54b1d44cd14849f42c0c08f3ee35e7036f2a62891c23f8bcb81450a6f52266",
+    "k8s-manifests/database/kustomization.yaml": "9edaaa899c21ae4c3ae5c030c97a94eea6d69551d8028fc5f6b42b7b897d1a93",
+    "k8s-manifests/database/redis.yaml": "3a43349d317143f1d67840caca1c7bc0ede8344e77ee1dddf208cc22b58fe908",
+    "k8s-manifests/kustomization.yaml": "32087bbf36af1bd7ce25ffb1176a5fa4a5986cf6427e3321088b125c67970532",
+    "k8s-manifests/security/kustomization.yaml": "20f72a536c5a6bc29c3fd7b63f350242a1e77c547813ffd4f076f7dadf71be68",
+    "k8s-manifests/security/network-policy.yaml": "0eabcb7d94bcdb73abb29ad866e0d0ceba4dbed79f1520e3db7923ccc131f099",
+    "monitoring/values.yaml": "8296f9a65e7d8558ab136acd4ee7c7af1aabb164cd2a47db326b0bc9f1b87a0f",
+    "scripts/demo.sh": "9066195edb536a96debadb9a960ba88907f1cd15f2c6620591738f573daaefed",
+    "traefik/cloudflare-origin-tls-secret.yaml": "f34dc3a5d1562cc6409c7eb1867344fbe7847cc3dd7583586aaf43c388c43ea5",
+    "traefik/tlsstore.yaml": "053ca9679d6d87d8b71619d359f77c4baebd28196b3680e2e51d12e9b266c95f",
+    "traefik/values.yaml": "04ef2f2140fa2849b501d07f473164503a5aff46f761b76b11481b56908b1363"
+  },
+  "limits": [
+    "Code observed, no application execution or cluster access.",
+    "No credentials, TLS secret files or production state captured.",
+    "Baseline hashes prove content scope only, not runtime feature readiness."
+  ]
+}

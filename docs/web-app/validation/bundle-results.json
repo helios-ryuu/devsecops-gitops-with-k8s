@@ -1,0 +1,102 @@
+{
+  "runAt": "2026-11-05T04:10:58.883Z",
+  "runtime": "Bun 1.4.3",
+  "checks": [
+    {
+      "name": "manifest + sections: brd-authoring",
+      "result": "PASS"
+    },
+    {
+      "name": "manifest + sections: frd-authoring",
+      "result": "PASS"
+    },
+    {
+      "name": "manifest + sections: api-contract-design",
+      "result": "PASS"
+    },
+    {
+      "name": "manifest + sections: architecture-design",
+      "result": "PASS"
+    },
+    {
+      "name": "manifest + sections: data-contract-design",
+      "result": "PASS"
+    },
+    {
+      "name": "manifest + sections: backend-migration-planning",
+      "result": "PASS"
+    },
+    {
+      "name": "exactly six skill entries; no conflicting bundle entry",
+      "result": "PASS"
+    },
+    {
+      "name": "bundle-relative references and generic scope",
+      "result": "PASS"
+    },
+    {
+      "name": "all YAML parses; API template shape + local refs",
+      "result": "PASS"
+    },
+    {
+      "name": "six synthetic excerpts form a coherent trace slice",
+      "result": "PASS"
+    },
+    {
+      "name": "success and error examples satisfy the smoke schema subset",
+      "result": "PASS"
+    },
+    {
+      "name": "negative case rejected: orphan FR parent",
+      "result": "PASS"
+    },
+    {
+      "name": "negative case rejected: orphan API operation",
+      "result": "PASS"
+    },
+    {
+      "name": "negative case rejected: storage enum drift",
+      "result": "PASS"
+    },
+    {
+      "name": "negative case rejected: required wire field drift",
+      "result": "PASS"
+    },
+    {
+      "name": "negative case rejected: unmapped new wire field",
+      "result": "PASS"
+    },
+    {
+      "name": "negative case rejected: missing NFR realization",
+      "result": "PASS"
+    },
+    {
+      "name": "negative sample rejected: invalid enum",
+      "result": "PASS"
+    },
+    {
+      "name": "negative sample rejected: missing required field",
+      "result": "PASS"
+    },
+    {
+      "name": "negative sample rejected: wrong ID type",
+      "result": "PASS"
+    },
+    {
+      "name": "negative sample rejected: empty ID",
+      "result": "PASS"
+    },
+    {
+      "name": "negative sample rejected: unknown field",
+      "result": "PASS"
+    }
+  ],
+  "passed": 22,
+  "failed": 0,
+  "limits": [
+    "Not a full OpenAPI/JSON Schema validator.",
+    "No runtime skill-selection eval or independent agent run.",
+    "Synthetic excerpt checks do not establish application behavior, deployment or migration readiness.",
+    "Mermaid source is inspected, not rendered by this script."
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "evidence_id": "E-12",
+  "result": "PASS",
+  "scope": "Runtime catalog discovery in the current session only",
+  "provenance": "The developer-provided Available skills catalog was observed before manifest reads. This agent-authored transcription was saved later; it is not a raw registry export.",
+  "raw_export_available": false,
+  "count": 6,
+  "skills": [
+    {
+      "name": "brd-authoring",
+      "description": "Create, refine or review a software/product Business Requirements Document (BRD) from business problems, goals, stakeholders and scope. Use for business requirements and release boundaries, not detailed FRD behavior or analytical study documentation.",
+      "path": "C:/Users/84352/.agents/skills/business-analyst-skill/skills/brd-authoring/SKILL.md"
+    },
+    {
+      "name": "frd-authoring",
+      "description": "Create, refine or review a Functional Requirements Document (FRD), system behaviors, business rules and acceptance criteria traced to business requirements. Use for functional specifications and measurable NFRs, not BRD framing, API schemas or analytical study requirements.",
+      "path": "C:/Users/84352/.agents/skills/business-analyst-skill/skills/frd-authoring/SKILL.md"
+    },
+    {
+      "name": "api-contract-design",
+      "description": "Design, revise or review a framework-independent OpenAPI 3.x HTTP API contract from functional requirements, including wire schemas, validation, errors and streaming behavior when required. Use for api-contract.yaml, not controller implementation or data storage design.",
+      "path": "C:/Users/84352/.agents/skills/business-analyst-skill/skills/api-contract-design/SKILL.md"
+    },
+    {
+      "name": "architecture-design",
+      "description": "Create, update or review architecture.md describing components, integrations, deployment, Mermaid diagrams and how design satisfies NFRs. Use for technical architecture documentation and trade-offs, not application implementation or infrastructure changes.",
+      "path": "C:/Users/84352/.agents/skills/business-analyst-skill/skills/architecture-design/SKILL.md"
+    },
+    {
+      "name": "data-contract-design",
+      "description": "Create, refine or review data-contract.md for application entities, API-to-storage mappings, lifecycle, TTL and consistency, including Redis keys when Redis is used. Use for application data contracts, not analytical metric specifications, data analysis or database implementation.",
+      "path": "C:/Users/84352/.agents/skills/business-analyst-skill/skills/data-contract-design/SKILL.md"
+    },
+    {
+      "name": "backend-migration-planning",
+      "description": "Create, update or review migration-plan.md for replacing a backend runtime/framework, especially Express to Laravel, while preserving business behavior, OpenAPI and Data contracts. Use for parity, staged cutover and rollback planning, not executing migrations or redesigning product scope.",
+      "path": "C:/Users/84352/.agents/skills/business-analyst-skill/skills/backend-migration-planning/SKILL.md"
+    }
+  ],
+  "fresh_session_explicit_invocation": "BLOCKED: no independent harness run in this task",
+  "implicit_selection_eval": "BLOCKED: current task explicitly requests all six; not a blind routing evaluation",
+  "not_proof": [
+    "Reading SKILL.md alone",
+    "Prior validation reports in the bundle",
+    "Fixture checks alone"
+  ]
+}

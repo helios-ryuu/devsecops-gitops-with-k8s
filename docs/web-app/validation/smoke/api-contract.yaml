@@ -1,0 +1,157 @@
+# SANDBOX: partial code-observed probe contract, not an accepted business API.
+openapi: 3.1.1
+info:
+  title: NT548 — hợp đồng thử nghiệm hai probes
+  version: 0.1.0
+  description: >-
+    Draft từ handlers tại project commit 2110eddec91bc3e34137c86fef693095c4afb677.
+    Chỉ mô tả request đã tới GET handler và response JSON do handler tạo;
+    không chứng minh HTTP/runtime hoặc ingress access policy. Counter và metrics
+    chưa có contract được xác lập. Examples là dữ liệu tổng hợp, không phải log chạy.
+x-document-control:
+  document-id: TEST-API
+  status: draft
+  date: '2026-11-05'
+  owner-role: Web Dev; approval authority TBD Q-01
+  upstream-versions:
+    TEST-BRD: 0.1.0
+    TEST-FRD: 0.1.0
+  source-refs: [E-05, E-06, E-08]
+  change-log:
+    - version: 0.1.0
+      change: Hai operations code-observed; không thêm endpoint nghiệp vụ hoặc readiness 503.
+      affected-ids: [FR-02, FR-03, getHealth, getReadiness]
+  security-decision: >-
+    Không thấy authentication/authorization trong hai handlers. Chính sách expose
+    ở proxy/cluster và target authorization TBD Q-04. Không coi thiếu security scheme
+    trong lát cắt này là phê duyệt public access hoặc bằng chứng perimeter không có auth.
+  compatibility: >-
+    Không đề xuất breaking change. Thêm dependency-aware readiness, đổi status/body
+    hoặc chuyển owner sang Express phải review consumers/probes và contracts trước.
+x-evidence:
+  - id: E-05
+    location: app/src/app/healthz/route.ts:1-10
+    provenance: code-observed; not HTTP-tested
+  - id: E-06
+    location: app/src/app/ready/route.ts:1-9
+    provenance: code-observed; not HTTP-tested
+x-open-questions:
+  - id: Q-02
+    impact: FR-01 counter UI/data behavior chưa đủ để đặt operations/schema; không tự tạo GET ghi counter.
+  - id: Q-03
+    impact: FR-03 target readiness timeout/dependency/failure status TBD; current code chỉ 200.
+  - id: Q-04
+    impact: Backend ownership/access và FR-04 metrics contract chưa có evidence.
+  - id: Q-05
+    impact: Counter representation và recovery chưa chốt; không có storage/wire promise.
+  - id: Q-07
+    impact: Metrics semantics/targets chưa có; giữ /metrics là gap.
+x-omissions:
+  errors: >-
+    Hai handlers không có error envelope hoặc failure branch được định nghĩa.
+    Không thêm 400/401/403/503 có JSON giả. Lỗi framework/proxy/process chưa có contract evidence.
+  validation: >-
+    Không business inputs/path params/body được đọc hoặc validate. Unknown query/body
+    không được mô tả là bị reject; framework/proxy handling chưa kiểm tra.
+  pagination-filtering-sorting: N/A — operational singleton reports, không có collection.
+  idempotency-concurrency: GET đọc process/time, không mutate business state; không phải claim cho counter.
+  streaming: N/A — không có yêu cầu SSE/event replay trong lát cắt này.
+  limits-rate-limiting: TBD Q-04/Q-07; không có logic handler chứng minh.
+x-validation:
+  checked-scope: Hai responses so với code; parse/ref/shape/examples và cross-document mappings bằng checker cục bộ.
+  unchecked-scope: OpenAPI-aware validation đầy đủ, HTTP/live, public access policy, counter/metrics/migration parity.
+  findings:
+    - id: VAL-07
+      check: Probe FR-operation-wire agreement
+      locations: TEST-FRD 0.1.0 FR-02/03; TEST-API 0.1.0 getHealth/getReadiness
+      expected-vs-observed: 200/status/fields khớp handlers; không nâng readiness thành Redis-ready.
+      impact: Chỉ chứng minh code-aligned draft slice.
+      correction-owner: Web Dev + QA kiểm thử HTTP sau review.
+      result: PASS
+    - id: VAL-08
+      check: Full API completeness and approval
+      locations: FR-01/04; Q-02/Q-03/Q-04/Q-07
+      expected-vs-observed: Có gaps và chưa có approved policy; không invent operations/errors.
+      impact: Không baseline-ready.
+      correction-owner: Web Dev + scope owner TBD.
+      result: BLOCKED
+paths:
+  /healthz:
+    get:
+      operationId: getHealth
+      x-fr-ids: [FR-02]
+      x-rule-ids: [RULE-02]
+      x-ac-ids: [AC-03, AC-04]
+      x-evidence-refs: [E-05]
+      x-implementation: code-observed; not runtime-tested
+      x-commitment: proposed
+      summary: Báo cáo tiến trình ở handler health
+      description: >-
+        Uptime tính bằng giây từ process.uptime(), timestamp từ new Date().toISOString().
+        Không đọc Redis; không xác lập trạng thái các dependency hoặc toàn bộ hệ thống.
+      responses:
+        '200':
+          description: Handler tạo JSON health khi nhận được GET.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthReport'
+              example:
+                status: ok
+                uptime: 12.5
+                timestamp: '2026-11-05T00:00:00.000Z'
+  /ready:
+    get:
+      operationId: getReadiness
+      x-fr-ids: [FR-03]
+      x-rule-ids: [RULE-03]
+      x-ac-ids: [AC-05, AC-06]
+      x-evidence-refs: [E-06]
+      x-implementation: code-observed; not runtime-tested
+      x-commitment: proposed
+      summary: Báo cáo ready theo handler hiện tại
+      description: >-
+        Trả ready/200 mà không kiểm tra Redis. Không có 503 do Redis failure trong
+        handler được đọc. Desired semantics cần Q-03 trước khi thay contract.
+      responses:
+        '200':
+          description: Handler tạo JSON ready khi nhận được GET; không chứng minh dependency-ready.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessReport'
+              example:
+                status: ready
+                timestamp: '2026-11-05T00:00:00.000Z'
+components:
+  schemas:
+    HealthReport:
+      type: object
+      additionalProperties: false
+      required: [status, uptime, timestamp]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        uptime:
+          type: number
+          minimum: 0
+          description: Giây sống của process tại thời điểm handler gọi, có thể là số thập phân.
+        timestamp:
+          type: string
+          format: date-time
+          pattern: 'Z$'
+          description: UTC ISO string do handler tạo; không phải persisted event timestamp.
+    ReadinessReport:
+      type: object
+      additionalProperties: false
+      required: [status, timestamp]
+      properties:
+        status:
+          type: string
+          enum: [ready]
+        timestamp:
+          type: string
+          format: date-time
+          pattern: 'Z$'
+          description: UTC ISO string do handler tạo; không phải Redis health status.

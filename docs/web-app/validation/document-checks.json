@@ -1,0 +1,230 @@
+{
+  "run_at_utc": "2026-11-05T04:29:32.050141+00:00",
+  "tool": "Python stdlib + native Bun YAML parser; targeted checker written for this validation task",
+  "counts": {
+    "PASS": 28,
+    "BLOCKED": 6,
+    "FAIL": 0
+  },
+  "checks": [
+    {
+      "name": "Git branch, base and documentation-only content scope",
+      "result": "PASS",
+      "scope": "repository safety",
+      "detail": "Baseline tracked hashes unchanged; all changed/untracked paths inside docs/web-app/validation; refs remain pinned."
+    },
+    {
+      "name": "Current-session runtime catalog record is complete and qualified",
+      "result": "PASS",
+      "scope": "record integrity; not independent discovery",
+      "detail": "Recorded catalog advertises six skills; this check validates the transcribed record, not a new discovery query."
+    },
+    {
+      "name": "Bundle pin and skill file integrity",
+      "result": "PASS",
+      "scope": "artifact/static",
+      "detail": "Captured bundle skill/template/shared files match pinned HEAD and remain unchanged."
+    },
+    {
+      "name": "Guided sequential application log and upstream artifacts",
+      "result": "PASS",
+      "scope": "artifact/static",
+      "detail": "Six guided steps, BRD first; creation/upstream hashes preserved and final artifacts match documented draft review revisions. Not an independent harness trace."
+    },
+    {
+      "name": "Smoke Markdown document controls and unresolved questions visible",
+      "result": "PASS",
+      "scope": "artifact/static",
+      "detail": "Five Markdown smoke outputs have draft/version/date/owner/source/upstream/change/validation controls; API checked separately."
+    },
+    {
+      "name": "Local links and table boundaries",
+      "result": "PASS",
+      "scope": "artifact/static",
+      "detail": "All local Markdown link targets exist; table rows used by this checker parse. No rendered-layout claim."
+    },
+    {
+      "name": "YAML parser executes on actual NT548 artifacts",
+      "result": "PASS",
+      "scope": "YAML syntax",
+      "detail": "Bun 1.4.3: parsed OpenAPI draft and captured offline Kustomize YAML; not a full OpenAPI validator."
+    },
+    {
+      "name": "Partial OpenAPI structure, local refs and example validation",
+      "result": "PASS",
+      "scope": "targeted subset; not full OAS certification",
+      "detail": "Targeted structure/ref checks and two synthetic examples pass supported schema subset only."
+    },
+    {
+      "name": "BR/FR/operation/source/schema/Data/NFR/version trace slice",
+      "result": "PASS",
+      "scope": "cross-document structural and source subset",
+      "detail": "condition checked"
+    },
+    {
+      "name": "RULE/AC links and migration inventory/readiness limits",
+      "result": "PASS",
+      "scope": "artifact/static",
+      "detail": "RULE/AC references resolve and migration names all invariants with not-run/gap status. Not proof of semantic/runtime parity."
+    },
+    {
+      "name": "Offline Kustomize render confirms namespace/selector evidence",
+      "result": "PASS",
+      "scope": "configuration evidence",
+      "detail": "Offline render: 7 resources in production-app, including Redis and NetworkPolicy; contradicts README database namespace claim. No live enforcement test."
+    },
+    {
+      "name": "Current probe semantics and unknown Redis contract remain bounded",
+      "result": "PASS",
+      "scope": "artifact/static",
+      "detail": "Current handler evidence contains no dependency/error branch; missing business/metrics operations and unknown TTL remain explicit."
+    },
+    {
+      "name": "Negative: orphan FR parent",
+      "result": "PASS",
+      "scope": "in-memory mutation detection",
+      "detail": "Injected inconsistency detected in memory; files unchanged."
+    },
+    {
+      "name": "Negative: orphan API FR reference",
+      "result": "PASS",
+      "scope": "in-memory mutation detection",
+      "detail": "Injected inconsistency detected in memory; files unchanged."
+    },
+    {
+      "name": "Negative: enum mismatch with handler",
+      "result": "PASS",
+      "scope": "in-memory mutation detection",
+      "detail": "Injected inconsistency detected in memory; files unchanged."
+    },
+    {
+      "name": "Negative: number to string drift",
+      "result": "PASS",
+      "scope": "in-memory mutation detection",
+      "detail": "Injected inconsistency detected in memory; files unchanged."
+    },
+    {
+      "name": "Negative: missing required field",
+      "result": "PASS",
+      "scope": "in-memory mutation detection",
+      "detail": "Injected inconsistency detected in memory; files unchanged."
+    },
+    {
+      "name": "Negative: unmapped wire field",
+      "result": "PASS",
+      "scope": "in-memory mutation detection",
+      "detail": "Injected inconsistency detected in memory; files unchanged."
+    },
+    {
+      "name": "Negative: timestamp UTC encoding drift",
+      "result": "PASS",
+      "scope": "in-memory mutation detection",
+      "detail": "Injected inconsistency detected in memory; files unchanged."
+    },
+    {
+      "name": "Negative: missing NFR control and gap",
+      "result": "PASS",
+      "scope": "in-memory mutation detection",
+      "detail": "Injected inconsistency detected in memory; files unchanged."
+    },
+    {
+      "name": "Negative: transient field made persistent",
+      "result": "PASS",
+      "scope": "in-memory mutation detection",
+      "detail": "Injected inconsistency detected in memory; files unchanged."
+    },
+    {
+      "name": "Negative: upstream version drift",
+      "result": "PASS",
+      "scope": "in-memory mutation detection",
+      "detail": "Injected inconsistency detected in memory; files unchanged."
+    },
+    {
+      "name": "Negative: unapproved FR commitment promotion",
+      "result": "PASS",
+      "scope": "in-memory mutation detection",
+      "detail": "Injected inconsistency detected in memory; files unchanged."
+    },
+    {
+      "name": "Negative sample: invalid enum",
+      "result": "PASS",
+      "scope": "schema subset sample rejection",
+      "detail": "condition checked"
+    },
+    {
+      "name": "Negative sample: missing timestamp",
+      "result": "PASS",
+      "scope": "schema subset sample rejection",
+      "detail": "condition checked"
+    },
+    {
+      "name": "Negative sample: negative uptime",
+      "result": "PASS",
+      "scope": "schema subset sample rejection",
+      "detail": "condition checked"
+    },
+    {
+      "name": "Negative sample: invalid date",
+      "result": "PASS",
+      "scope": "schema subset sample rejection",
+      "detail": "condition checked"
+    },
+    {
+      "name": "Negative sample: unexpected field",
+      "result": "PASS",
+      "scope": "schema subset sample rejection",
+      "detail": "condition checked"
+    },
+    {
+      "name": "Fresh-session explicit invocation",
+      "result": "BLOCKED",
+      "scope": "not executed / evidence absent",
+      "detail": "No independent harness run; current-session guided application only."
+    },
+    {
+      "name": "Blind implicit skill routing",
+      "result": "BLOCKED",
+      "scope": "not executed / evidence absent",
+      "detail": "Prompt explicitly requested all six; no isolated routing evaluation."
+    },
+    {
+      "name": "Full OpenAPI-aware validation",
+      "result": "BLOCKED",
+      "scope": "not executed / evidence absent",
+      "detail": "Default Python lacks yaml/jsonschema/openapi_spec_validator; Bun subset checks do not certify OAS."
+    },
+    {
+      "name": "Mermaid rendering",
+      "result": "BLOCKED",
+      "scope": "not executed / evidence absent",
+      "detail": "Diagram source reviewed; no renderer executed."
+    },
+    {
+      "name": "Application HTTP/Redis/load and live cluster",
+      "result": "BLOCKED",
+      "scope": "not executed / evidence absent",
+      "detail": "Code/config inspection and offline render only; no app/cluster mutation or runtime tests."
+    },
+    {
+      "name": "Migration plan and cutover readiness",
+      "result": "BLOCKED",
+      "scope": "not executed / evidence absent",
+      "detail": "Express source, target decision, accepted baselines, recovery/parity evidence absent Q-04/Q-06."
+    }
+  ],
+  "limits": [
+    "Same agent authored and reviewed artifacts; no independent semantic evaluator.",
+    "Metadata/keyword/hash/targeted source checks cannot prove full cross-document semantics.",
+    "Schema checker supports only keywords actually used; unsupported keywords fail, not silently pass.",
+    "Expected source contradictions are reported separately in evidence-register/report, not counted as checker failures.",
+    "No application execution, deployment, migration, external messaging or production access."
+  ],
+  "smoke_artifact_sha256": {
+    "BRD.md": "06ec2d3734cc6d58ecc5b1d206e8ec114599690d4d0f2a55a77b34009b3046eb",
+    "FRD.md": "d5b108dd1e61a984697286b7eb1b14752b68b2daf142c43060a582b67eb4939c",
+    "api-contract.yaml": "3d59c412a113fe74f2ae046e41581e59c2d3fc3ffb50dbdc6a91c61fc75fbf85",
+    "architecture.md": "04a02ba3d4935ab703a24751000a6d57ca3534bc7a5657fed68c2111b5894f7b",
+    "data-contract.md": "e887b9a797e217693033c071e667fa074bafa6e403ddf6a51bd8830f6c6489ff",
+    "migration-plan.md": "171ba9262340365f822fb9954110aa7e1bd312405b6dff5a79c8f94719db5d94"
+  }
+}
