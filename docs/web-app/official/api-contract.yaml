@@ -1,0 +1,282 @@
+# Official Documentation — giữ nguyên wire contract từ practical-test.
+# Xem README.md và FRD.md để phân biệt current code với proposed target.
+openapi: 3.1.1
+info:
+  title: AI Agent Office Monitor — Operational API
+  version: 0.1.0
+  description: >-
+    Contract HTTP độc lập framework, dùng để phát triển và review Web App.
+    Health và success body của readiness giữ code-observed Next handlers.
+    Redis-aware readiness/503 và metrics là target proposed, chưa runtime-verified.
+    Counter API còn BLOCKED Q-101/Q-103. Access boundary còn Q-102;
+    tài liệu Official không tự phê duyệt public exposure hoặc deployment.
+x-document-control:
+  document-id: WEB-API
+  document-version: 1.0.0
+  status: review
+  date: '2026-11-06'
+  owner-role: Web Fullstack Dev; requirement acceptance authority Q-100
+  upstream-versions:
+    WEB-BRD: 1.0.0
+    WEB-FRD: 1.0.0
+  source-refs:
+    - E-100 requested scope; registry tại README.md
+    - E-101 README section 1.2, healthz/ready/metrics
+    - E-103 Next handlers tại source snapshot 2110eddec91bc3e34137c86fef693095c4afb677
+  derived-from: ../validation/practical-test/03-api-contract.yaml — PT-API document 0.1.0
+  registry-ref: README.md
+  architecture-ref: architecture.md — ADR-100, ADR-102, ADR-104
+  data-ref: data-contract.md
+  change-log:
+    - >-
+      Document 1.0.0: biên tập Official, cập nhật navigation và cách giải thích.
+      API info.version vẫn 0.1.0; không đổi paths, operations, schemas, responses,
+      metric catalog hoặc examples của contract nguồn.
+  security-decision: >-
+    BLOCKED Q-102. Không assert security scheme hoặc security: []. OpenAPI tools
+    có thể hiển thị operations như unsecured. Phải chốt probe/scrape/browser
+    exposure policy trước deployment; auth sản phẩm Future không giải quyết việc này.
+x-reading-guide:
+  current-code: /healthz và /ready là Next GET handlers; ready hiện luôn200.
+  target-design: /ready check init + Redis + drain; /metrics xuất process-local registry.
+  source-vs-target: Proposed responses không chứng minh current implementation có nhánh lỗi đó.
+  versions: openapi là dialect; info.version là API version; document-version là version tài liệu.
+  links:
+    overview: README.md
+    behavior: FRD.md
+    architecture: architecture.md
+    data: data-contract.md
+x-evidence:
+  - id: E-103
+    kind: Fact
+    provenance: code-observed, not runtime-tested
+    finding: Chỉ GET /healthz và /ready được quan sát; ready luôn tạo200.
+  - id: ADR-102
+    kind: Decision
+    status: proposed
+    finding: Init, bounded Redis check và drain là readiness target;503 là proposed delta.
+  - id: ADR-104
+    kind: Decision
+    status: proposed
+    finding: Metrics scrape không phụ thuộc Redis; chỉ process-local HTTP/process data.
+x-open-questions:
+  - id: Q-101
+    blocking-fr-ids: [FR-101]
+    question: Chốt visit trigger, uniqueness, refresh/bots/retry/idempotency trước counter operations.
+    owner: Web owner
+  - id: Q-102
+    blocking-fr-ids: [FR-102, FR-103, FR-104]
+    question: Chốt integration access, origins và exposure; future product auth không thay quyết định này.
+    owner: Web owner and Platform Lead
+  - id: Q-104
+    question: Redis check deadline/depth, shutdown/drain và NFR thresholds còn TBD.
+    owner: Web and Platform and QA
+  - id: Q-106
+    question: Duyệt metric names/units/labels và scrape integration.
+    owner: Web and QA and Platform
+x-coverage:
+  included:
+    FR-102: getLiveness
+    FR-103: getReadiness
+    FR-104: getApplicationMetrics
+  blocked:
+    FR-101: Chưa có route đến khi Q-101 được chốt; GET không increment visitor state.
+  not-http:
+    FR-100: HTML page, ngoài JSON API
+    FR-105: Packaging và runtime configuration
+    FR-106: Conditional UI đọc browser snapshot theo ADR-101
+    FR-107: Conditional internal browser simulator
+    FR-108: Conditional internal reducer
+    FR-109: Conditional 3D UI
+    FR-110: Conditional derived animation
+    FR-111: Conditional recent browser activity
+x-wire-rules:
+  - Các GET operations được mô tả không có request body hoặc path parameters.
+  - Không định nghĩa query parameters/business headers; consumer không phụ thuộc behavior chưa được đặc tả.
+  - Required response fields không null; additional response fields được phép cho compatible additions, consumer bỏ qua field không biết.
+  - Timestamps là UTC RFC3339 string với Z; uptime là số giây không âm, có thể fractional.
+  - Pagination/sort/idempotency keys N/A cho các reads này; rate limits/access failures còn Q-102.
+  - JSON errors ở đây do app tạo; ingress/network/404/405 behavior chưa baseline.
+  - Không có agent CRUD/simulator control/event ingestion/auth/streaming operation.
+x-optional-streaming:
+  status: deferred
+  rationale: SSE optional, chưa selected; không event-stream endpoint hoặc replay guarantee.
+  gates: >-
+    Nếu chọn, chốt identity/access, envelope/event names/cursor/order, heartbeat/retry,
+    Last-Event-ID, resnapshot/replay/retained source, pre-header và in-stream errors,
+    proxy buffering/timeouts, fan-out và drain. Redis Pub/Sub một mình không cung cấp replay.
+    Reference /stream không được tự đưa vào contract.
+x-validation:
+  checked-scope: Wire definitions giữ nguyên nguồn; kết quả kiểm tra bản Official ghi tại README.md.
+  unchecked-scope: Runtime conformance, deployment access, counter API, Prometheus parser integration và optional streaming.
+  findings:
+    - 'BLOCKED: release/access/counter decisions Q-100/Q-101/Q-102/Q-103.'
+    - Proposed additions không là implementation evidence; historical validators tại evaluation-report không tự chứng nhận bản Official.
+paths:
+  /healthz:
+    get:
+      operationId: getLiveness
+      x-fr-ids: [FR-102]
+      x-scope-class: Mandatory
+      x-design-status: code-observed response; untested
+      x-access-status: BLOCKED Q-102, technical probe consumer
+      summary: Kiểm tra process còn đáp ứng, độc lập với Redis
+      description: No business state mutation. A nonresponding process is detected by caller timeout, not a promised JSON response.
+      responses:
+        '200':
+          description: HTTP process can answer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Liveness'
+              example:
+                status: ok
+                uptime: 12.5
+                timestamp: '2026-11-05T03:00:00.000Z'
+  /ready:
+    get:
+      operationId: getReadiness
+      x-fr-ids: [FR-103]
+      x-scope-class: Mandatory
+      x-design-status: proposed dependency semantics; current implementation always 200
+      x-access-status: BLOCKED Q-102, technical readiness consumer
+      summary: Kiểm tra điều kiện phục vụ theo target design
+      description: >-
+        Proposed 200 only after initialization and successful bounded Redis check,
+        while not draining. No counter increment or initialization/reset of business
+        keys. Exact Redis deadline TBD Q-104; connection-only versus write-check
+        depth requires approval. Proposed PING is not proof of successful writes.
+      responses:
+        '200':
+          description: Serving prerequisites satisfied at check time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Readiness'
+              example:
+                status: ready
+                timestamp: '2026-11-05T03:00:00.000Z'
+        '503':
+          description: Proposed dependency failure, initialization incomplete or draining.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                redisUnavailable:
+                  value:
+                    error:
+                      code: DEPENDENCY_UNAVAILABLE
+                      message: Serving dependency unavailable
+                draining:
+                  value:
+                    error:
+                      code: NOT_READY
+                      message: Application not ready
+  /metrics:
+    get:
+      operationId: getApplicationMetrics
+      x-fr-ids: [FR-104]
+      x-scope-class: Mandatory
+      x-design-status: proposed; source-stated route, not implemented
+      x-access-status: BLOCKED Q-102, infrastructure scraper only proposed
+      summary: Xuất số liệu ứng dụng cho scraper
+      description: >-
+        Proposed text exposition version 0.0.4. Process uptime gauge in seconds
+        and completed HTTP request counter, collected per process. No global
+        aggregate visitor total derived from process counters. Redis failure
+        does not prevent registry export. Metric vocabulary below awaits Q-106.
+      x-metric-catalog:
+        - name: web_app_process_uptime_seconds
+          type: gauge
+          unit: seconds
+          labels: []
+          source: monotonic process lifetime
+        - name: web_app_http_requests_total
+          type: counter
+          unit: requests
+          labels: [method, route, status_code]
+          source: completed requests per process
+          allowed-values: >-
+            method from registered HTTP methods with OTHER bucket; route from
+            registered templates with unmatched bucket; status_code valid HTTP
+            status. Never use raw URL/query, agent IDs or task IDs. Reset on restart.
+      responses:
+        '200':
+          description: Scrapeable process registry, even if Redis is unavailable.
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                const: 'text/plain; version=0.0.4; charset=utf-8'
+              description: Proposed explicit exposition format.
+          content:
+            text/plain:
+              schema:
+                type: string
+                minLength: 1
+              example: |
+                # HELP web_app_process_uptime_seconds Process uptime in seconds.
+                # TYPE web_app_process_uptime_seconds gauge
+                web_app_process_uptime_seconds 12.5
+                # HELP web_app_http_requests_total Completed HTTP requests.
+                # TYPE web_app_http_requests_total counter
+                web_app_http_requests_total{method="GET",route="/healthz",status_code="200"} 1
+        '503':
+          description: Registry temporarily unavailable, proposed application error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: METRICS_UNAVAILABLE
+                  message: Metrics unavailable
+components:
+  schemas:
+    UtcTimestamp:
+      type: string
+      format: date-time
+      pattern: 'Z$'
+      description: UTC timestamp; examples are synthetic, not observed traffic.
+    Liveness:
+      type: object
+      required: [status, uptime, timestamp]
+      additionalProperties: true
+      properties:
+        status:
+          type: string
+          const: ok
+        uptime:
+          type: number
+          minimum: 0
+          description: Seconds since process start, possibly fractional.
+        timestamp:
+          $ref: '#/components/schemas/UtcTimestamp'
+    Readiness:
+      type: object
+      required: [status, timestamp]
+      additionalProperties: true
+      properties:
+        status:
+          type: string
+          const: ready
+        timestamp:
+          $ref: '#/components/schemas/UtcTimestamp'
+    Error:
+      type: object
+      required: [error]
+      additionalProperties: true
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          additionalProperties: true
+          properties:
+            code:
+              type: string
+              enum: [DEPENDENCY_UNAVAILABLE, NOT_READY, METRICS_UNAVAILABLE]
+            message:
+              type: string
+              minLength: 1
+              description: Human-readable, no secrets or dependency address; clients use code.
