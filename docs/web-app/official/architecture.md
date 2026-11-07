@@ -1,215 +1,150 @@
-# Architecture — Thành phần, luồng xử lý và tích hợp Web App
+# Architecture — Next.js Fullstack, V1/V2 và Redis
 
 | Document ID | Document version | Status | Date | Owner role | Sources | Upstream |
 |---|---|---|---|---|---|---|
-| WEB-ARCH | 1.0.0 | review | 2026-11-06 | Web Fullstack Dev / Solution Architect; Platform phối hợp | E-100..E-108 tại [registry](README.md) | WEB-BRD/WEB-FRD1.0.0; WEB-API document1.0.0/API0.1.0; WEB-DATA1.0.0 được đối chiếu; nguồn PT-ARCH0.1.0 |
+| WEB-ARCH | 1.1.0 | review | 2026-11-07 | Web Dev; Platform phối hợp | E-103/E-104/E-109 và [registry](README.md) | WEB-BRD/FRD/DATA1.1.0; WEB-API document 1.1.0/API 0.2.0; WEB-ARCH 1.0.0 |
 
-Change log 1.0.0: biên tập từ [Architecture practical](../validation/practical-test/04-architecture.md); tách hiện trạng, target proposed, luồng xử lý và deployment. Giữ components, ADR-100..ADR-104, NFR controls và các giới hạn. Các diagrams mô tả code/config hoặc design có nhãn rõ; không chứng minh live deployment.
+Change log 1.1.0: ADR-100 chuyển sang Next Fullstack đã chốt; không target Express trong release. Thêm V1/V2, atomic page-view registration, probes 2 s/3 s/≈50 s, bốn metrics, Text Dashboard và readiness availability trade-off. Giữ ADR/NFR IDs. [PT-ARCH0.1.0](../validation/practical-test/04-architecture.md) chỉ là nguồn lịch sử.
 
-## 1. Ranh giới trách nhiệm
+## 1. Current evidence khác target
 
-| Boundary | Sở hữu |
-|---|---|
-| Web App | UI, application HTTP/domain logic, Redis adapter và application metrics |
-| Platform | Routing, K3s/Tailscale/Traefik, policy, container delivery và scrape infrastructure |
-| QA/Observability | Chạy test/load, đánh giá và báo cáo bằng chứng; Web cung cấp behavior/metrics kiểm tra được |
-
-CI/CD và cluster là các ràng buộc tích hợp, không biến thành product feature của Web. Redis là external runtime nhưng adapter và ý nghĩa dữ liệu counter thuộc ứng dụng. Không đưa credential Redis vào browser.
-
-## 2. Hiện trạng được quan sát
-
-| Thành phần | State | Evidence / giới hạn |
+| Thành phần | Current observed / configured | Target V1/V2, không phải kết quả test |
 |---|---|---|
-| Next16.4.3 / React19.3.0 | Dependency configured; starter code-observed | E-103; chưa chứng minh UI chức năng ngoài starter hoặc runtime |
-| GET /healthz và /ready | Code-observed tại Next handlers | Ready hiện luôn 200, không Redis check; chưa HTTP-tested |
-| Docker standalone, port3000, UID10001:10001 | Configured | E-104; chưa build/run |
-| Redis service/env/NetworkPolicy | Configured external | E-104; app chưa Redis client; root Kustomize production-app |
-| Express/prom-client/Redis application integration | Planned/intended | README + brief; chưa thấy implementation/dependency trong app |
-| Three.js/simulator/agent dashboard | Proposed extension | Chưa selected Q-100, chưa source |
-| SSE | Optional/deferred | Không thêm connection manager/broker vào candidate topology |
-| Live deployment | Unknown | Không suy running từ manifests |
+| Next App Router | Next starter UI và hai probe handlers | Next Fullstack giữ UI và server APIs trong cùng app; không Express |
+| Ready | Handler luôn trả 200; chưa đọc Redis | Init/config + Redis check tối đa 2 s + not draining; fail 503 |
+| App Deployment | Standalone port 3000, 2 replicas, non-root; chưa startupProbe/explicit timeout 3 s | Probe integration theo NFR-101, Platform xác nhận timing tuple |
+| Redis | Separate Deployment/Service/env; chưa volume/PVC trong manifest đọc | Total no TTL, dedup 600 s, persistence/backup/recovery plan |
+| Counter/metrics/Office | Chưa thấy source implementation | APIs và bốn metric families V1; Office basic V1/full V2 |
+
+Không claim live cluster, performance hoặc correctness từ files. C-100 đã giải quyết về release stack; C-101/C-102 và implementation gap C-103 vẫn được ghi tại registry. Không sửa application/manifests ở lượt này.
+
+## 2. Boundaries và components
 
 ```mermaid
 flowchart LR
-    B["Browser"] -->|"HTTP HTML"| N["Next starter UI - code observed"]
-    P["Probe consumer - configured"] -.->|"GET healthz / ready :3000"| H["Next route handlers - code observed"]
-    N --- H
-    D["Docker standalone - configured"] --- N
-    C["REDIS_HOST / PORT - configured"] -.-> N
-    R["Redis Service - configured only"]
+    V["Viewer"] -->|"HTTPS website / Office + counter API"| Edge["Ingress / access boundary - Platform"]
+    Edge --> N["Next Fullstack - UI and server APIs"]
+    Infra["Authorized infra / admin"] -->|"restricted probes / metrics"| N
+    N -->|"Redis protocol - server only"| R["Separate Redis service"]
+    Mon["Existing CPU / RAM / Kubernetes monitoring"] -.-> Infra
 ```
 
-Không vẽ cạnh Next→Redis như kết nối implementation hiện tại vì chưa có client. Next có cả UI và hai HTTP probes, nhưng điều đó không chứng minh đã thay Express. C-100/C-101/C-102 ghi rõ gap Express, Node version strings và Redis namespace. Trong root config được đọc, resources cùng production-app nên không tự gọi hostname `redis-service` là lỗi cross-namespace.
+| Component | FR / Delivery Stage | Responsibility / interface | Data ownership |
+|---|---|---|---|
+| Next UI / Text Dashboard | FR-100/106/109/110; V1 basic, V2 full | HTML/client UI; Text Dashboard luôn đọc được state khi scene lỗi; keyboard | Presentation, không Redis credentials |
+| Browser Demo Engine + Reducer | FR-107/108; V1 basic, V2 full | 3 Agents, 5–8 s, 30 tasks/run; one writer; Reset Demo/new run; stage guards | ENT-101..ENT-103 transient run |
+| Scene Adapter | FR-109/110; V1 basic, V2 full | Snapshot→poses; dispose/unmount; không quyết định task result | Derived render state |
+| Recent Activity | FR-111 V2 only | 20 accepted events, seq giảm; không persisted history | Projection từ ENT-103, không V1 panel/buffer |
+| Next Route Handlers / HTTP Adapter | FR-101..104; V1, V2 | /api/visits GET/POST, /healthz, /ready, /metrics; serialize theo API 0.2.0 | HTTP transient receipts/errors |
+| Counter Use Case + Redis Port | FR-101; V1, V2 | Validate requestId, atomic dedup+increment+receipt; exception mapping | ENT-100 total và request dedup |
+| Process Metrics Registry | FR-104; V1, V2 | Four metric families; bounded labels; không đọc business total khi scrape | Per-process, reset khi process restart |
+| Redis Runtime / recovery | FR-101/103, NFR-104 | Separate service; Platform storage/backup/restore, app encoding/TTL logic | Total và receipt keys; không agent/task store |
 
-## 3. Kiến trúc dự kiến và components
+Port là giao diện domain/storage/scene nội bộ; adapter nối với Next, Redis hoặc rendering. Giữ business rules ngoài HTTP serialization để có thể thay server runtime tương lai, không tạo service/backend process mới trong release.
 
-Các phần sau là **proposed design**. Extension chỉ active khi Q-100 được chốt; Next/Express topology và probe ownership còn Q-108.
+## 3. Luồng page view và retry
+
+```mermaid
+sequenceDiagram
+    participant B as Browser document
+    participant N as Next API
+    participant R as Redis registration boundary
+    B->>B: New load/F5 -> new requestId
+    B->>N: POST /api/visits {requestId}
+    N->>R: Atomic register(totalKey, dedupKey, requestId)
+    alt Existing valid receipt (<600s)
+        R-->>N: Original total, no increment, expiry unchanged
+        N-->>B: 200 replayed=true
+    else New ID and initialized total
+        R->>R: Increment total + store receipt with TTL600s
+        R-->>N: Original receipt total
+        N-->>B: 200 replayed=false
+    else Redis error / missing total / uncertain write
+        N-->>B: Applicable 503, unavailable or outcome unknown
+    end
+    Note over B,N: Retry same document uses SAME ID, never fresh ID to hide failure
+```
+
+F5 khác request retry: mỗi load có ID mới; React re-render/double effect trong cùng load phải dùng cùng ID. GET đọc total không tăng. Reset Demo chỉ reset run browser, không POST visit hoặc reset total. Không lưu IP/cookie/account identity hoặc claim unique visitor.
+
+**Design dẫn xuất cho atomic registration:** server-side Redis script/function hoặc cơ chế tương đương thực hiện lookup receipt, validate types/state, increment và store receipt như một unit không interleave giữa 2 Next replicas. Không dùng chuỗi client `GET→INCR→SET` rời rạc hoặc local-memory dedup. Prevalidate trước writes; preserve decimal precision; lỗi sau write/partial failures cần fault tests, không suy rollback/durability chỉ vì script atomic. Xem [Redis scripting semantics](https://redis.io/docs/latest/develop/programmability/eval-intro/) và Data cho giới hạn.
+
+Dedup window 600 s, không refresh trên replay. Total không expiry/reset. Window hết, key mất/evicted hoặc recovery mất state thì không bảo đảm exactly-once. Client dừng automatic retry sau 600 s từ first attempt và hiện outcome unknown; không tự new ID để resend một load cũ.
+
+## 4. Simulator và fallback
 
 ```mermaid
 flowchart LR
-    V["Demo viewer"] -->|"HTTPS Web UI"| W["Web App boundary - proposed"]
-    I["Traefik / K3s - external"] -->|"HTTP routing / probes"| W
-    M["Prometheus infrastructure - external"] -->|"GET metrics"| W
-    W -->|"Redis protocol - app-owned adapter"| R["Redis runtime - external"]
-    D["Delivery platform - external"] -.->|"Container / runtime config"| W
-    Q["QA / reporting"] -.->|"Behavior và metric evidence"| W
+    Sim["One simulator writer - 5-8s"] --> Red["Stage-aware validated reducer"]
+    Red --> S["Run snapshot - 3 agents, <=30 tasks"]
+    S --> T["Text Dashboard + keyboard + Reset Demo"]
+    S --> Scene["3D / animations, V1 basic or V2 full"]
+    S -.-> Recent["Recent20events - V2 only"]
+    Scene -. "WebGL failure" .-> T
 ```
 
-| Component | Responsibility / FRs | Interface | Dữ liệu và dependency | Hướng xây dựng |
-|---|---|---|---|---|
-| Next UI | FR-100/FR-106/FR-109..FR-111; text usable nếu scene lỗi | HTML/React snapshot | Presentation state, không Redis secrets | BUILD UI; ADAPT visual ideas |
-| Browser Demo Engine — conditional | FR-107/FR-108; một writer và reducer | Internal SimEvent→Snapshot | ENT-101..ENT-103 transient/run | BUILD simulator tối thiểu, không server ingestion |
-| Scene Adapter — conditional | FR-109/FR-110; state→poses và lifecycle dispose | Snapshot + agent IDs→ScenePort | Derived render state | ADAPT rig/renderer, không copy workers.js wholesale |
-| Application HTTP Adapter | FR-102/FR-103/FR-104 | getLiveness/getReadiness/getApplicationMetrics | Transient statuses và per-process registry | Express proposed; Next handlers current |
-| Counter Use Case + Redis Port | FR-101 | HTTP TBD Q-101; increment/read nội bộ | ENT-100 | BUILD, không phụ thuộc ORM/framework domain types |
-| Metrics Registry | FR-104, NFR-105 | Prometheus text; completed-request hooks | Process-local series, không business visitor total | BUILD/chọn thư viện tương thích sau |
-| Redis Runtime | FR-101/FR-103 | Redis adapter theo config | Counter authoritative trong loss limits còn Q-103 | External configured; không thêm broker |
+V1 không hiện Agent completed/failed hoặc FR-111. Chi tiết basic finish→Idle vẫn là design proposal Q-107 ở FRD; V2 có terminal/ref/reset rules đầy đủ. Một running task/Agent, task 30 là giới hạn của cả run; không âm thầm new run để tiếp tục. Reset Demo/reload tạo run mới, clear old run/timers, bootstrap 3 Agents. Reload cũng là page view mới; Reset Demo không là visit.
 
-```mermaid
-flowchart TB
-    subgraph Browser["Browser - proposed; demo conditional"]
-        UI["Next dashboard / mandatory web UI"]
-        SIM["Simulator - one writer"] -->|"Internal versioned events"| RED["Validated reducer"]
-        RED --> S["Demo snapshot / recent buffer"]
-        S --> UI
-        S --> SC["Scene Adapter - 2-3 chibi"]
-    end
-    subgraph App["Backend - Express proposed, not implemented"]
-        HTTP["HTTP contract adapter"] --> UC["Counter use case - semantics gated"]
-        UC --> RP["Redis Port"]
-        HTTP -->|"readiness check"| RP
-        HTTP --> MET["Per-process metrics registry"]
-    end
-    UI -.->|"Counter HTTP contract TBD Q-101"| HTTP
-    RP -->|"Redis protocol"| DB["Redis runtime"]
-```
+Snapshot là nguồn cho dashboard/scene; animation không sửa domain. Unmount/remount phải cleanup và ngăn duplicate engines.3D lỗi không làm task failed; Text Dashboard và keyboard vẫn dùng cùng snapshot, không bổ sung renderer 2D/SSE/real agents.
 
-Simulator không gọi agents backend API trong ADR-101. Redis không được chọn làm agent/task/event store. HTTP/Data contract định nghĩa ý nghĩa trước implementation; Express/Laravel defaults không là canonical schema.
+## 5. Readiness, startup và ảnh hưởng AI Office
 
-### Các thuật ngữ tại ranh giới dữ liệu
-
-| Thuật ngữ | Ý nghĩa trong kiến trúc này |
-|---|---|
-| Reducer / snapshot | Reducer validate event rồi cập nhật một trạng thái nhất quán; dashboard/scene chỉ đọc snapshot đã commit |
-| Port / adapter | Port là giao diện nội bộ cần giữ ổn định; adapter nối nó với HTTP framework, Redis hoặc rendering cụ thể |
-| Derived render state | Pose/animation được suy ra từ domain snapshot, không là nguồn cập nhật task/agent |
-| BUILD / ADAPT / SKIP | Tự xây phần cần thiết / điều chỉnh có chọn lọc / không đưa vào phạm vi; chưa có nghĩa source đã được reuse |
-
-## 4. Luồng xử lý chính và lỗi
-
-### Simulator → snapshot → UI/scene
-
-```mermaid
-sequenceDiagram
-    participant Sim as Browser Simulator - conditional
-    participant Red as Reducer
-    participant Store as Browser Snapshot
-    participant UI as Dashboard and Activity
-    participant Scene as Scene Adapter
-    Sim->>Red: task.started(runId, seq, agentId, taskId)
-    Red->>Red: Validate next seq, idle guard, new task
-    alt Valid event
-        Red->>Store: Atomic local update: task + agent + buffer
-        Store-->>UI: Consistent snapshot
-        Store-->>Scene: working -> typing + text label
-    else Invalid, gap or duplicate
-        Red-->>Sim: Reject + diagnostic, or duplicate no-op
-        Note over Store,Scene: No inconsistent state or extra activity
-    end
-```
-
-RULE-104..RULE-108 ở FRD sở hữu transitions/guards. Data sở hữu logical fields và commit boundary, không thêm API event ingestion.
-
-### Readiness khi Redis bình thường, lỗi và phục hồi
-
-```mermaid
-sequenceDiagram
-    participant Probe as Probe Consumer
-    participant API as HTTP Adapter - proposed behavior
-    participant Redis as Redis Port / Service
-    Probe->>API: getReadiness
-    API->>Redis: Bounded dependency check - deadline Q-104
-    alt Initialized, check successful, not draining
-        Redis-->>API: Success
-        API-->>Probe: 200 ready + UTC timestamp
-    else Timeout, error, initializing or draining
-        API-->>Probe: 503 applicable Error code - proposed
-        Note over API,Redis: No visit increment or business key reset
-    end
-    Probe->>API: getLiveness while Redis down
-    API-->>Probe: 200 ok if process responds
-    Note over Probe,Redis: Next successful ready check may return 200 after recovery
-```
-
-PING chỉ là candidate check, không chứng minh write permission. Check depth/deadline còn Q-104. Counter success/failure sequence chưa thể chốt trigger/retry trước Q-101; Data vẫn phân biệt atomic increment và timeout sau write.
-
-## 5. Deployment và integration contract
-
-```mermaid
-flowchart TB
-    B["Browser"] -->|"HTTPS"| E["External ingress / routing owner"]
-    E -->|"HTML / assets"| F["Next frontend - retained proposal"]
-    E -.->|"API / counter routing TBD Q-108"| A["Express backend - proposed only"]
-    P["Probe consumers"] -.->|"healthz / ready ownership TBD"| A
-    M["External scraper"] -.->|"metrics access Q-102"| A
-    A -->|"Proposed adapter connection"| R["Redis service - configured"]
-```
-
-| Environment / node | Network/config/owner | Giới hạn cần giải quyết |
+| Control | Accepted target | Design proposal / residual |
 |---|---|---|
-| Current app container config | Next standalone :3000, non-root; ConfigMap PORT/REDIS_HOST/REDIS_PORT | Backend split chưa có trong Dockerfile/CI hiện tại |
-| Proposed frontend + Express backend | Same-origin routing là preference proposed; port/origin/container count Q-108 | Platform chốt probe/UI relationship; backend ready không chứng minh frontend render |
-| Redis service | Cùng namespace theo root config; adapter app kết nối, browser không truy cập trực tiếp | Credentials/TLS/persistence chưa chốt; Platform quản lý secret injection nếu có |
-| Local / cluster | Chưa runtime/live-verified | Không thiết kế lại K3s/Tailscale/NetworkPolicy |
+| /healthz | Process-only, độc lập Redis | Dùng làm candidate startup/liveness target; không kiểm business total |
+| /ready | Init/config đủ, Redis check bounded 2 s, không drain; 200/503 đúng API | Disable/bound retries trong 2 s; PING/check quyền command cần Web/Platform xác nhận |
+| Kubernetes readiness | timeoutSeconds=3 | Period/failureThreshold/propagation và tổng handler overhead cần test, không assume tức thời |
+| startupProbe | Budget khoảng 50 s | Candidate /healthz, periodSeconds 5, failureThreshold 10, timeoutSeconds 3; 10 × 5≈50 s là planning budget, không exact wall-clock SLA; Platform phê duyệt tuple trước sửa manifests |
+| Recovery | Redis khỏe lại thì lần valid ready check có thể 200 | Không cần restart chỉ vì Redis down; QA đo propagation và routing phục hồi |
 
-Trước backend split phải chốt binding port, origins/routing ownership, shutdown signal và drain deadline Q-108/Q-104. Không giả định Express có thể được thêm vào standalone Next packaging hiện tại mà không đổi integration. Bộ tài liệu nêu dependency này; không tự sửa application/infra.
+Startup probe kiểm process khởi động để Redis outage không biến thành restart loop do startup dependency check. Startup thành công rồi readiness/liveness hoạt động theo configuration; đây là đề xuất tích hợp, không manifest đã áp dụng. [Kubernetes probe documentation](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/) giải thích startup gate và NotReady routing; triển khai thực tế phải test.
 
-## 6. NFR realization
+**Trade-off đã phải làm rõ:** readiness gắn vào toàn bộ Next pod, không chỉ counter API. Redis lỗi làm NotReady; khi endpoints bị rút, HTML/API/Office requests mới có thể thất bại nếu không còn Ready pod. Browser đã tải JS/snapshot có thể tiếp tục local demo và hiện counter unavailable, nhưng refresh/new viewer vẫn cần server. Không cam kết AI Office sẵn sàng độc lập Redis hoặc tự tách route/service để né target đã chốt.
 
-| NFR | Control / component | Trade-off và verification | Evidence / gap |
+Liveness 200 không chứng minh UI/Redis khỏe. Metrics registry trong process vẫn có thể export, nhưng Service scrape có thể mất khi pod NotReady; Platform cần đường scrape Pod/monitoring phù hợp với authorization thay vì promise Service luôn reachable.
+
+## 6. Access và observability
+
+Platform phải giới hạn /healthz, /ready, /metrics và monitoring tools cho infra/authorized admin bằng routing/network/monitoring grants đã duyệt. Không tin browser-supplied `admin` header hoặc coi tên stakeholder là quyền. Product UI/counter viewer access không cấp quyền probes/scrape. Không thêm app login V1; exact grants/origin/rate/deny responses còn Q-102.
+
+| Metric family | Type / unit / labels | Source / limits |
+|---|---|---|
+| web_app_process_uptime_seconds | gauge, seconds, no labels | Process lifetime |
+| web_app_http_requests_total | counter, requests; method/route/status_code | Completed requests per process, không global visitor total |
+| web_app_http_request_duration_seconds | histogram, seconds; method/route; bucket `le` derived | Completed response duration; buckets Q-106 |
+| web_app_redis_up | gauge 0/1, no labels | Last completed bounded dependency check; 0 on failure/timeout hoặc chưa success, 1 success; freshness qualification Q-106 |
+
+Route label chỉ registered template hoặc unmatched; method allowlist/OTHER; không raw URL/query, requestId, agent/task IDs, user/secret/free text. Bucket/sum/count là phần histogram family, không thêm business metrics. CPU/RAM/Kubernetes lấy từ monitoring hạ tầng hiện có. Scrape không đọc total hoặc increment; Redis down không ngăn process/HTTP export.
+
+## 7. NFR realization
+
+| NFR | Control / component | Verification | Gap còn lại |
 |---|---|---|---|
-| NFR-100 | Non-root config hiện có; backend proposed theo cùng nguyên tắc | Build/run, kiểm tra UID và writable paths | Configured; backend image Q-108 |
-| NFR-101 | HTTP adapter Redis check có timeout; drain readiness | PING nhẹ nhưng không chứng minh writes; QA đo fail/restore | Check depth/deadline Q-104 |
-| NFR-102 | Scene Adapter, 2–3 rigs, cap pixel ratio, selective static merging | Profile trước bloom/advanced merge; dispose/unmount | Hardware/FPS/memory targets Q-104 |
-| NFR-103 | Synthetic events, không host-file/CLI ports, access review | Giảm credential surface; auth feature tương lai không giải metrics exposure | Access/origins Q-102 |
-| NFR-104 | Redis atomic increment, explicit missing/timeout behavior, demo transient | Atomic không đồng nghĩa durable | Loss/eviction/backup/RPO/RTO Q-103 |
-| NFR-105 | Per-process registry, bounded labels, not-ready khi drain | Parser/traffic tests, shutdown coordination Platform | Metric vocabulary Q-106, drain Q-104 |
-| NFR-106 | Text/dashboard ngoài canvas; labels ngoài màu/animation | Keyboard/accessibility review; optional 2D renderer chưa chọn | Standard/devices Q-105 |
+| NFR-100 | Next standalone/non-root/runtime config | Build/run UID/writable paths | Config mới là observed; không đổi image ở đây |
+| NFR-101 | Redis 2 s/readiness 3 s/startup≈50 s; process-only liveness | Fail/timeout/restore/startup/endpoints/Office tests | Tuple/depth/drain và overhead Platform/QA |
+| NFR-102 | 3 Agents, 5–8 s, 30 tasks/run, stage-specific scene | Browser/task cap/cadence/unmount profile | FPS/memory/device targets Q-104 |
+| NFR-103 | Viewer vs infra/admin boundary, no login/real execution | Allow/deny/network/dependency review | Grants/deny/origin Q-102 |
+| NFR-104 | Shared Redis atomic total+receipt, total no TTL, dedup 600 s, no reset | Concurrent/retry/TTL/loss/restart/restore tests | Storage/persistence/backup/RPO/RTO Q-103 |
+| NFR-105 | Four metric families, bounded labels, graceful drain | Parser/traffic/latency/scrape target checks | Buckets/freshness/wiring Q-106, drain Q-104 |
+| NFR-106 | Text Dashboard fallback, keyboard, text labels | WebGL-fault + keyboard/manual review | Device/standard qualification Q-105 |
 
-## 7. Vận hành, recovery và reuse
+## 8. ADRs — IDs được giữ
 
-| Sự cố | Hành vi target / điều cần phân biệt |
-|---|---|
-| Redis down | Counter unavailable; ready503 proposed; liveness200 nếu process đáp ứng; metrics export độc lập |
-| Counter write timeout | Có thể đã tăng; không auto-retry khi policy chưa chốt; không reset count |
-| Missing/evicted key | Không tự suy total=0; init/restore authority ở Q-103 |
-| Registry lỗi | 503 METRICS_UNAVAILABLE proposed; không phụ thuộc business state |
-| WebGL/init lỗi | Scene unavailable, text dashboard giữ state; renderer fail không làm task failed |
-| Unmount / nhiều replicas | Cleanup timers; một simulator writer/browser; mỗi browser là demo độc lập |
-
-Hai replicas được cấu hình không cho phép tự thêm simulator timer/server trên mỗi pod. Shared world cần quyết định single writer/leader, source of truth, retention, CAS và fan-out trước khi revise contracts. Không thêm Redis Pub/Sub chỉ để chuẩn bị future.
-
-E-108 và [ma trận reference](../validation/practical-test/07-reference-analysis.md) là bằng chứng cho chọn lọc visual modules: ADAPT chibi/basic poses, renderer/camera và một phần desk scene; BUILD state mapper, minimal simulator/reducer/UI và Redis counter; SKIP real-session backend, CLI/hooks/accounts và extra city features. Pure helpers chỉ reuse sau extraction/notice. Source MIT không tự xác minh quyền của từng third-party asset/font/brand/vendor; audit trước khi reuse. Chưa copy/chạy reference trong lần chuyển Official.
-
-## 8. Architecture decisions và portability
-
-| ADR / status | Problem / alternatives | Proposed choice / lý do | Cost / revisit trigger |
+| ADR / status | Problem / alternatives | Decision / design | Trade-off / revisit |
 |---|---|---|---|
-| ADR-100 / proposed | Current Next routes và separate Express intent | Giữ current Next rõ ràng; target tách HTTP/domain/Redis ports | Thêm deployable cần Q-108; xem lại nếu backend tiếp tục Next |
-| ADR-101 / proposed, A-100 | Browser-local hay shared-server simulator | Browser event/reducer gọn, không auth/mutation/SSE | Không shared/persistent agents; revisit khi viewers cần cùng state |
-| ADR-102 / proposed | Always200 hay dependency-aware ready | Init + bounded Redis check + not draining; giữ success body, thêm503 | Operational change cần probe owner và Q-104 |
-| ADR-103 / proposed | Copy cả office hay chọn visual modules | ADAPT rig/renderer/camera; BUILD mapper/UI; SKIP CLI/accounts/extras | React cleanup/licensing effort; theo ma trận reference |
-| ADR-104 / proposed | Observability phụ thuộc domain/Redis hay process-local | Local registry, no Redis read để scrape, bounded labels | Metric set Q-106; process restart reset counters |
+| ADR-100 / accepted E-109 | Next Fullstack hay separate Express | Next giữ UI+server APIs, Redis riêng; previous Express proposal superseded | Fullstack readiness ảnh hưởng cả Office; không release Express |
+| ADR-101 / retained design, A-100 | Browser-local hay shared server simulator | Browser one writer/reducer; stage split theo E-109 | Không shared/persistent agents; revisit khi scope mới được duyệt |
+| ADR-102 / accepted targets; tuple proposed | Ready always 200 hay dependency-aware | Redis 2 s/probe 3 s/startup≈50 s, not draining; giữ success body, 503 lỗi | PING/write-depth và Platform config chưa approve; current ready chưa khớp |
+| ADR-103 / proposed reuse design | Copy reference hay chọn module | ADAPT rig/renderer/camera, BUILD mapper/demo; SKIP CLI/accounts/extras | Cleanup/license audit trước reuse; [reference matrix](../validation/practical-test/07-reference-analysis.md) |
+| ADR-104 / accepted metric set; details design | Process observability độc lập counter | 4 families, bounded labels, last-check redis_up, không app CPU/RAM/K8s duplication | Buckets/freshness/scrape target xác nhận Q-106 |
 
-Domain event/state không chứa Express request/response hoặc Laravel model types. Redis Port sở hữu encoding/atomic operation; HTTP adapter serialize theo API; ScenePort nhận domain snapshot, không phụ thuộc My Office sess/desk fields. Những seams này là design proposed, chưa implementation evidence. ADR-105 rollout strategy thuộc [Migration](migration-plan.md).
+Domain không chứa Next Request/Response hoặc Laravel models. Redis Port giữ serialization/atomicity; ScenePort đọc logical snapshot. Future migration phải giữ contract/domain, không đổi UI stack hoặc thêm Express chỉ để có baseline. ADR-105 rollout thuộc Migration.
 
-## 9. Evidence, impact và review
+## 9. Findings và evidence boundary
 
-E-103/E-104 là code/config; E-108 chỉ technical reference. A-100 và mọi ADR còn proposed; Q/C ở [registry Official](README.md). Chọn shared simulator, SSE hoặc persistence sẽ tác động FR-107/FR-108/FR-111, API coverage, ENT-101..ENT-103 và migration; cần đồng bộ trước accepted baseline.
-
-| Finding | Check / severity | Locations / expected vs observed | Impact | Correction / owner | Result / follow-up |
+| ID | Check / severity | Locations / expected vs observed | Impact | Correction / owner | Result / follow-up |
 |---|---|---|---|---|---|
-| VAL-105 | Architecture consistency / major | Architecture/API/Data: browser simulation transient, no stream/history promise | Không hứa replay từ ephemeral state | Giữ ADR-101 / Web owner | Design consistency của nguồn được bảo toàn; runtime chưa kiểm tra |
-| VAL-106 | Integration / blocker | E-104 standalone Next khác target Express split Q-108 | Target chưa deployable-ready | Chốt topology/probes/runtime / Web + Platform | BLOCKED readiness |
+| VAL-105 | Design consistency / major | Next Fullstack, Redis riêng, browser-local V1/V2; no agent API | Giữ selected scope | Cross-check API/Data/stages / Web+QA | Document consistency; runtime chưa chạy |
+| VAL-106 | Integration / blocker | Current ready/probe/Redis persistence khác target 2 s/3 s/≈50 s | Chưa deployment/availability/restore evidence | Platform/Web implementation và QA fault tests | BLOCKED execution; không còn Express split blocker |
 
-Các diagrams không phải log triển khai. Resource fit, routing, live policy và operational tests cần được kiểm chứng trong công việc implementation/QA riêng.
+Chỉ tài liệu được cập nhật. Diagrams mô tả target hoặc observed source, không phải deployment logs. Source/runtime/independent review limits tại [registry](README.md).

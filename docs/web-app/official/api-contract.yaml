@@ -1,130 +1,363 @@
-# Official Documentation — giữ nguyên wire contract từ practical-test.
-# Xem README.md và FRD.md để phân biệt current code với proposed target.
+# Target design theo E-109; chưa là implementation evidence.
 openapi: 3.1.1
 info:
-  title: AI Agent Office Monitor — Operational API
-  version: 0.1.0
-  description: >-
-    Contract HTTP độc lập framework, dùng để phát triển và review Web App.
-    Health và success body của readiness giữ code-observed Next handlers.
-    Redis-aware readiness/503 và metrics là target proposed, chưa runtime-verified.
-    Counter API còn BLOCKED Q-101/Q-103. Access boundary còn Q-102;
-    tài liệu Official không tự phê duyệt public exposure hoặc deployment.
+  title: AI Agent Office Monitor — V1/V2 API
+  version: 0.2.0
+  description: Target contract theo E-109; Next Fullstack UI và server APIs, Redis riêng, không Express release.
+    Document1.1.0 không là implementation/acceptance evidence. V1/V2 cùng operational/counter contracts; Office
+    simulator browser-local không có agents/tasks HTTP API.
 x-document-control:
   document-id: WEB-API
-  document-version: 1.0.0
+  document-version: 1.1.0
   status: review
-  date: '2026-11-06'
-  owner-role: Web Fullstack Dev; requirement acceptance authority Q-100
+  date: '2026-11-07'
+  owner-role: Web Dev; Platform/QA integration
   upstream-versions:
-    WEB-BRD: 1.0.0
-    WEB-FRD: 1.0.0
+    WEB-BRD: 1.1.0
+    WEB-FRD: 1.1.0
   source-refs:
-    - E-100 requested scope; registry tại README.md
-    - E-101 README section 1.2, healthz/ready/metrics
-    - E-103 Next handlers tại source snapshot 2110eddec91bc3e34137c86fef693095c4afb677
-  derived-from: ../validation/practical-test/03-api-contract.yaml — PT-API document 0.1.0
-  registry-ref: README.md
-  architecture-ref: architecture.md — ADR-100, ADR-102, ADR-104
+  - E-103 current Next handlers
+  - E-109 accepted Q-100..Q-108; registry README.md
+  architecture-ref: architecture.md
   data-ref: data-contract.md
   change-log:
-    - >-
-      Document 1.0.0: biên tập Official, cập nhật navigation và cách giải thích.
-      API info.version vẫn 0.1.0; không đổi paths, operations, schemas, responses,
-      metric catalog hoặc examples của contract nguồn.
-  security-decision: >-
-    BLOCKED Q-102. Không assert security scheme hoặc security: []. OpenAPI tools
-    có thể hiển thị operations như unsecured. Phải chốt probe/scrape/browser
-    exposure policy trước deployment; auth sản phẩm Future không giải quyết việc này.
+  - '1.1.0/API0.2.0: add FR-101 read/register with requestId+600s dedup; retain existing operationIds; four metrics;
+    Redis2s/probe3s/startup≈50s; target Next Fullstack.'
+  - '1.0.0/API0.1.0: initial partial operational contract; unchanged historical source under validation.'
+  compatibility: 'Pre1.0 target changes: consumers/probes/scraper must review counter/error/metric/readiness behavior;
+    no claim deployed baseline preserved byte-for-byte.'
+  security-decision: Q-102 access classes accepted; enforcement by Platform network/proxy/monitoring grants, no
+    V1 login/auth API. No application security scheme is invented. OpenAPI may render operations unsecured; do not
+    expose infra endpoints using that default. Viewer denied at perimeter; exact deny response/grants TBD Platform.
 x-reading-guide:
-  current-code: /healthz và /ready là Next GET handlers; ready hiện luôn200.
-  target-design: /ready check init + Redis + drain; /metrics xuất process-local registry.
-  source-vs-target: Proposed responses không chứng minh current implementation có nhánh lỗi đó.
-  versions: openapi là dialect; info.version là API version; document-version là version tài liệu.
-  links:
-    overview: README.md
-    behavior: FRD.md
-    architecture: architecture.md
-    data: data-contract.md
-x-evidence:
-  - id: E-103
-    kind: Fact
-    provenance: code-observed, not runtime-tested
-    finding: Chỉ GET /healthz và /ready được quan sát; ready luôn tạo200.
-  - id: ADR-102
-    kind: Decision
-    status: proposed
-    finding: Init, bounded Redis check và drain là readiness target;503 là proposed delta.
-  - id: ADR-104
-    kind: Decision
-    status: proposed
-    finding: Metrics scrape không phụ thuộc Redis; chỉ process-local HTTP/process data.
+  overview: README.md
+  behavior: FRD.md
+  architecture: architecture.md
+  data: data-contract.md
+  delivery-stages:
+  - V1
+  - V2
+  current-code: Only Next starter plus /healthz and always200 /ready observed. Counter, metrics and target readiness
+    not implemented/tested.
 x-open-questions:
-  - id: Q-101
-    blocking-fr-ids: [FR-101]
-    question: Chốt visit trigger, uniqueness, refresh/bots/retry/idempotency trước counter operations.
-    owner: Web owner
-  - id: Q-102
-    blocking-fr-ids: [FR-102, FR-103, FR-104]
-    question: Chốt integration access, origins và exposure; future product auth không thay quyết định này.
-    owner: Web owner and Platform Lead
-  - id: Q-104
-    question: Redis check deadline/depth, shutdown/drain và NFR thresholds còn TBD.
-    owner: Web and Platform and QA
-  - id: Q-106
-    question: Duyệt metric names/units/labels và scrape integration.
-    owner: Web and QA and Platform
+- id: Q-102
+  status: PARTIALLY RESOLVED
+  resolved: Viewer vs operational/admin access; no loginV1
+  remaining: Network/proxy/monitoring grants, origins/deny behavior.
+- id: Q-103
+  status: PARTIALLY RESOLVED
+  resolved: Total no TTL/no reset; dedup600s
+  remaining: Init authority,persistence/backup/restore,RPO/RTO,max counter and loss handling.
+- id: Q-104
+  status: PARTIALLY RESOLVED
+  resolved: Redis2s,readinessprobe3s,startup≈50s
+  remaining: Check depth,Platform probe tuple,command/drain/performance budgets.
+- id: Q-106
+  status: PARTIALLY RESOLVED
+  resolved: Four required metric families
+  remaining: Histogram buckets,route vocabulary,scrape wiring/freshness qualification.
 x-coverage:
   included:
-    FR-102: getLiveness
-    FR-103: getReadiness
-    FR-104: getApplicationMetrics
-  blocked:
-    FR-101: Chưa có route đến khi Q-101 được chốt; GET không increment visitor state.
+    FR-101:
+    - getVisitorCount
+    - registerPageView
+    FR-102:
+    - getLiveness
+    FR-103:
+    - getReadiness
+    FR-104:
+    - getApplicationMetrics
   not-http:
-    FR-100: HTML page, ngoài JSON API
-    FR-105: Packaging và runtime configuration
-    FR-106: Conditional UI đọc browser snapshot theo ADR-101
-    FR-107: Conditional internal browser simulator
-    FR-108: Conditional internal reducer
-    FR-109: Conditional 3D UI
-    FR-110: Conditional derived animation
-    FR-111: Conditional recent browser activity
+    FR-100: HTML/UI outside JSON API
+    FR-105: Packaging/config
+    FR-106: Browser dashboard V1 basic/V2 full
+    FR-107: Browser simulator,5–8s,Reset Demo
+    FR-108: Browser reducer
+    FR-109: 3D/Text Dashboard fallback
+    FR-110: Derived animations
+    FR-111: Recent20events,V2 only
 x-wire-rules:
-  - Các GET operations được mô tả không có request body hoặc path parameters.
-  - Không định nghĩa query parameters/business headers; consumer không phụ thuộc behavior chưa được đặc tả.
-  - Required response fields không null; additional response fields được phép cho compatible additions, consumer bỏ qua field không biết.
-  - Timestamps là UTC RFC3339 string với Z; uptime là số giây không âm, có thể fractional.
-  - Pagination/sort/idempotency keys N/A cho các reads này; rate limits/access failures còn Q-102.
-  - JSON errors ở đây do app tạo; ingress/network/404/405 behavior chưa baseline.
-  - Không có agent CRUD/simulator control/event ingestion/auth/streaming operation.
+- GET does not mutate business visits.
+- Required response fields non-null; totals decimal strings, timestamps UTC RFC3339 Z.
+- Registration JSON request rejects unknown fields; response additional fields allowed for compatible additions.
+- No visitor identity/IP/cookie/session-based uniqueness is claimed. UUID is request identity, not a user/account.
+- No promise of exactly-once beyond600s, state loss, expired/evicted dedup or unverified recovery.
+- No pagination,agent CRUD,event ingestion,auth or simulator-control API; Reset Demo is browser-local.
+- Rate limits/max body/operational access-denial wire handling remain Platform/Web design details; no numeric defaults
+  asserted.
 x-optional-streaming:
   status: deferred
-  rationale: SSE optional, chưa selected; không event-stream endpoint hoặc replay guarantee.
-  gates: >-
-    Nếu chọn, chốt identity/access, envelope/event names/cursor/order, heartbeat/retry,
-    Last-Event-ID, resnapshot/replay/retained source, pre-header và in-stream errors,
-    proxy buffering/timeouts, fan-out và drain. Redis Pub/Sub một mình không cung cấp replay.
-    Reference /stream không được tự đưa vào contract.
+  rationale: SSE/shared history not selected for V1/V2; no replay/retained event promise.
 x-validation:
-  checked-scope: Wire definitions giữ nguyên nguồn; kết quả kiểm tra bản Official ghi tại README.md.
-  unchecked-scope: Runtime conformance, deployment access, counter API, Prometheus parser integration và optional streaming.
-  findings:
-    - 'BLOCKED: release/access/counter decisions Q-100/Q-101/Q-102/Q-103.'
-    - Proposed additions không là implementation evidence; historical validators tại evaluation-report không tự chứng nhận bản Official.
+  checked-scope: Document checks recorded in README.md after execution; examples synthetic.
+  unchecked-scope: Runtime, Redis atomicity/persistence/fault injection, live ingress/probes/scrape, Prometheus
+    parser integration, simulator and migration.
 paths:
+  /api/visits:
+    get:
+      operationId: getVisitorCount
+      x-fr-ids:
+      - FR-101
+      x-delivery-stages:
+      - V1
+      - V2
+      x-access-class: viewer
+      x-implementation: target design; not runtime-tested
+      summary: Đọc tổng page views, không increment
+      description: Chỉ đọc total đã initialized. Không tạo counter khi missing, không biến Redis error thành0. Response
+        total là snapshot tại thời điểm đọc.
+      responses:
+        '200':
+          description: Tổng đã biết; decimal string để không mất chính xác.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisitorTotal'
+              example:
+                total: '123'
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+              description: Không cache business receipt/counter hoặc probe state.
+        '500':
+          description: Lỗi ứng dụng đã được sanitize.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - type: object
+                  properties:
+                    error:
+                      type: object
+                      properties:
+                        code:
+                          enum:
+                          - INTERNAL_ERROR
+              examples:
+                INTERNAL_ERROR:
+                  value:
+                    error:
+                      code: INTERNAL_ERROR
+                      message: Lỗi ứng dụng đã được sanitize.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+              description: Không cache business receipt/counter hoặc probe state.
+        '503':
+          description: Counter chưa khả dụng hoặc chưa initialized theo authority được chốt.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - type: object
+                  properties:
+                    error:
+                      type: object
+                      properties:
+                        code:
+                          enum:
+                          - COUNTER_UNAVAILABLE
+                          - COUNTER_NOT_INITIALIZED
+              examples:
+                COUNTER_UNAVAILABLE:
+                  value:
+                    error:
+                      code: COUNTER_UNAVAILABLE
+                      message: Counter chưa khả dụng hoặc chưa initialized theo authority được chốt.
+                COUNTER_NOT_INITIALIZED:
+                  value:
+                    error:
+                      code: COUNTER_NOT_INITIALIZED
+                      message: Counter chưa khả dụng hoặc chưa initialized theo authority được chốt.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+              description: Không cache business receipt/counter hoặc probe state.
+    post:
+      operationId: registerPageView
+      x-fr-ids:
+      - FR-101
+      x-delivery-stages:
+      - V1
+      - V2
+      x-access-class: viewer
+      x-implementation: target design; not runtime-tested
+      summary: Ghi nhận một page view bằng requestId
+      description: Mỗi document load/F5 tạo UUID mới. Hydration/re-render/retry cùng load dùng cùng requestId. Commit
+        counter+dedup atomic. Retry cùng ID trong cửa sổ600s trả receipt gốc, không increment; retry không refresh
+        expiry. Không tạo ID mới chỉ để retry lỗi. Hết cửa sổ hoặc mất Redis dedup state không bảo đảm duplicate
+        protection; client dừng automatic retry sau600s tính từ lần gửi đầu và báo outcome unknown. Probe/metrics/static/Reset
+        Demo không gọi registration. Không thu identity người dùng.
+      x-idempotency:
+        identity-field: requestId
+        retention-seconds: 600
+        total-expiry: null
+        refresh-on-retry: false
+        replay-total: original receipt total, not latest global total
+        scope: site/environment; Redis state and retention window intact
+        after-window: Do not automatically reuse stale IDs; server cannot distinguish expired duplicate from new
+          ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PageViewRequest'
+            example:
+              requestId: e409d9b9-971c-4a88-81e4-dd728a61946d
+      responses:
+        '200':
+          description: Registration thành công hoặc replay receipt trong window. Total là snapshot tại original
+            registration; GET đọc total mới nhất.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageViewReceipt'
+              examples:
+                newPageView:
+                  value:
+                    requestId: e409d9b9-971c-4a88-81e4-dd728a61946d
+                    total: '124'
+                    replayed: false
+                retrySameRequest:
+                  value:
+                    requestId: e409d9b9-971c-4a88-81e4-dd728a61946d
+                    total: '124'
+                    replayed: true
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+              description: Không cache business receipt/counter hoặc probe state.
+        '400':
+          description: Body phải đúng PageViewRequest, requestId UUID hợp lệ, không additional fields.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - type: object
+                  properties:
+                    error:
+                      type: object
+                      properties:
+                        code:
+                          enum:
+                          - INVALID_REQUEST
+              examples:
+                INVALID_REQUEST:
+                  value:
+                    error:
+                      code: INVALID_REQUEST
+                      message: Body phải đúng PageViewRequest, requestId UUID hợp lệ, không additional fields.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+              description: Không cache business receipt/counter hoặc probe state.
+        '500':
+          description: Exception không dự kiến; không lộ stack/Redis host/secret.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - type: object
+                  properties:
+                    error:
+                      type: object
+                      properties:
+                        code:
+                          enum:
+                          - INTERNAL_ERROR
+              examples:
+                INTERNAL_ERROR:
+                  value:
+                    error:
+                      code: INTERNAL_ERROR
+                      message: Exception không dự kiến; không lộ stack/Redis host/secret.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+              description: Không cache business receipt/counter hoặc probe state.
+        '503':
+          description: Dependency hoặc outcome chưa xác định. Không reset, không blind retry bằng ID mới. Limit/initialization
+            policy còn Platform/Web xác nhận.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - type: object
+                  properties:
+                    error:
+                      type: object
+                      properties:
+                        code:
+                          enum:
+                          - COUNTER_UNAVAILABLE
+                          - COUNTER_NOT_INITIALIZED
+                          - VISIT_OUTCOME_UNKNOWN
+                          - COUNTER_LIMIT_REACHED
+              examples:
+                COUNTER_UNAVAILABLE:
+                  value:
+                    error:
+                      code: COUNTER_UNAVAILABLE
+                      message: Dependency hoặc outcome chưa xác định. Không reset, không blind retry bằng ID mới.
+                        Limit/initialization policy còn Platform/Web xác nhận.
+                COUNTER_NOT_INITIALIZED:
+                  value:
+                    error:
+                      code: COUNTER_NOT_INITIALIZED
+                      message: Dependency hoặc outcome chưa xác định. Không reset, không blind retry bằng ID mới.
+                        Limit/initialization policy còn Platform/Web xác nhận.
+                VISIT_OUTCOME_UNKNOWN:
+                  value:
+                    error:
+                      code: VISIT_OUTCOME_UNKNOWN
+                      message: Dependency hoặc outcome chưa xác định. Không reset, không blind retry bằng ID mới.
+                        Limit/initialization policy còn Platform/Web xác nhận.
+                COUNTER_LIMIT_REACHED:
+                  value:
+                    error:
+                      code: COUNTER_LIMIT_REACHED
+                      message: Dependency hoặc outcome chưa xác định. Không reset, không blind retry bằng ID mới.
+                        Limit/initialization policy còn Platform/Web xác nhận.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+              description: Không cache business receipt/counter hoặc probe state.
   /healthz:
     get:
       operationId: getLiveness
-      x-fr-ids: [FR-102]
-      x-scope-class: Mandatory
-      x-design-status: code-observed response; untested
-      x-access-status: BLOCKED Q-102, technical probe consumer
-      summary: Kiểm tra process còn đáp ứng, độc lập với Redis
-      description: No business state mutation. A nonresponding process is detected by caller timeout, not a promised JSON response.
+      x-fr-ids:
+      - FR-102
+      x-delivery-stages:
+      - V1
+      - V2
+      x-access-class: infra-or-authorized-admin
+      x-implementation: 200 handler code-observed; target access enforcement not tested
+      summary: Kiểm tra process, không phụ thuộc Redis
+      description: GET không mutate business data. Process không trả lời do caller phát hiện timeout; không hứa
+        JSON khi process chết.
       responses:
         '200':
-          description: HTTP process can answer.
+          description: Process còn đáp ứng.
           content:
             application/json:
               schema:
@@ -132,84 +365,141 @@ paths:
               example:
                 status: ok
                 uptime: 12.5
-                timestamp: '2026-11-05T03:00:00.000Z'
+                timestamp: '2026-11-06T00:00:00.000Z'
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+              description: Không cache business receipt/counter hoặc probe state.
   /ready:
     get:
       operationId: getReadiness
-      x-fr-ids: [FR-103]
-      x-scope-class: Mandatory
-      x-design-status: proposed dependency semantics; current implementation always 200
-      x-access-status: BLOCKED Q-102, technical readiness consumer
-      summary: Kiểm tra điều kiện phục vụ theo target design
-      description: >-
-        Proposed 200 only after initialization and successful bounded Redis check,
-        while not draining. No counter increment or initialization/reset of business
-        keys. Exact Redis deadline TBD Q-104; connection-only versus write-check
-        depth requires approval. Proposed PING is not proof of successful writes.
+      x-fr-ids:
+      - FR-103
+      x-delivery-stages:
+      - V1
+      - V2
+      x-access-class: infra-or-authorized-admin
+      x-implementation: target design; not runtime-tested
+      summary: Kiểm tra init/config, Redis dependency và drain
+      x-redis-timeout-seconds: 2
+      x-kubernetes-probe-timeout-seconds: 3
+      x-startup-budget-seconds: 50
+      description: Target:200 khi initialized/config hợp lệ, Redis check thành công trong tối đa2s và chưa drain.
+        Tổng response phải đủ margin trước readiness probe timeout3s. Redis retry không kéo dài check quá2s. Startup
+        budget khoảng50s bằng startupProbe, không cộng thành Redis timeout. Check depth PING hay kiểm quyền command
+        còn Platform/Web xác nhận; không tạo/reset counter hoặc dedup keys. Current Next /ready vẫn always200; target
+        chưa implemented. Khi NotReady, routing tới cả UI/API Next có thể bị ngắt.
       responses:
         '200':
-          description: Serving prerequisites satisfied at check time.
+          description: Điều kiện phục vụ đạt tại thời điểm check.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Readiness'
               example:
                 status: ready
-                timestamp: '2026-11-05T03:00:00.000Z'
+                timestamp: '2026-11-06T00:00:00.000Z'
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+              description: Không cache business receipt/counter hoặc probe state.
         '503':
-          description: Proposed dependency failure, initialization incomplete or draining.
+          description: Redis check lỗi/timeout2s hoặc app initializing/missing config/draining. Không lộ dependency
+            address.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - type: object
+                  properties:
+                    error:
+                      type: object
+                      properties:
+                        code:
+                          enum:
+                          - DEPENDENCY_UNAVAILABLE
+                          - NOT_READY
               examples:
-                redisUnavailable:
+                DEPENDENCY_UNAVAILABLE:
                   value:
                     error:
                       code: DEPENDENCY_UNAVAILABLE
-                      message: Serving dependency unavailable
-                draining:
+                      message: Redis check lỗi/timeout2s hoặc app initializing/missing config/draining. Không lộ
+                        dependency address.
+                NOT_READY:
                   value:
                     error:
                       code: NOT_READY
-                      message: Application not ready
+                      message: Redis check lỗi/timeout2s hoặc app initializing/missing config/draining. Không lộ
+                        dependency address.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+              description: Không cache business receipt/counter hoặc probe state.
   /metrics:
     get:
       operationId: getApplicationMetrics
-      x-fr-ids: [FR-104]
-      x-scope-class: Mandatory
-      x-design-status: proposed; source-stated route, not implemented
-      x-access-status: BLOCKED Q-102, infrastructure scraper only proposed
-      summary: Xuất số liệu ứng dụng cho scraper
-      description: >-
-        Proposed text exposition version 0.0.4. Process uptime gauge in seconds
-        and completed HTTP request counter, collected per process. No global
-        aggregate visitor total derived from process counters. Redis failure
-        does not prevent registry export. Metric vocabulary below awaits Q-106.
+      x-fr-ids:
+      - FR-104
+      x-delivery-stages:
+      - V1
+      - V2
+      x-access-class: infra-or-authorized-admin
+      x-implementation: target design; not runtime-tested
+      summary: Xuất bốn metric families của V1
       x-metric-catalog:
-        - name: web_app_process_uptime_seconds
-          type: gauge
-          unit: seconds
-          labels: []
-          source: monotonic process lifetime
-        - name: web_app_http_requests_total
-          type: counter
-          unit: requests
-          labels: [method, route, status_code]
-          source: completed requests per process
-          allowed-values: >-
-            method from registered HTTP methods with OTHER bucket; route from
-            registered templates with unmatched bucket; status_code valid HTTP
-            status. Never use raw URL/query, agent IDs or task IDs. Reset on restart.
+      - name: web_app_process_uptime_seconds
+        type: gauge
+        unit: seconds
+        labels: []
+        source: monotonic process lifetime
+      - name: web_app_http_requests_total
+        type: counter
+        unit: requests
+        labels:
+        - method
+        - route
+        - status_code
+        source: completed HTTP requests per process; includes operational requests, not business visit count
+      - name: web_app_http_request_duration_seconds
+        type: histogram
+        unit: seconds
+        labels:
+        - method
+        - route
+        source: completed HTTP response duration measured by monotonic clock; bucket boundaries TBD Q-106
+        derived:
+        - bucket/le
+        - sum
+        - count
+      - name: web_app_redis_up
+        type: gauge
+        unit: boolean 0/1
+        labels: []
+        source: last completed bounded dependency observation;1 success,0 failure/timeout or before success; no
+          business counter read; freshness measurement Q-106
+      description: 'Prometheus text exposition0.0.4, per-process registry. Redis down không chặn export HTTP/process
+        series; redis_up phản ánh bounded check gần nhất, không promise tức thời. Scrape qua Service có thể thất
+        bại khi readiness rút Nextpod: Platform cần scrape target phù hợp. Không xuất thêm CPU/RAM/Kubernetes metrics
+        ở app; dùng hạ tầng sẵn có. Không đọc business total hoặc tạo visits để scrape. Histogram sample chỉ minh
+        họa +Inf; production buckets phải được QA chốt. Method từ allowlist+OTHER, route từ registered templates+unmatched,
+        status_code valid HTTP; không raw URL/query,requestId,agent/taskID,credential hoặc free text.'
       responses:
         '200':
-          description: Scrapeable process registry, even if Redis is unavailable.
+          description: Registry process còn phục vụ; các số liệu example là synthetic, không traffic đã đo.
           headers:
             Content-Type:
               schema:
                 type: string
-                const: 'text/plain; version=0.0.4; charset=utf-8'
-              description: Proposed explicit exposition format.
+                const: text/plain; version=0.0.4; charset=utf-8
+              description: Exposition format đã chọn.
           content:
             text/plain:
               schema:
@@ -222,26 +512,48 @@ paths:
                 # HELP web_app_http_requests_total Completed HTTP requests.
                 # TYPE web_app_http_requests_total counter
                 web_app_http_requests_total{method="GET",route="/healthz",status_code="200"} 1
+                # HELP web_app_http_request_duration_seconds Completed HTTP request duration.
+                # TYPE web_app_http_request_duration_seconds histogram
+                web_app_http_request_duration_seconds_bucket{method="GET",route="/healthz",le="+Inf"} 1
+                web_app_http_request_duration_seconds_sum{method="GET",route="/healthz"} 0.01
+                web_app_http_request_duration_seconds_count{method="GET",route="/healthz"} 1
+                # HELP web_app_redis_up Last bounded dependency observation.
+                # TYPE web_app_redis_up gauge
+                web_app_redis_up 1
         '503':
-          description: Registry temporarily unavailable, proposed application error.
+          description: Registry không khả dụng; Redis down đơn thuần không là lý do trả503 metrics.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                error:
-                  code: METRICS_UNAVAILABLE
-                  message: Metrics unavailable
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - type: object
+                  properties:
+                    error:
+                      type: object
+                      properties:
+                        code:
+                          enum:
+                          - METRICS_UNAVAILABLE
+              examples:
+                METRICS_UNAVAILABLE:
+                  value:
+                    error:
+                      code: METRICS_UNAVAILABLE
+                      message: Registry không khả dụng; Redis down đơn thuần không là lý do trả503 metrics.
 components:
   schemas:
     UtcTimestamp:
       type: string
       format: date-time
-      pattern: 'Z$'
+      pattern: Z$
       description: UTC timestamp; examples are synthetic, not observed traffic.
     Liveness:
       type: object
-      required: [status, uptime, timestamp]
+      required:
+      - status
+      - uptime
+      - timestamp
       additionalProperties: true
       properties:
         status:
@@ -255,7 +567,9 @@ components:
           $ref: '#/components/schemas/UtcTimestamp'
     Readiness:
       type: object
-      required: [status, timestamp]
+      required:
+      - status
+      - timestamp
       additionalProperties: true
       properties:
         status:
@@ -263,20 +577,71 @@ components:
           const: ready
         timestamp:
           $ref: '#/components/schemas/UtcTimestamp'
+    VisitorTotal:
+      type: object
+      required:
+      - total
+      additionalProperties: true
+      properties:
+        total:
+          type: string
+          pattern: ^(0|[1-9][0-9]*)$
+          description: Exact decimal total, nonnegative, no JS/PHP numeric coercion; initialized0 is valid, dependency
+            failure is not0.
+    PageViewRequest:
+      type: object
+      required:
+      - requestId
+      additionalProperties: false
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          description: Generated once per document load; preserved for retries; new F5 gets new UUID.
+    PageViewReceipt:
+      type: object
+      required:
+      - requestId
+      - total
+      - replayed
+      additionalProperties: true
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        total:
+          type: string
+          pattern: ^(0|[1-9][0-9]*)$
+          description: Total recorded at original registration; repeated ID returns this original total.
+        replayed:
+          type: boolean
+          description: False for first committed registration; true when original receipt replayed without increment.
     Error:
       type: object
-      required: [error]
+      required:
+      - error
       additionalProperties: true
       properties:
         error:
           type: object
-          required: [code, message]
+          required:
+          - code
+          - message
           additionalProperties: true
           properties:
             code:
               type: string
-              enum: [DEPENDENCY_UNAVAILABLE, NOT_READY, METRICS_UNAVAILABLE]
+              enum:
+              - INVALID_REQUEST
+              - COUNTER_UNAVAILABLE
+              - COUNTER_NOT_INITIALIZED
+              - VISIT_OUTCOME_UNKNOWN
+              - COUNTER_LIMIT_REACHED
+              - DEPENDENCY_UNAVAILABLE
+              - NOT_READY
+              - METRICS_UNAVAILABLE
+              - INTERNAL_ERROR
             message:
               type: string
               minLength: 1
-              description: Human-readable, no secrets or dependency address; clients use code.
+              description: Sanitized human-readable text; clients branch on code; no Redis host,stack or secret.

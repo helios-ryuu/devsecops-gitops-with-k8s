@@ -1,179 +1,128 @@
-# FRD — Chức năng và quy tắc Web App
+# FRD — Chức năng và acceptance theo V1/V2
 
 | Document ID | Document version | Status | Date | Owner role | Sources | Upstream |
 |---|---|---|---|---|---|---|
-| WEB-FRD | 1.0.0 | review | 2026-11-06 | Web Fullstack Dev; QA review | E-100..E-108 tại [registry](README.md) | WEB-BRD1.0.0; nguồn PT-FRD0.1.0 |
+| WEB-FRD | 1.1.0 | review | 2026-11-07 | Web Dev; QA review | E-109 và [registry](README.md) | WEB-BRD 1.1.0; WEB-FRD 1.0.0 |
 
-Change log 1.0.0: tổ chức lại [FRD practical](../validation/practical-test/02-FRD.md) theo workflow, nhóm chức năng, rules và acceptance criteria. Giữ 12 FR, 9 RULE, 15 AC và 7 NFR cùng ý nghĩa/commitment. Các hành vi mới vẫn proposed; không xem danh sách AC là kết quả test.
+Change log 1.1.0: giữ 12 FR, 9 RULE, 15 AC, 7 NFR; thêm Delivery Stage, page-view retry/TTL, readiness 2 s/probe 3 s/startup≈50 s, metrics và fallback đã chốt. Contract details là thiết kế dẫn xuất; không tuyên bố đã implement/test. Nguồn [PT-FRD0.1.0](../validation/practical-test/02-FRD.md) giữ nguyên.
 
-## 1. Actors và workflow
+## 1. Release và actors
 
-Người xem mở UI; simulator là actor nội bộ trong browser **nếu extension được chọn**. Probe consumer và metrics scraper là technical clients do nhóm quản lý. Release hiện không bao gồm administrator, login, task editor hoặc AI executor. Deployment access còn Q-102; thiếu auth feature không đồng nghĩa endpoint được duyệt public.
+V1 Integration Release thực hiện đầy đủ FR-100..FR-105 và mức cơ bản FR-106..FR-110. V2 Full AI Office hoàn thiện FR-106..FR-111. Viewer chỉ truy cập website/Office; operational endpoints/tools chỉ infra hoặc authorized admin. Stakeholder không tự có Admin; không login V1, không task editor/AI executor.
 
-### Workflow bắt buộc
+### Workflow V1
 
-1. Người xem mở web và đọc nội dung release/counter.
-2. App xử lý counter theo định nghĩa visit sẽ chốt ở Q-101. Redis lỗi thì hiển thị unavailable, không tạo số giả.
-3. Operator kiểm tra liveness để biết process còn đáp ứng; kiểm tra readiness để biết điều kiện phục vụ theo target design.
-4. Scraper lấy application metrics. Probe/scrape không làm tăng business visit count.
+1. Mỗi lần document load/F5 tạo requestId mới; hydration/re-render/retry cùng document phải dùng lại ID đó.
+2. POST register page view; cùng requestId được xử lý một lần trong cửa sổ dedup 600 s. GET đọc tổng không ghi visit. Probe/metrics/assets/Reset Demo không ghi visit.
+3. Hiển thị total nếu known; Redis lỗi hiện unavailable, không tạo 0 giả hoặc reset total.
+4. Bootstrap 3 Agents Idle; simulator/reducer tối thiểu phát event cách 5–8 s, cập nhật UI/scene chung snapshot. Viewer có Reset Demo; reload cũng tạo run mới.
+5. WebGL/3D lỗi thì dùng Text Dashboard; keyboard thao tác được, không chỉ màu/animation.
 
-### Workflow extension có điều kiện
+### Workflow V2
 
-```mermaid
-flowchart LR
-    Open["Vào demo - nhãn Simulated"] --> Init["Bootstrap 2-3 agents idle"]
-    Init --> Sim["Simulator tạo event"]
-    Sim --> Reduce["Reducer validate và cập nhật snapshot"]
-    Reduce --> View["Dashboard, scene, recent activity cùng đọc snapshot"]
-    View --> Sim
-```
+Giữ V1 và hoàn thiện completed/failed/recovery scenarios, transitions/validation/animations và FR-111 Recent Activity 20 events. Tối đa 1 running task/Agent và 30 tasks/run; khi đạt 30 không tạo task 31, cho task đang chạy kết thúc rồi chờ Reset Demo. Không tự reset total hoặc tự khởi tạo run vô hạn để né giới hạn.
 
-Event không hợp lệ không cập nhật snapshot/activity. Theo A-100/ADR-101 proposed, reload tạo demo run mới; không hứa shared state, lịch sử xuyên phiên hoặc real execution. Scenario/cadence/reset controls còn Q-107.
+## 2. Functional requirements và Delivery Stage
 
-## 2. Chức năng bắt buộc
+| FR | Parent BR | V1 — Integration Release | V2 — Full AI Office | Interface / links / implementation |
+|---|---|---|---|---|
+| FR-100 | BR-100 | Render website/Office cơ bản, counter unavailable khi lỗi; Text Dashboard/keyboard | Giữ V1, hiển thị Office đầy đủ | HTML/UI; RULE-100; AC-100; starter code-observed |
+| FR-101 | BR-101 | F5 là page view mới; register requestId atomic/dedup 600 s; read total; total no TTL/no auto-reset; xử lý exceptions | Giữ đúng semantics V1 | getVisitorCount/registerPageView; RULE-100/101; AC-101/102; chưa code |
+| FR-102 | BR-102 | GET /healthz:200 ok, uptime>=0, UTC; độc lập Redis, không ghi visit | Giữ V1 | getLiveness; RULE-102; AC-103; current handler observed |
+| FR-103 | BR-102 | Init/config xong, Redis check thành công trong 2 s và chưa drain→200; lỗi/timeout→503; probe timeout 3 s, startup budget≈50 s | Giữ V1 | getReadiness; RULE-102; AC-104/105; current ready vẫn luôn 200 |
+| FR-104 | BR-103 | Scrape 4 metrics V1, labels bounded; Redis down không làm mất process/HTTP export; redis_up=0 khi check thất bại | Giữ V1; không thêm agent/task labels | getApplicationMetrics; RULE-103; AC-106; chưa route |
+| FR-105 | BR-104 | Next Fullstack container/config, non-root, operational access, probe integration; persistence/backup/recovery plan trước acceptance | Giữ integration khi nâng V2 | Internal/package; RULE-102; AC-107; configured only |
+| FR-106 | BR-105 | Dashboard 3 Agents:ID/name, Idle/Working, current task; empty/unavailable text rõ | Đủ idle/working/completed/failed và task results | Browser UI, HTTP N/A; RULE-104/105; AC-108/114; planned |
+| FR-107 | BR-105 | Một browser simulator writer, events 5–8 s, Reset Demo/reload new run; tối đa 30 tasks/run; cleanup timers | Success/Failure/Recovery scenarios đầy đủ | Browser internal, HTTP N/A; RULE-104..106; AC-109/113; planned |
+| FR-108 | BR-105 | Reducer tối thiểu giữ agent-task nhất quán, 1 running/Agent; basic ID/run/seq/guard checks không được bỏ | Full invalid/ref/gap/duplicate/terminal validation và recovery scenarios | Internal, HTTP N/A; RULE-104..106; AC-110/113; planned |
+| FR-109 | BR-106 | 3 chibi trong dải 2–3; 3D cơ bản; lỗi WebGL→Text Dashboard, không task failure giả | Hoàn thiện scene/scenarios tương thích bốn states | UI, HTTP N/A; RULE-107; AC-111/114; planned |
+| FR-110 | BR-106 | Idle→rest, Working→typing và text label; animation không đổi state | Completed→success gesture, Failed→error gesture; recovery theo rules | UI, HTTP N/A; RULE-107; AC-111; planned |
+| FR-111 | BR-106 | NOT IN V1; không panel/buffer Recent Activity để nghiệm thu V1 | 20 accepted events gần nhất, seq giảm, timestamp/agent/task, label simulated; transient | UI/internal, HTTP N/A; RULE-106/108; AC-112/113; planned V2 |
 
-Các FR dưới đây có priority **High / Mandatory** theo BRD. Requested obligation và cách đặc tả proposed là hai khía cạnh riêng.
+Các scope/stage/numeric targets E-109 là accepted. API/storage choices là design dẫn xuất. Không agents CRUD/server simulator/SSE/login hoặc real execution trong V1/V2.
 
-### FR-100 — Hiển thị giao diện Web App
+## 3. Rules — canonical behavior owner
 
-- **Parent:** BR-100. **Actor/trigger:** viewer mở trang.
-- **Kết quả:** render giao diện với nội dung của release đã chọn.
-- **Lỗi/ngoại lệ:** counter lỗi hiện unavailable; không dùng probe healthy thay cho việc chứng minh UI render thành công hoặc assets tải được.
-- **Interface/status:** UI, HTTP page ngoài OpenAPI JSON; starter code-observed, chưa tested. **Links:** RULE-100, AC-100.
+| RULE | Quy tắc | Stage / authority |
+|---|---|---|
+| RULE-100 | Một F5/document load là page view mới. requestId mới cho load mới; cùng document retry dùng cùng ID. Không đếm probes, metrics, static assets, GET đọc total hoặc Reset Demo | V1, V2; E-109/Q-101 |
+| RULE-101 | Một logical registration được increment và ghi dedup cùng atomic boundary. Dedup 600 s từ success đầu, không refresh TTL khi retry; total no TTL/no auto-reset. Confirmed new IDs tăng đúng 1; cùng ID replay không tăng. Timeout có thể outcome unknown: retry chỉ cùng ID trong cửa sổ, không sinh ID thay thế để che lỗi | V1, V2; behavior accepted; atomic/wire design ở API/Data |
+| RULE-102 | Liveness chỉ process. Ready kiểm init/config, Redis check timeout 2 s và không drain; fail 503. Readiness probe timeout 3 s, startupProbe budget≈50 s. Redis failure không làm liveness fail hoặc tự reset counter | V1, V2; E-109/Q-104 |
+| RULE-103 | 4 metric families tại API; CPU/RAM/K8s dùng infrastructure metrics. Labels không raw URL/query, requestId, agent/taskID, user/secret hoặc task content; registry không cần đọc business counter để export | V1, V2; E-109/Q-106 |
+| RULE-104 | Agent enum giữ idle/working/completed/failed; Task enum running/completed/failed. V1 UI dùng idle/working; completed/failed Agent scenarios chỉ V2 | V1 subset, V2 full; E-109 |
+| RULE-105 | Tối đa 1 running task/Agent; assignment tạo task ID mới; result phải current task. V2 terminal Agent giữ ref đến agent.reset→idle. Reset Demo global bỏ run, không là agent.reset và không là counter reset | V1 basic, V2 full; V1 finish detail bên dưới |
+| RULE-106 | Một writer/browser, runId/seq; chỉ next seq apply, duplicate no-op, gap/invalid ref reject+diagnostic. Events 5–8 s khi có transition; 30 tasks/run; không await giữa validate/commit; cleanup timers. New run clear trước bootstrap | V1 basic, V2 full validation; values accepted |
+| RULE-107 | UI/scene đọc snapshot; animation không trigger task completion. Text Dashboard fallback và keyboard bắt buộc, không chỉ màu | V1, V2; E-109/Q-105 |
+| RULE-108 | Recent Activity chỉ V2, 20 accepted events, seq giảm; bỏ event cũ không xóa task; transient, reset/reload mất theo run; không retained history | V2; E-109/Q-107 |
 
-### FR-101 — Ghi nhận và hiển thị lượt truy cập
+### V1 task completion — design detail cần phân biệt scope
 
-- **Parent:** BR-101. **Actor/trigger:** viewer; visit trigger TBD Q-101.
-- **Kết quả:** đọc/ghi counter Redis và hiển thị theo định nghĩa visit được duyệt.
-- **Lỗi/concurrency:** không trả total=0 khi Redis unavailable; confirmed increments phải atomic. Timeout sau write có thể không rõ kết quả, retry/dedupe cần Q-101.
-- **Interface/status:** HTTP counter operations BLOCKED Q-101; planned. Không tạo GET để increment counter. **Links:** RULE-100/RULE-101, AC-101/AC-102; ENT-100 ở Data.
+Để giữ event cadence khi UI chỉ Idle/Working, **đề xuất triển khai**: basic task.completed kết thúc task nội bộ và đưa Agent thẳng Working→Idle, ref→null; không có Success pose/Agent completed hoặc failure/recovery scenario trong V1. Đây là completion tối thiểu của reducer, không full Success feature. Quy tắc này còn cần Web owner xác nhận Q-107; không gắn accepted chỉ vì các numeric targets đã chốt. Nếu chọn giữ Working đến Reset Demo, phải ghi giới hạn scheduler khi cả 3 Agents bận; không tự tạo task chồng. V2 giữ terminal behavior đã có ở nguồn.
 
-### FR-102 — Kiểm tra liveness
+| Agent current | Trigger / guard | Next | Task / ref / giới hạn | Stage |
+|---|---|---|---|---|
+| idle | task.started; ID mới, còn quota, Agent rảnh | working | Tạo running task + ref atomic | V1, V2 |
+| working | task.completed đúng current | idle | Task completed nội bộ, ref null; không Success pose | V1 design proposal, Q-107 |
+| working | task.completed đúng current | completed | Task completed, giữ ref | V2 |
+| working | task.failed đúng current | failed | Task failed, giữ ref | V2 |
+| completed/failed | agent.reset | idle | Ref null, task terminal giữ tới new run | V2 recovery |
+| busy/terminal | task.started không đúng guard | Forbidden | Không overwrite running task; V2 terminal cần reset | Stage-specific guards |
+| bất kỳ | Reset Demo hoặc reload | new run / idle | Clear toàn run, bootstrap 3 Agents; không total reset | V1, V2 |
+| taskCount=30 | Thử assignment mới | Forbidden | Không task 31; finish in-flight rồi chờ Reset | V1, V2 |
 
-- **Parent:** BR-102. **Actor/trigger:** probe GET `/healthz`, process còn phục vụ HTTP.
-- **Kết quả:** 200, `status=ok`, uptime tính bằng giây và timestamp UTC; không mutate business state.
-- **Dependency failure:** Redis down vẫn trả 200 nếu process còn đáp ứng. Process không trả lời được thì caller phát hiện timeout, không hứa app JSON error.
-- **Interface/status:** `getLiveness`; code-observed, chưa runtime-tested. **Links:** RULE-102, AC-103.
+Không tự thêm auto-retry failed task hoặc tự reset total/run sau X giây. Events là mô phỏng; task completion không là command/model execution.
 
-### FR-103 — Kiểm tra readiness
+## 4. Operational behavior và availability
 
-- **Parent:** BR-102. **Actor/trigger:** readiness consumer GET `/ready`.
-- **Target proposed:** 200 `status=ready` khi init hoàn tất, Redis check thành công trong deadline Q-104 và app chưa drain.
-- **Lỗi proposed:** Redis error/timeout → 503 `DEPENDENCY_UNAVAILABLE`; init chưa xong/draining → 503 `NOT_READY`. Không lộ host/secret; không increment hoặc reset counter khi check.
-- **Current evidence:** Next handler hiện luôn tạo 200, chưa kiểm tra Redis. Không mô tả target trên như code đã có.
-- **Interface:** `getReadiness`. **Links:** RULE-102, AC-104/AC-105, ADR-102.
-
-### FR-104 — Xuất application metrics
-
-- **Parent:** BR-103. **Actor/trigger:** scraper GET `/metrics`.
-- **Kết quả proposed:** Prometheus-compatible text; metric names/units/labels tại API, chờ Q-106.
-- **Lỗi/boundary:** registry không phục vụ → 503; Redis down không ngăn scrape process/HTTP metrics; scrape không tăng visit. Labels không chứa dữ liệu nhạy cảm hoặc giá trị không giới hạn.
-- **Interface/status:** `getApplicationMetrics`; planned, chưa có route implementation trong source. **Links:** RULE-103, AC-106.
-
-### FR-105 — Bàn giao để đóng gói và tích hợp
-
-- **Parent:** BR-104. **Actor/trigger:** Web/Platform bàn giao build.
-- **Kết quả:** app có thể đóng gói container, nhận runtime config và phục vụ integration contract đã chốt.
-- **Lỗi:** thiếu config bắt buộc → not ready; không nhúng credential vào image; runtime không cần root.
-- **Interface/status:** internal/package, HTTP N/A vì đây là packaging; configured, chưa tested. **Links:** RULE-102, AC-107.
-
-| Thuật ngữ / HTTP status | Cách hiểu tại các FR operational |
-|---|---|
-| Liveness | Process còn đáp ứng HTTP; không xác nhận Redis hoặc UI hoạt động đầy đủ |
-| Readiness | Điều kiện phục vụ theo target init/dependency/drain; current handler chưa thực hiện target check |
-| `200` | Đã tạo response thành công theo operation; ý nghĩa phụ thuộc `/healthz`, `/ready` hoặc `/metrics` |
-| `503` | Response lỗi ứng dụng được đề xuất cho readiness/registry; không là bằng chứng đã có trong current source |
-| Draining | App ngừng nhận traffic mới theo quy trình shutdown/rollout; deadline và ownership còn Q-104/Q-108 |
-
-## 3. Chức năng extension có điều kiện
-
-FR-106..FR-111 đều **Medium / Proposed MVP Extension**, chưa accepted/selected Q-100. Theo ADR-101 proposed, các chức năng là UI/internal browser và **HTTP N/A có lý do**, không cần tự thêm agents/task APIs.
-
-| FR / parent | Trigger và kết quả quan sát được | Ngoại lệ / giới hạn | Links |
+| Trường hợp | Liveness | Readiness | Counter / Office |
 |---|---|---|---|
-| FR-106 / BR-105 | Viewer vào demo: hiển thị agent ID/name/state/current task và các task đã tạo | Empty list có thông báo; unknown state không crash hoặc bị ép completed | RULE-104/RULE-105; AC-108/AC-114 |
-| FR-107 / BR-105 | Demo active: simulator tạo events giả lập theo transitions | Một writer/browser; stop/unmount dừng timers; không thực thi command/model hoặc nhận external event chưa validate | RULE-104..RULE-106; AC-109/AC-113 |
-| FR-108 / BR-105 | Reducer nhận assignment/result: cập nhật agent-task nhất quán | Busy agent, missing task, duplicate/out-of-order bị reject/no-op kèm diagnostic; không tiến state sai | RULE-104..RULE-106; AC-110/AC-113 |
-| FR-109 / BR-106 | Mở office: 2–3 chibi tương ứng agent IDs | WebGL/init fail hiện 3D unavailable; dashboard text vẫn đọc state được; không cam kết optional 2D renderer | RULE-107; AC-111/AC-114 |
-| FR-110 / BR-106 | State đổi: idle→rest, working→typing, completed→success gesture, failed→error gesture, kèm text label | Animation không thay business state; unknown state có diagnostic; không chỉ dùng màu | RULE-107; AC-111 |
-| FR-111 / BR-106 | Event được chấp nhận: recent activity hiển thị mới nhất trước, timestamp, agent/task và nhãn simulated | Empty panel rõ; buffer capacity Q-107; không persisted history/filter | RULE-106/RULE-108; AC-112/AC-113 |
+| Process đáp ứng, Redis tốt, init xong | 200 | 200 ready | Counter có thể phục vụ; Office theo stage |
+| Redis lỗi/timeout 2 s | 200 nếu process đáp ứng | 503DEPENDENCY_UNAVAILABLE | Counter 503/unavailable; Pod có thể bị rút serving endpoints, viewer mới không tải Office |
+| Init/config chưa đủ hoặc drain | 200 nếu process đáp ứng | 503 NOT_READY | Không nhận traffic qua ready endpoints; không reset total |
+| Process không đáp ứng | Caller timeout | Caller timeout | Không hứa JSON response |
 
-## 4. Business rules và state machine
+Browser đã tải Office có thể tiếp tục local simulator/Text Dashboard khi counter lỗi; reload/new viewer cần server và có thể thất bại nếu mọi Next pod NotReady. Readiness không tự restart pod; startup/liveness failure policy riêng. Không nới `/ready` để giả availability độc lập Redis. Metrics có thể vẫn export trong process nhưng scrape qua Service cũng có thể mất khi endpoints bị rút; Platform cần đường scrape trực tiếp Pod/monitoring phù hợp.
 
-| RULE | Định nghĩa chính | Source / parent / status |
-|---|---|---|
-| RULE-100 | Visit theo Q-101; probe/metrics/static assets không là business visits | BR-101; proposed interpretation; definition BLOCKED |
-| RULE-101 | Mỗi Redis-confirmed increment có một atomic tăng. Timeout không chứng minh chưa tăng; không promise exactly-once hoặc unique visitor | BR-101; proposed, retry gate Q-101 |
-| RULE-102 | Liveness chỉ process; target readiness gồm init + Redis dependency và chưa drain | BR-102/BR-104; proposed delta so với current ready |
-| RULE-103 | Metrics labels không chứa agent/task IDs, raw URL, credentials hoặc task content | BR-103/BR-104; proposed bounded vocabulary |
-| RULE-104 | Agent enum: idle/working/completed/failed. Task enum riêng: running/completed/failed | BR-105; agent enum user-provided; task rules proposed |
-| RULE-105 | Agent tối đa một running task. Assignment tạo task ID mới; chỉ current running task được complete/fail. Terminal agent giữ task ref đến reset; reset bỏ ref | BR-105; proposed |
-| RULE-106 | Một writer/browser; seq tăng trong demoRunId. Chỉ seq kế tiếp apply; duplicate no-op; gap/invalid ref reject + diagnostic, không thêm activity. New run clear state trước bootstrap | BR-105/BR-106; proposed |
-| RULE-107 | UI/animation đọc snapshot; animation không trigger task completion | BR-106; proposed |
-| RULE-108 | Recent buffer transient trong browser, không là retained history. Capacity Q-107; reload mất buffer có chủ ý | BR-106; proposed |
+## 5. Acceptance criteria theo stage
 
-| Giá trị | Agent state | Task status |
-|---|---|---|
-| `idle` | Chưa có current task; ref null | Không dùng |
-| `working` / `running` | Agent dùng `working` | Task đang xử lý dùng `running` |
-| `completed` / `failed` | Agent phản ánh kết quả current task và giữ ref đến reset | Task terminal; không tự chạy lại |
+Mọi hàng là **expected behavior, not executed result**. Giữ mã AC cũ và tách stage trong cùng hàng.
 
-Terminal nghĩa là completed hoặc failed. Task được giữ trong run tới khi clear run; reset agent không xóa task terminal. Bảng transitions là định nghĩa chính, không suy hành vi từ animation.
-
-| Agent hiện tại | Trigger / guard | Agent kế tiếp | Task / tác động hoặc điều cấm | RULE |
+| AC | FR / RULE | Delivery Stage | Given / When | Then / evidence cần |
 |---|---|---|---|---|
-| idle | task.started; task ID mới, agent không có task | working | Tạo running task và ref trong cùng reducer update | RULE-105/RULE-106 |
-| working | task.completed; đúng current task | completed | Task→completed; giữ ref | RULE-105 |
-| working | task.failed; đúng current task | failed | Task→failed; giữ ref | RULE-105 |
-| completed/failed | agent.reset | idle | Ref→null; giữ task terminal đến new run | RULE-105 |
-| idle | complete/fail | Forbidden | Không tạo task/state/event mới | RULE-105/RULE-106 |
-| working | start task khác hoặc reset | Forbidden | Không overwrite task đang chạy | RULE-105/RULE-106 |
-| terminal | complete/fail/start trước reset | Forbidden | Duplicate seq no-op; event mới sai transition reject | RULE-105/RULE-106 |
+| AC-100 | FR-100 | V1, V2 | Mở page; thử counter lỗi | UI/text status trung thực, counter unavailable không 0 giả; không claim ready thay UI-render test |
+| AC-101 | FR-101, RULE-100 | V1, V2 | F5 hai lần; retry cùng request trong 600 s; gửi GET/probe/scrape/assets/Reset Demo | Hai load IDs khác nhau tăng 2; retries không tăng; excluded requests không tăng; UUID lifecycle kể cả double hydration |
+| AC-102 | FR-101, RULE-101 | V1, V2 | N new IDs với concurrent duplicates; response mất sau commit; key TTL boundary | Total n+N; replay original receipt, same ID không tăng; dedup TTL không refresh; total no expiry; expired/lost dedup ngoài guarantee; exceptions không reset |
+| AC-103 | FR-102, RULE-102 | V1, V2 | Process còn đáp ứng, Redis down; GET /healthz | 200 ok, uptime>=0, UTC; không Redis check/visit |
+| AC-104 | FR-103, RULE-102 | V1, V2 | Init/config xong, check Redis thành công ≤2 s; probe timeout 3 s | 200 ready; không mutate business data; QA đo end-to-end response đủ margin trước 3 s |
+| AC-105 | FR-103, RULE-102 | V1, V2 | Redis lỗi/timeout hoặc drain rồi phục hồi | 503 đúng error code; Redis wait không vượt 2 s; next valid check 200; không restart chỉ do Redis; kiểm tra endpoints/routing tác động Office, new load/reload |
+| AC-106 | FR-104, RULE-103 | V1, V2 | QA tạo traffic, latency và Redis fail/restore; authorized scrape | Parser đọc 4 families đúng types/units; bounded labels; redis_up chuyển 0/1; duration observations hợp request; không tăng visit; deny viewer operational access |
+| AC-107 | FR-105 | V1, V2 | Chạy image/config/probe target trong test riêng; slowstart/missing config | Non-root; startup budget≈50 s bằng startupProbe; ready timeout 3 s; missing config notready; backup/restore/access plan xác nhận; không suy target đã có trong manifest |
+| AC-108 | FR-106 | V1 basic, V2 full | Reset/reload bootstrap 3 Agents rồi valid start | Dashboard đúng ID/name/state/task và Simulated; V1 Idle/Working, V2 four states |
+| AC-109 | FR-107 | V1 basic, V2 full | Demo chạy đủ events rồi Reset/unmount | Events cách 5–8 s khi có transition; ≤1 running/Agent; ≤30 tasks/run; new run/counter không lẫn; unmount stop; V2 thêm Success/Failure/Recovery; V1 finish proposal chờ Q-107 |
+| AC-110 | FR-108, RULE-105 | V1 basic, V2 full | Valid result; thử assign vào busy Agent và cross run/ref sai | Atomic agent+task; basic guards V1; V2 terminal states/ref reset/full guards; không task 31 |
+| AC-111 | FR-109/110, RULE-107 | V1 basic, V2 full | Render 3 chibi từ snapshot | V1 rest/typing; V2 success/error/recovery poses; label text, animation không đổi state |
+| AC-112 | FR-111, RULE-108 | V2 only | 21 accepted events rồi Reset/reload | 20 mới nhất seq giảm, bỏ cũ nhất; new run empty; V1 không yêu cầu panel/buffer Recent |
+| AC-113 | FR-107/108/111, RULE-106 | V1 basic, V2 full | Re-deliver seq k, gap k+2, invalid refs | V1 không corrupt snapshot hoặc double assign; V2 full matrix/diagnostics, no invalid activity; FR-111 part chỉ V2 |
+| AC-114 | FR-100/106/109 | V1, V2 | WebGL/3D fail hoặc empty snapshot; dùng keyboard | Text Dashboard fallback đúng state, empty text; Reset Demo thao tác được; không chỉ màu/animation; không tự nhận WCAG certified |
 
-Không có auto-retry task hoặc auto-reset sau X giây được chốt. Q-107 xác định scenario/cadence, không tự biến failed thành working.
+## 6. NFRs và verification
 
-## 5. Acceptance criteria
+| NFR | Parent / source | Target / Delivery Stage | Verification / residual |
+|---|---|---|---|
+| NFR-100 | BR-104, E-104/E-109 | V1, V2: Next Fullstack non-root, UID 10001:10001 configured, runtime config ngoài image | Build/run riêng; không tự sửa Dockerfile |
+| NFR-101 | BR-102, E-109 | V1, V2: Redis check 2 s, readiness probe 3 s, startup budget≈50 s | Fault/duration/endpoints tests; Platform xác nhận tuple/depth/drain |
+| NFR-102 | BR-105/106, E-109 | V1 basic, V2 full: 3 Agents, 5–8 s events, 30 tasks/run | Browser profile; FPS/memory/device thresholds còn Q-104 |
+| NFR-103 | BR-104/105, E-109 | Viewer product; operational/tools infra/admin; không login V1, không real execution/credentials | Proxy/CNI/monitoring grants+deny tests; enforcement Q-102 |
+| NFR-104 | BR-101/105, E-109 | Total no TTL, request dedup 600 s, no auto reset; persistence/backup/recovery required; demo transient | Atomicity/restart/restore/TTL tests; RPO/RTO/storage/retention Q-103 |
+| NFR-105 | BR-103/104, E-109 | 4 metric families, bounded labels, no CPU/RAM/K8s duplication; graceful drain | Parser/load/scrape/routing checks; buckets/deadlines Q-106/Q-104 |
+| NFR-106 | BR-100/106, E-109 | Text Dashboard fallback, keyboard, không màu/animation-only | Manual browser/keyboard review; qualification standard Q-105 |
 
-Given/When/Then lần lượt là **điều kiện ban đầu → thao tác/sự kiện → kết quả mong đợi**. Những hàng còn BLOCKED không có đủ quyết định để nghiệm thu.
+## 7. Traceability và findings
 
-| AC | FR / RULE | Given | When | Then / case |
-|---|---|---|---|---|
-| AC-100 | FR-100 | Release mandatory được build | Mở web | UI render; counter lỗi hiện unavailable, không số giả / success+failure |
-| AC-101 | FR-101, RULE-100 | Visit rule Q-101 được duyệt, Redis hoạt động | Visit hợp lệ và probe/scrape phát sinh | Chỉ visit hợp lệ đổi total đúng rule / expected delta BLOCKED Q-101 |
-| AC-102 | FR-101, RULE-101 | Counter n, N confirmed increments, không reset/eviction | Hai clients ghi đồng thời | Total n+N; timeout báo unavailable/ambiguous, không retry mù / concurrency+failure |
-| AC-103 | FR-102, RULE-102 | HTTP process đáp ứng, Redis unreachable | GET /healthz | 200 ok, uptime>=0, timestamp UTC, không tăng counter / alternate |
-| AC-104 | FR-103, RULE-102 | Init xong, Redis check thành công | GET /ready | 200 ready và timestamp, không mutate business data / success target |
-| AC-105 | FR-103, RULE-102 | Redis lỗi/timeout hoặc app drain | GET /ready rồi Redis phục hồi, hết drain | 503 trước; check đạt trả 200; không cần restart chỉ vì Redis / failure+recovery; deadline Q-104 |
-| AC-106 | FR-104, RULE-103 | Registry ready, QA tạo traffic | Scrape /metrics | Parser Prometheus đọc được series đã chốt; labels không nhạy cảm; Redis down vẫn scrape / success+boundary; Q-106 |
-| AC-107 | FR-105 | Image/build/config integration được chọn | Chạy local/staging, thử bỏ config Redis bắt buộc | Normal UI/probes accessible; thiếu config not ready; process không cần root / chưa thực thi |
-| AC-108 | FR-106 | Extension được chọn, demo mới | Bootstrap 2–3 agents idle rồi task.started hợp lệ | Dashboard ID/name/state/task khớp snapshot, có simulated label / success |
-| AC-109 | FR-107 | Demo active | Scenario start→result→reset rồi unmount | Chỉ event mô phỏng, transitions hợp lệ, unmount ngừng tạo events / cleanup |
-| AC-110 | FR-108, RULE-105 | Agent working trên task A | Result task A; riêng case khác thử assign B khi A còn running | Case hợp lệ cập nhật task+agent; case busy reject, snapshot giữ nguyên / guard |
-| AC-111 | FR-109/FR-110, RULE-107 | Cùng agent lần lượt qua bốn states | Render từng snapshot | 2–3 chibi, animation+text tương ứng; animation không đổi state / boundary |
-| AC-112 | FR-111, RULE-108 | Capacity C được chốt Q-107 | Nhận C+1 valid events rồi reload | Giữ C mới nhất theo seq giảm, bỏ cũ nhất; reload tạo demo mới / conditional boundary |
-| AC-113 | FR-107/FR-108/FR-111, RULE-106 | Event seq k đã apply | Nhận lại k hoặc k+2/unknown task | Duplicate no-op; gap/ref sai diagnostic, không activity/state sai / failure |
-| AC-114 | FR-106/FR-109 | Empty snapshot hoặc WebGL init lỗi | Mở view | Empty text/3D unavailable; dashboard text đọc state được, không báo renderer thành công giả / alternative |
+[BRD](BRD.md) sở hữu BR/stages; [API](api-contract.yaml) map FR-101→getVisitorCount/registerPageView, FR-102/103/104→getLiveness/getReadiness/getApplicationMetrics. FR-100 HTML ngoài JSON, FR-105 packaging, FR-106..111 browser-only (FR-111 V2). [Data](data-contract.md) ENT-100 counter/dedup, ENT-101..103 demo; [Architecture](architecture.md) controls cho đủ NFRs. Quyết định đã giải không còn OPEN toàn bộ; residuals tại[registry](README.md).
 
-## 6. Non-functional requirements
-
-| NFR | Parent / source | Target / điều cần đo | Conditions / verification | Commitment / gap |
-|---|---|---|---|---|
-| NFR-100 | BR-104, E-100/E-104 | Non-root container, runtime config tách image; configured UID10001:10001 | Inspect/build/run image | Requested integration; chưa chạy |
-| NFR-101 | BR-102, E-100 | Readiness deadline/recovery observation Q-104 | Redis fail/restore, QA đo duration, tách liveness | Proposed semantics; target BLOCKED |
-| NFR-102 | BR-105/BR-106, E-100 | 2–3 characters; FPS/memory/browser/GPU matrix Q-104 | Profile scene và tab lifecycle | Conditional, không lấy FPS reference làm SLA |
-| NFR-103 | BR-104/BR-105, E-100 | Không real execution/credential access trong demo; exposure Q-102 | Review code/dependency/security, logs/network | Scope invariant; deployment access BLOCKED |
-| NFR-104 | BR-101/BR-105, E-100 | RPO/RTO/persistence/eviction/max counter Q-103 | Redis loss/restart/concurrency characterization | Không promise durability |
-| NFR-105 | BR-103/BR-104, E-101 | Scrape-compatible, bounded labels, shutdown/drain deadline Q-106/Q-104 | Parser/traffic/termination checks cùng Platform | Metrics required; limits pending |
-| NFR-106 | BR-100/BR-106, E-100 | Không dùng màu/animation làm kênh state duy nhất; keyboard/accessibility standard Q-105 | Text labels, keyboard/manual review | Proposed; không claim WCAG compliance |
-
-## 7. Traceability và review
-
-[BRD](BRD.md) sở hữu BR mapping. [API](api-contract.yaml) mô tả FR-102→getLiveness, FR-103→getReadiness, FR-104→getApplicationMetrics; FR-101 giữ gap Q-101. FR-100 là HTML UI, FR-105 packaging, FR-106..FR-111 UI/internal theo ADR-101. [Data](data-contract.md) sở hữu ENT-100 cho counter, ENT-101..ENT-103 cho demo conditional. [Architecture](architecture.md) mapping đầy đủ NFR controls/gaps.
-
-E-103 là code-observed probes, không chứng minh simulator. A-100 và task/event rules vẫn proposed; Q-100..Q-108 tại [registry](README.md). Nếu cần shared simulator/backend hoặc SSE, phải revise FR/API/Data/Architecture trước implementation.
-
-| Finding | Check / severity | Locations / expected vs observed | Impact | Correction / owner | Result / follow-up |
+| ID | Check / severity | Locations / expected vs observed | Impact | Correction / owner | Result / follow-up |
 |---|---|---|---|---|---|
-| VAL-102 | Traceability / major | FR-100..FR-111 có BR hợp scope; ba operational operations, counter gap rõ | Không orphan FR, chưa full API | Giữ gap FR-101 / Web owner | Supported links bảo toàn; completeness BLOCKED |
-| VAL-103 | Behavior / blocker | FR-101/AC-101/AC-102 cần Q-101 | Counter chưa nghiệm thu được | Chốt trigger/retry / Web owner + QA | BLOCKED |
-| VAL-104 | NFR / major | NFR-101/NFR-102/NFR-104/NFR-105 còn thresholds | Chưa chứng nhận capacity/recovery | Q-103/Q-104/Q-106 / Web + Platform + QA | BLOCKED targets; runtime ACs chưa chạy |
+| VAL-102 | Trace/stage / major | 12 FRs cùng parents, FR-111 V2, 5 operations hợp FR | Không orphan/không scope creep | Cross check / Web+QA | Document check; runtime pending |
+| VAL-103 | Counter / major | Q-101 đã chốt; contract có idempotency window/exception boundary | Không còn visit definition blocker | Implement/fault test / Web+QA | Decisions RESOLVED; atomicity untested |
+| VAL-104 | NFR / major | Timing/limits/fallback đã chốt; storage/access/buckets/performance qualification còn TBD | Không coi targets tested | Platform/QA confirm residuals | Partial residual gates; không OPEN ba timing targets |
