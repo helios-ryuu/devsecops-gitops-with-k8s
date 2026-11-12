@@ -192,7 +192,7 @@ Các bước thực hiện thiết lập hạ tầng thực tế:
       ```
       - Có thể mở trình duyệt truy cập domain web app: https://nt548.helios.id.vn (Hoặc domain khác) để kiểm tra giao diện Next.js hiển thị lượt truy cập.
 20. **Kích hoạt hệ thống Giám sát (Monitoring Stack)**
-    - Thực hiện triển khai Prometheus + Grafana + Loki + Tempo + Alertmanager bằng ArgoCD GitOps:
+    - Thực hiện triển khai `kube-prometheus-stack` (Prometheus Operator, Prometheus, Grafana, Node Exporter, kube-state-metrics; Alertmanager tắt trong `monitoring/values.yaml`) bằng ArgoCD GitOps:
       ```bash
       kubectl apply -f argocd/monitoring.yaml
       ```
@@ -210,3 +210,14 @@ Các bước thực hiện thiết lập hạ tầng thực tế:
       kubectl get ingress -n monitoring
       ```
     - Truy cập Grafana Dashboard: https://grafana.helios.id.vn (Hoặc domain khác) để kiểm tra các biểu đồ giám sát hệ thống.
+
+21. **Thiết lập bảo mật Cloudflare Zero Trust Access cho hạ tầng quản trị (K3s Admin)**
+    - Khởi tạo ứng dụng tự lưu trữ (Self-hosted Application) tên **`K3s Admin`** trên Cloudflare Zero Trust Dashboard để thiết lập tường lửa nhận diện danh tính (Identity-Aware Proxy) bảo vệ toàn bộ các cổng quản trị cụm.
+    - **Destinations (Tên miền đích được bảo vệ):**
+      - `argocd.helios.id.vn` (Giao diện điều phối GitOps ArgoCD)
+      - `grafana.helios.id.vn` (Giao diện giám sát số liệu Grafana Dashboard)
+    - **Access Policies (Chính sách kiểm soát truy cập):**
+      - Tên Policy: `Admin` (Action: `Allow`).
+      - Quy tắc xác thực: Bắt buộc đăng nhập và xác thực danh tính qua Email OTP / 2FA đối với email quản trị (`ngotiensy2005@gmail.com`).
+    - **Session Duration (Thời hạn phiên):** Cấu hình `1 week` (1 tuần) giúp tối ưu trải nghiệm quản trị, không phải nhập mã OTP liên tục nhiều lần trong ngày.
+    - **Kết quả đạt được:** Triệt tiêu hoàn toàn nguy cơ tấn công brute-force và quét lỗ hổng zero-day từ Internet công cộng vào ArgoCD & Grafana; chỉ có quản trị viên xác thực thành công mới được phép chạm tới Traefik Ingress trên VPS.
