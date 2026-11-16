@@ -1,119 +1,193 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# SCRIPT HƯỚNG DẪN DEMO: DEVSECOPS & GITOPS TRÊN K3S HYBRID (ĐỒ ÁN NT548)
-# Chức năng: Chỉ hiển thị các bước và câu lệnh mẫu, chỉ thực hiện thao tác ĐỌC.
-# Không tự ý chạy bất kỳ lệnh xóa hay thay đổi nào trên cụm.
+# SCRIPT IN HƯỚNG DẪN DEMO: PLATFORM ENGINEERING & DEVSECOPS (ĐỒ ÁN NT548)
+# Chức năng: CHỈ IN RA CÁC BƯỚC VÀ CÂU LỆNH MẪU ĐỂ TRÌNH BÀY DEMO.
+# Không thực thi bất kỳ câu lệnh nào lên Git hay cụm Kubernetes.
 # ==============================================================================
 
-set -e
+set -euo pipefail
 
-# Màu sắc hiển thị terminal
-CYAN='\033[0;36m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+CYAN=$'\033[0;36m'
+GREEN=$'\033[0;32m'
+YELLOW=$'\033[1;33m'
+BLUE=$'\033[0;34m'
+RED=$'\033[0;31m'
+NC=$'\033[0m'
 
-NAMESPACE="production-app"
-DEPLOYMENT="web-deployment"
+print_scenario_1() {
+  cat <<EOF
+
+${YELLOW}=== KỊCH BẢN 1: CI DEVSECOPS GATE (GITLEAKS, TRIVY, KUBECONFORM & TRIVY CONFIG) ===${NC}
+${BLUE}Mục tiêu:${NC} Chứng minh pipeline GitHub Actions chặn mọi commit rò rỉ secret, dính CVE
+          hoặc manifest K8s cấu hình không an toàn trước khi build & push lên GHCR.
+
+${GREEN}[Bước 1] Mô phỏng vi phạm CVE trên app (ví dụ thêm lodash 4.17.20):${NC}
+  $ cd app && pnpm add lodash@4.17.20 && cd ..
+  $ git add app/package.json app/pnpm-lock.yaml
+  $ git commit -m "test(security): inject vulnerable dependency lodash@4.17.20"
+  $ git push origin main
+
+${GREEN}[Bước 2] Hoặc mô phỏng kiểm tra manifest YAML thuần cục bộ (kubeconform & trivy config):${NC}
+  $ kubeconform -strict -ignore-missing-schemas -summary project-nt548/k8s-manifests platform-core/kyverno/policies platform-core/monitoring/servicemonitors
+  $ trivy config project-nt548/k8s-manifests --severity HIGH,CRITICAL --exit-code 1
+
+${GREEN}[Bước 3] Quan sát trên tab GitHub Actions:${NC}
+  - Job '2. Source CVE Scanning (Trivy FS)' hoặc '3. Kubernetes Manifest & Config Gate' dừng với Exit Code 1.
+  - Job '4. Build, Trivy Image Gate & Deploy app-prod' bị bỏ qua -> app-prod trên cụm an toàn tuyệt đối.
+
+${GREEN}[Bước 4] Dọn trạng thái test (nếu đã push commit thử nghiệm):${NC}
+  $ git revert HEAD --no-edit && git push origin main
+
+EOF
+}
+
+print_scenario_2() {
+  cat <<EOF
+
+${YELLOW}=== KỊCH BẢN 2: KYVERNO ADMISSION POLICY ENFORCE (NHÃN policy-tier=hardened) ===${NC}
+${BLUE}Mục tiêu:${NC} Chứng minh Kubernetes API Server từ chối ngay tại tầng Admission mọi Pod chạy quyền root,
+          thiếu resource limits, dùng tag ':latest' hoặc từ registry không được cấp phép.
+
+${GREEN}[Bước 1] Kiểm tra 4 ValidatingPolicy đang bật Enforce (Deny):${NC}
+  $ kubectl get validatingpolicy
+  $ kubectl get namespace app-prod --show-labels
+
+${GREEN}[Bước 2] Thử tạo Pod vi phạm (image :latest, không securityContext, không limits):${NC}
+  $ kubectl run test-violation -n app-prod --image=nginx:latest --restart=Never
+
+${GREEN}[Bước 3] Kết quả trình bày cho Hội đồng:${NC}
+  - Admission Webhook của Kyverno trả lỗi từ chối ngay lập tức, Pod không thể được lên lịch.
+
+${GREEN}[Bước 4] Thử chạy lại một image không nằm trong whitelist (ví dụ alpine:3.20):${NC}
+  $ kubectl run test-registry -n app-prod --image=alpine:3.20 --restart=Never -- sleep 30
+
+EOF
+}
+
+print_scenario_3() {
+  cat <<EOF
+
+${YELLOW}=== KỊCH BẢN 3: GITOPS CONTINUOUS DELIVERY (ROLLINGUPDATE ZERO-DOWNTIME) & GIT ROLLBACK ===${NC}
+${BLUE}Mục tiêu:${NC} Trình diễn nâng cấp ứng dụng không gián đoạn với Deployment web-deployment
+          (replicas: 2, RollingUpdate maxUnavailable=0, maxSurge=1) và rollback tức thì bằng Git.
+
+${GREEN}[Bước 1] Kiểm tra trạng thái Production hiện tại trong app-prod:${NC}
+  $ kubectl get deployments,pods,svc,ingress -n app-prod -o wide
+  $ curl -s https://nt548.helios.id.vn | grep -oE 'PRODUCTION \([a-f0-9]+\)'
+
+${GREEN}[Bước 2] Mở terminal theo dõi truy cập liên tục (chứng minh 0% downtime):${NC}
+  $ while true; do curl -s -o /dev/null -w "%{http_code}\n" https://nt548.helios.id.vn/ready; sleep 0.3; done
+
+${GREEN}[Bước 3] Đẩy cập nhật nhỏ trong app/ lên main để kích hoạt CI -> GitOps RollingUpdate:${NC}
+  - CI pipeline chạy Gitleaks -> Trivy FS -> Kubeconform & Trivy Config -> Build & Trivy Image -> Commit tag mới vào project-nt548/k8s-manifests/deployment.yaml.
+  $ git pull --rebase origin main
+  $ kubectl -n app-prod rollout status deploy/web-deployment
+  $ kubectl -n app-prod get pods -o wide
+
+${GREEN}[Bước 4] Demo GitOps Rollback tức thì (Zero-Downtime):${NC}
+  $ git revert HEAD --no-edit && git push origin main
+  $ kubectl -n app-prod rollout status deploy/web-deployment
+  $ curl -s https://nt548.helios.id.vn/ready
+
+EOF
+}
+
+print_scenario_4() {
+  cat <<EOF
+
+${YELLOW}=== KỊCH BẢN 4: NETWORKPOLICY CÔ LẬP REDIS & HUBBLE OBSERVABILITY ===${NC}
+${BLUE}Mục tiêu:${NC} Chứng minh chỉ Pod mang nhãn app: web mới truy cập được cổng TCP 6379 của Redis;
+          mọi Pod lạ trong app-prod bị Cilium eBPF chặn đứng và hiện flow DROPPED trên Hubble UI.
+
+${GREEN}[Bước 1] Kiểm tra NetworkPolicy đang áp dụng:${NC}
+  $ kubectl get networkpolicy -n app-prod -o yaml
+
+${GREEN}[Bước 2] Kiểm tra Pod Web hợp lệ truy cập được Redis (/ready):${NC}
+  $ curl -i https://nt548.helios.id.vn/ready
+
+${GREEN}[Bước 3] Khởi chạy Pod hợp chuẩn Kyverno trong app-prod nhưng KHÔNG mang nhãn app=web:${NC}
+  $ kubectl run intruder -n app-prod --labels="app=intruder" --rm -it --restart=Never \\
+      --image=ghcr.io/helios-ryuu/devsecops-gitops-with-k8s:<CURRENT_TAG> \\
+      --overrides='{"spec":{"securityContext":{"runAsNonRoot":true,"runAsUser":10001,"runAsGroup":10001,"fsGroup":10001,"seccompProfile":{"type":"RuntimeDefault"}},"containers":[{"name":"intruder","image":"ghcr.io/helios-ryuu/devsecops-gitops-with-k8s:<CURRENT_TAG>","securityContext":{"allowPrivilegeEscalation":false,"readOnlyRootFilesystem":true,"capabilities":{"drop":["ALL"]}},"resources":{"requests":{"cpu":"20m","memory":"32Mi"},"limits":{"cpu":"50m","memory":"64Mi"}},"command":["node","-e","const s=require(\"node:net\").connect(6379,\"redis-service.app-prod.svc.cluster.local\");s.setTimeout(3000,()=>{console.log(\"DROPPED/TIMEOUT\");s.destroy()});s.on(\"connect\",()=>{console.log(\"CONNECTED\");s.destroy()});s.on(\"error\",e=>console.log(\"ERROR:\",e.message))"]}]}}'
+
+${GREEN}[Bước 4] Quan sát trực tiếp trên Hubble UI (https://hubble.helios.id.vn):${NC}
+  - Chọn filter Verdict = DROPPED -> hiển thị dòng màu đỏ chặn kết nối từ intruder tới redis-0:6379.
+
+EOF
+}
+
+print_scenario_5() {
+  cat <<EOF
+
+${YELLOW}=== KỊCH BẢN 5: NIGHTLY GHCR IMAGE AUDIT (0 MB CLUSTER RAM), TRAEFIK HA & LONGHORN FAILOVER ===${NC}
+${BLUE}Mục tiêu:${NC} Chứng minh quét CVE định kỳ image đang chạy bằng GitHub Actions (không tốn RAM cụm),
+          khả năng chịu lỗi Traefik HA và bảo toàn dữ liệu Redis trên Longhorn khi bảo trì Worker.
+
+${GREEN}[Bước 1] Kiểm tra quét CVE hàng đêm cho các image đang deploy (0 MB RAM cụm):${NC}
+  - Vào GitHub Actions -> Workflow 'CI, DevSecOps Gate & Nightly Image Audit' -> xem lịch cron '0 0 * * *'
+    hoặc bấm Run workflow (tick 'run_nightly_scan=true') để trình diễn trực tiếp:
+  - Runner tự đọc các image tag đang chạy trong deployment.yaml & redis-statefulset.yaml, pull về và chạy Trivy.
+  - Mở Grafana (https://grafana.helios.id.vn) để xem dashboard tài nguyên Node, Cilium eBPF và Traefik RPS.
+
+${GREEN}[Bước 2] Kiểm chứng Traefik HA Zero-Downtime trên 2 Worker (worker-01 & worker-02):${NC}
+  $ kubectl get pods -n traefik -o wide
+  - Chạy vòng lặp tải nhẹ trong 1 terminal khác:
+    $ while true; do curl -s -o /dev/null -w "%{http_code}\n" https://nt548.helios.id.vn/healthz; sleep 0.3; done
+  - Xóa 1 Pod Traefik bất kỳ:
+    $ kubectl delete pod -n traefik \$(kubectl get pod -n traefik -l app.kubernetes.io/name=traefik -o jsonpath='{.items[0].metadata.name}')
+  -> Quan sát kết quả HTTP 200 liên tục, không rớt kết nối nào.
+
+${GREEN}[Bước 3] Kiểm chứng Longhorn Storage Failover (không mất bộ đếm Redis):${NC}
+  $ kubectl get pods -n app-prod -o wide | grep redis-0
+  - Ghi nhận số lượt truy cập hiện tại trên https://nt548.helios.id.vn
+  - Drain node đang chứa redis-0 (thay <NODE_NAME> bằng worker-01 hoặc worker-02):
+    $ kubectl drain <NODE_NAME> --ignore-daemonsets --delete-emptydir-data
+  - Chờ redis-0 khởi chạy lại trên worker còn lại, sau đó tải lại web và mở node lại:
+    $ kubectl get pods -n app-prod -o wide -w
+    $ kubectl uncordon <NODE_NAME>
+
+EOF
+}
+
+print_all() {
+  print_scenario_1
+  print_scenario_2
+  print_scenario_3
+  print_scenario_4
+  print_scenario_5
+}
+
+if [[ "${1:-}" == "--all" ]]; then
+  print_all
+  exit 0
+elif [[ "${1:-}" =~ ^[1-5]$ ]]; then
+  "print_scenario_${1}"
+  exit 0
+fi
 
 clear 2>/dev/null || true
-echo -e "${CYAN}====================================================================${NC}"
-echo -e "${CYAN}    HƯỚNG DẪN KỊCH BẢN DEMO: DEVSECOPS & GITOPS (K3S HYBRID)        ${NC}"
-echo -e "${CYAN}====================================================================${NC}"
-echo -e "Chọn kịch bản demo bạn muốn hiển thị:"
-echo -e "  ${GREEN}1)${NC} [GitOps] Kịch bản 1: Kiểm chứng Self-healing (Tự phục hồi Pod/Deployment)"
-echo -e "  ${GREEN}2)${NC} [GitOps] Kịch bản 2: Kiểm chứng Tự động Rollback qua Git Revert"
-echo -e "  ${GREEN}3)${NC} [DevSecOps] Kịch bản 3: Kiểm chứng Trivy Security Gate (Chặn CVE)"
-echo -e "  ${GREEN}4)${NC} [Giám sát] Kiểm tra nhanh trạng thái toàn cụm (Read-only)"
+echo -e "${CYAN}========================================================================${NC}"
+echo -e "${CYAN}   HƯỚNG DẪN CÁC BƯỚC DEMO: PLATFORM ENGINEERING & DEVSECOPS (NT548)    ${NC}"
+echo -e "${CYAN}   (Script chỉ in câu lệnh hướng dẫn — không thực thi lên hệ thống)     ${NC}"
+echo -e "${CYAN}========================================================================${NC}"
+echo -e "Chọn kịch bản bạn muốn xem hướng dẫn:"
+echo -e "  ${GREEN}1)${NC} Kịch bản 1: CI DevSecOps Gate (Gitleaks, Trivy, Kubeconform, Trivy Config)"
+echo -e "  ${GREEN}2)${NC} Kịch bản 2: Kyverno Admission Policy Enforce (policy-tier=hardened)"
+echo -e "  ${GREEN}3)${NC} Kịch bản 3: GitOps Continuous Delivery (RollingUpdate Zero-Downtime) & Rollback"
+echo -e "  ${GREEN}4)${NC} Kịch bản 4: NetworkPolicy Cô lập Redis & Hubble Observability (DROPPED)"
+echo -e "  ${GREEN}5)${NC} Kịch bản 5: Nightly GHCR CVE Audit (0 MB RAM), Traefik HA & Longhorn Failover"
+echo -e "  ${GREEN}a)${NC} In toàn bộ 5 kịch bản"
 echo -e "  ${RED}0)${NC} Thoát"
-echo -e "${CYAN}--------------------------------------------------------------------${NC}"
-read -rp "Nhập lựa chọn của bạn (0-4): " choice
+echo -e "${CYAN}------------------------------------------------------------------------${NC}"
+read -rp "Nhập lựa chọn của bạn (0-5 hoặc a): " choice
 
-case $choice in
-  1)
-    echo -e "\n${YELLOW}=== KỊCH BẢN 1: GITOPS SELF-HEALING (TỰ PHỤC HỒI KHI CÓ SAI LỆCH) ===${NC}"
-    echo -e "${BLUE}Mục tiêu:${NC} Chứng minh ArgoCD liên tục đối chiếu trạng thái thực tế với Git."
-    echo -e "          Khi quản trị viên cố tình xóa tài nguyên trực tiếp trên K8s,"
-    echo -e "          ArgoCD sẽ tự động tái tạo lại ngay lập tức (Zero-Touch Reconciliation).\n"
-
-    echo -e "${GREEN}[Bước 1] Kiểm tra trạng thái Deployment đang chạy bình thường:${NC}"
-    echo -e "  $ kubectl get deployment ${DEPLOYMENT} -n ${NAMESPACE}\n"
-    kubectl get deployment "$DEPLOYMENT" -n "$NAMESPACE" 2>/dev/null || echo -e "  (Chưa triển khai hoặc chưa kết nối cluster)\n"
-
-    echo -e "${GREEN}[Bước 2] Lệnh mô phỏng sự cố (Copy lệnh này chạy thủ công):${NC}"
-    echo -e "  ${RED}$ kubectl delete deployment ${DEPLOYMENT} -n ${NAMESPACE}${NC}\n"
-
-    echo -e "${GREEN}[Bước 3] Lệnh quan sát ArgoCD tự phục hồi trong vòng 5-10 giây:${NC}"
-    echo -e "  $ kubectl get pods -n ${NAMESPACE} -l app=web -w"
-    echo -e "  $ kubectl get deployment ${DEPLOYMENT} -n ${NAMESPACE}\n"
-
-    echo -e "${BLUE}Gợi ý thuyết trình:${NC} Mở đồng thời giao diện Web UI ArgoCD để khán giả thấy"
-    echo -e "cây ứng dụng nhấp nháy OutOfSync sang Synced màu xanh lá cây trong vài giây."
-    ;;
-
-  2)
-    echo -e "\n${YELLOW}=== KỊCH BẢN 2: GITOPS ROLLBACK AN TOÀN QUA GIT REVERT ===${NC}"
-    echo -e "${BLUE}Mục tiêu:${NC} Chứng minh mọi thay đổi phiên bản đều truy vết trên Git."
-    echo -e "          Khi cần hoàn tác, chỉ cần 'git revert' là ArgoCD tự động kéo phiên bản cũ về.\n"
-
-    echo -e "${GREEN}[Bước 1] Kiểm tra image và commit tag hiện tại của Pod:${NC}"
-    echo -e "  $ kubectl get deployment ${DEPLOYMENT} -n ${NAMESPACE} -o jsonpath='{.spec.template.spec.containers[0].image}'\n"
-    CURRENT_IMG=$(kubectl get deployment "$DEPLOYMENT" -n "$NAMESPACE" -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null || echo "")
-    if [ -n "$CURRENT_IMG" ]; then
-      echo -e "  Image hiện tại: ${CYAN}${CURRENT_IMG}${NC}\n"
-    fi
-
-    echo -e "${GREEN}[Bước 2] Lệnh thực hiện Rollback qua Git (Chạy từ terminal):${NC}"
-    echo -e "  $ git revert HEAD --no-edit"
-    echo -e "  $ git push origin main\n"
-
-    echo -e "${GREEN}[Bước 3] Lệnh theo dõi quá trình Rolling Update phiên bản cũ:${NC}"
-    echo -e "  $ kubectl rollout status deployment/${DEPLOYMENT} -n ${NAMESPACE}"
-    echo -e "  $ kubectl get deployment ${DEPLOYMENT} -n ${NAMESPACE} -o jsonpath='{.spec.template.spec.containers[0].image}'\n"
-
-    echo -e "${BLUE}Gợi ý thuyết trình:${NC} Nhấn mạnh việc không ai dùng lệnh 'kubectl set image' thủ công"
-    echo -e "trên production, mà toàn bộ tuân thủ nguyên tắc GitOps Declarative."
-    ;;
-
-  3)
-    echo -e "\n${YELLOW}=== KỊCH BẢN 3: DEVSECOPS SECURITY GATE (CHẶN COMMIT DÍNH CVE) ===${NC}"
-    echo -e "${BLUE}Mục tiêu:${NC} Chứng minh pipeline CI tự động đóng vai trò chốt chặn bảo mật."
-    echo -e "          Mã nguồn dính CVE hoặc rò rỉ secret sẽ bị chặn ngay lập tức, không cho phép đóng gói image.\n"
-
-    echo -e "${GREEN}[Bước 1] Thêm một thư viện chứa lỗ hổng nghiêm trọng vào app (Ví dụ: lodash 4.17.20):${NC}"
-    echo -e "  $ cd app && pnpm add lodash@4.17.20 && cd ..\n"
-
-    echo -e "${GREEN}[Bước 2] Commit và đẩy lên GitHub để kích hoạt CI Pipeline:${NC}"
-    echo -e "  $ git add app/package.json app/pnpm-lock.yaml"
-    echo -e "  $ git commit -m \"test(security): inject vulnerable dependency lodash@4.17.20\""
-    echo -e "  $ git push origin main\n"
-
-    echo -e "${GREEN}[Bước 3] Quan sát Security Gate chặn quá trình phát hành:${NC}"
-    echo -e "  1. Mở tab GitHub Actions trên repo."
-    echo -e "  2. Job '2. Source CVE Scanning (Trivy FS)' sẽ quét thấy lỗ hổng CRITICAL/HIGH và trả về Exit Code 1 (Fail)."
-    echo -e "  3. Toàn bộ các bước sau (Build Docker, Push GHCR, Update Tag) bị CANCEL/FAILED."
-    echo -e "  4. Cụm K8s và ArgoCD hoàn toàn an toàn, không bị cập nhật phiên bản lỗi này."
-    ;;
-
-  4)
-    echo -e "\n${YELLOW}=== KIỂM TRA NHANH TRẠNG THÁI HỆ THỐNG (READ-ONLY) ===${NC}\n"
-    echo -e "${CYAN}[1] Danh sách Nodes:${NC}"
-    kubectl get nodes -o wide 2>/dev/null || echo "Không kết nối được cluster"
-    echo -e "\n${CYAN}[2] Toàn bộ Pods trong production-app:${NC}"
-    kubectl get pods -n "$NAMESPACE" -o wide 2>/dev/null || echo "Namespace chưa tồn tại"
-    echo -e "\n${CYAN}[3] Ingress đang hoạt động:${NC}"
-    kubectl get ingress -A 2>/dev/null || echo "Chưa có Ingress"
-    ;;
-
-  0)
-    echo -e "\nThoát."
-    exit 0
-    ;;
-
-  *)
-    echo -e "\n${RED}Lựa chọn không hợp lệ.${NC}"
-    exit 1
-    ;;
+case "$choice" in
+  1) print_scenario_1 ;;
+  2) print_scenario_2 ;;
+  3) print_scenario_3 ;;
+  4) print_scenario_4 ;;
+  5) print_scenario_5 ;;
+  a|A) print_all ;;
+  0) echo -e "\nThoát."; exit 0 ;;
+  *) echo -e "\n${RED}Lựa chọn không hợp lệ.${NC}"; exit 1 ;;
 esac

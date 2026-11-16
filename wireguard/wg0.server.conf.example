@@ -1,0 +1,26 @@
+# /etc/wireguard/wg0.conf trên server (vps / Kubernetes server-01)
+[Interface]
+Address = 10.100.0.1/24
+ListenPort = 51820
+MTU = 1420
+PrivateKey = <SERVER_PRIVATE_KEY>
+
+# client-01 (worker-01)
+[Peer]
+PublicKey = <CLIENT_01_PUBLIC_KEY>
+AllowedIPs = 10.100.0.2/32
+
+# client-02 (worker-02)
+[Peer]
+PublicKey = <CLIENT_02_PUBLIC_KEY>
+AllowedIPs = 10.100.0.3/32
+
+# client-fedora (laptop quản trị)
+[Peer]
+PublicKey = <CLIENT_FEDORA_PUBLIC_KEY>
+AllowedIPs = 10.100.0.10/32
+
+# client-phone (điện thoại)
+[Peer]
+PublicKey = <CLIENT_PHONE_PUBLIC_KEY>
+AllowedIPs = 10.100.0.11/32

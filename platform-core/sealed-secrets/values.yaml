@@ -1,0 +1,25 @@
+# ==============================================================================
+# HELM VALUES: BITNAMI SEALED SECRETS CONTROLLER
+# Chart: sealed-secrets/sealed-secrets (https://bitnami.github.io/sealed-secrets)
+# Install:
+#   helm repo add sealed-secrets https://bitnami.github.io/sealed-secrets
+#   helm install sealed-secrets sealed-secrets/sealed-secrets -n kube-system -f platform-core/sealed-secrets/values.yaml
+# ==============================================================================
+
+fullnameOverride: sealed-secrets-controller
+
+resources:
+  requests:
+    cpu: "25m"
+    memory: "48Mi"
+  limits:
+    cpu: "100m"
+    memory: "128Mi"
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-role.kubernetes.io/control-plane
+              operator: DoesNotExist

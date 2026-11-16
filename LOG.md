@@ -1,223 +1,55 @@
 # Nhật ký triển khai (Deployment Log)
 
-Các bước thực hiện thiết lập hạ tầng thực tế:
+> Checklist ghi chú thực tế trong quá trình dựng hạ tầng và triển khai ứng dụng theo [ARCHITECTURE.md](./ARCHITECTURE.md) và [RUNBOOK.md](./RUNBOOK.md).
 
-1. **Cài đặt Tailscale**
-   - Cài đặt và cấu hình Tailscale trên các node (`server-01` VPS, `worker-01`, `worker-02` on-prem) tạo mạng mesh VPN riêng.
+## Pha 0: Chuẩn bị Hạ tầng, Tắt Host Firewall An toàn SSH & Công cụ Quản trị
+- [x] Xác nhận cổng `sshd` thực tế (`61022` trên `server-01`, `61122` trên `worker-01`, `61222` trên `worker-02`), cấu hình SSH key-only (`PasswordAuthentication no`) và kiểm tra `~/.kube/config` trên `laptop`
+- [x] Tắt `ufw` / `firewalld` trên cả 3 node và xác minh `iptables` ở trạng thái `policy ACCEPT`
+- [x] Cài công cụ trên `laptop` (Fedora) (`kubectl`, `helm`, `kubeseal`, `cilium`, `wireguard-tools`) và khai báo biến `export VPS_PUBLIC_IP`
+- [x] Đặt DHCP Reservation LAN `10.10.10.0/24`, khóa Cloud Firewall (NSG) VPS (`61022/tcp`, `80/tcp`, `443/tcp`, `51820/udp`, `ICMP` IPv4), trỏ Cloudflare DNS & tạo Origin Certificate
 
-2. **Cài đặt K3s Cluster**
-   - **Cấu hình & Cài đặt Server Node (`server-01` VPS):**
-     Tạo file `/etc/rancher/k3s/config.yaml`:
-     ```yaml
-     # --- Định danh & Mạng Node ---
-     node-name: "server-01"
-     bind-address: "<MASTER_TAILSCALE_IP>"
-     advertise-address: "<MASTER_TAILSCALE_IP>"
-     node-ip: "<MASTER_TAILSCALE_IP>"
-     node-external-ip: "<MASTER_TAILSCALE_IP>"
+<!-- Ghi chú của bạn cho Pha 0 -->
 
-     # --- SANs cho TLS Certificate ---
-     tls-san:
-       - "<MASTER_TAILSCALE_IP>"
-       - "127.0.0.1"
-       - "localhost"
 
-     # --- Cấu hình CNI Mạng Flannel qua Tailscale ---
-     flannel-iface: "tailscale0"
-     flannel-backend: "vxlan"
+## Pha 1: Mạng WireGuard `wg0` & Chuẩn bị Host Longhorn
+- [x] Cài gói phụ thuộc OS, nạp `br_netfilter` và ghi cấu hình `/etc/sysctl.d/90-k8s.conf` (`ip_forward=1`, `rp_filter=0`, `bridge-nf-call-iptables=1`) trên cả 3 node
+- [x] Cài `open-iscsi`, `nfs-common` và bật `iscsid` + `iscsi_tcp` trên `worker-01` & `worker-02` (`/var/lib/longhorn`)
+- [x] Sinh khóa và bật WireGuard `wg0` (`10.100.0.0/24`) cho `server`, `client-01`, `client-02`, `client-fedora`, `client-phone`; kiểm tra thông mạng 5 node, LAN `worker-01 <-> worker-02` và SSH qua `10.100.0.1..3`
+- [x] Kiểm chứng `ufw`/`firewalld` tắt, `FORWARD ACCEPT`, khởi động lại các node Linux & `laptop`, xác nhận `wg0` tự phục hồi và `nmap` kiểm tra VPS Cloud NSG
 
-     # --- Cấu hình Taints ---
-     node-taint:
-       - "node-role.kubernetes.io/control-plane:NoSchedule"
+<!-- Ghi chú của bạn cho Pha 1 -->
 
-     # --- Tinh chỉnh Dịch vụ & Add-ons ---
-     disable:
-       - "traefik"
-       - "servicelb"
-   
-     # --- Bảo mật & Phân quyền ---
-     secrets-encryption: true
-     write-kubeconfig-mode: "0644"
-     debug: false
-     ```
-     Phân quyền cho file cấu hình & Chạy lệnh cài đặt K3s Server và lấy token:
-     ```bash
-     # Phân quyền cho file cấu hình (0644 giúp user thường chạy kubectl không bị cảnh báo permission denied)
-     sudo chmod 755 /etc/rancher/k3s
-     sudo chmod 644 /etc/rancher/k3s/config.yaml
 
-     curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.37.1+k3s1" sh -
-     sudo cat /var/lib/rancher/k3s/server/node-token
-     ```
+## Pha 2: Kubernetes v1.37.1 (`kubeadm`), Cilium eBPF + Hubble UI & Sealed Secrets
+- [x] Tắt Swap vĩnh viễn, nạp `overlay` và cài đặt `containerd.io 2.3.6` (`SystemdCgroup = true`) + `kubelet`/`kubeadm`/`kubectl` `v1.37.1` trên cả 3 node
+- [x] Tạo `/etc/kubernetes/enc/enc.yaml` (`aescbc`), chạy `kubeadm init` trên `server-01`, `kubeadm join` + gán nhãn `node.longhorn.io/create-default-disk=true` cho `worker-01`, `worker-02`
+- [x] Cài đặt Cilium eBPF CNI/LB + `CiliumLoadBalancerIPPool` (`<VPS_PUBLIC_IP>/32`) + Hubble UI
+- [x] Cài đặt Sealed Secrets Controller & sao lưu `~/sealed-secrets-master-key.yaml`
+- [x] Tạo & apply 2 `SealedSecret` Tầng 1 (`cloudflare-origin-tls`, `grafana-admin-secret`)
 
-   - **Cấu hình & Cài đặt Worker Nodes (`worker-01`, `worker-02` on-prem):**
-     Tạo file `/etc/rancher/k3s/config.yaml` trên từng worker:
-     ```yaml
-     server: "https://<MASTER_TAILSCALE_IP>:6443"
-     token: "<NODE_TOKEN>"
-     node-name: "worker-01"   # Đặt tương ứng worker-01 hoặc worker-02
-     node-ip: "<WORKER_TAILSCALE_IP>"
-     node-external-ip: "<WORKER_TAILSCALE_IP>"
-     flannel-iface: "tailscale0"
-     ```
-     Chạy lệnh cài đặt K3s Agent:
-     ```bash
-     curl -sfL https://get.k3s.io | sh -s - agent
-     ```
+<!-- Ghi chú của bạn cho Pha 2 -->
 
-3. **Đồng bộ Kubeconfig về máy quản trị**
-   - Sao chép file `/etc/rancher/k3s/k3s.yaml` từ `server-01` về máy local (`~/.kube/config`) và phân quyền cho config: `chmod 600 ~/.kube/config`.
-   - Cập nhật địa chỉ `server` trỏ về Tailscale IP của `server-01` nếu cần.
 
-4. **Xác nhận trạng thái Nodes**
-   - Kiểm tra kết nối cụm:
-     ```bash
-     kubectl get nodes -o wide
-     ```
-   - Đảm bảo tất cả 3 node đều ở trạng thái `Ready`.
+## Pha 3: Traefik HA (`LoadBalancer`) & Longhorn Storage
+- [x] Cài đặt Traefik HA (`replicas: 2`), `traefik-metrics` (`ClusterIP: 9100`), `TLSStore`
+- [x] Cài đặt Longhorn (`replicas: 2`) và kiểm tra Node IP trong Longhorn UI (`10.100.0.2 <-> 10.100.0.3`)
 
-5. **Tạo Chứng chỉ SSL Cloudflare Origin Server**
-   - Tạo Origin Certificate (hạn 1 năm hoặc mặc định 15 năm tối đa) trên Cloudflare Dashboard cho domain `*.helios.id.vn` và `helios.id.vn`.
-   - Tải về và lưu cặp file chứng chỉ vào thư mục [secrets/](file:///home/helios/main/projects/devsecops-gitops-with-k8s/secrets/) gồm `tls.crt` và `tls.key`.
+<!-- Ghi chú của bạn cho Pha 3 -->
 
-6. **Tạo Kubernetes Secret cho TLS**
-   - Tạo Kubernetes Secret `cloudflare-origin-tls` trong namespace `traefik` (tạo imperative hoặc encode base64 vào file [traefik/cloudflare-origin-tls-secret.yaml](file:///home/helios/main/projects/devsecops-gitops-with-k8s/traefik/cloudflare-origin-tls-secret.yaml)):
-     ```bash
-     kubectl create namespace traefik
-     kubectl create secret tls cloudflare-origin-tls \
-       --cert=secrets/tls.crt \
-       --key=secrets/tls.key \
-       -n traefik
-     ```
 
-7. **Apply TLSStore cho Traefik**
-   - Áp dụng cấu hình Default Certificate qua [traefik/tlsstore.yaml](file:///home/helios/main/projects/devsecops-gitops-with-k8s/traefik/tlsstore.yaml):
-     ```bash
-     kubectl apply -f traefik/tlsstore.yaml
-     ```
+## Pha 4: Monitoring Stack, Kyverno Policy, ArgoCD & Kích hoạt CI/GHCR
+- [x] Cài đặt `kube-prometheus-stack` (`monitoring`) & apply `platform-core/monitoring/servicemonitors/`
+- [x] Cài đặt Kyverno (`admissionController`), apply `platform-core/kyverno/policies/` và xác nhận 4 `ValidatingPolicy` sẵn sàng (`Deny`)
+- [x] Cài đặt ArgoCD (`argocd`) cho GitOps Tầng 2 & bật `serviceMonitor` trên Cilium/Hubble, Longhorn và ArgoCD
+- [x] Bật `Read and write permissions` cho `GITHUB_TOKEN` (GitHub Settings -> Actions -> General)
+- [x] Kiểm tra `git status`, chạy `git add -A && git commit && git push -u origin main`, đợi `ci.yml` build image GHCR & `git pull --rebase origin main`
 
-8. **Thêm Traefik Helm Repository**
-   - Cập nhật kho chart của Traefik:
-     ```bash
-     helm repo add traefik https://traefik.github.io/charts
-     helm repo update
-     ```
+<!-- Ghi chú của bạn cho Pha 4 -->
 
-9. **Cài đặt Traefik Ingress Controller Release**
-   - Deploy Traefik bằng Helm với file values tùy chỉnh [traefik/values.yaml](file:///home/helios/main/projects/devsecops-gitops-with-k8s/traefik/values.yaml):
-     ```bash
-     helm install traefik traefik/traefik -n traefik -f traefik/values.yaml
-     ```
 
-10. **Thêm ArgoCD Helm Repository**
-    - Cập nhật kho chart của ArgoCD:
-      ```bash
-      helm repo add argo https://argoproj.github.io/argo-helm
-      helm repo update
-      ```
-11. **Cài đặt ArgoCD GitOps Controller Release**
-    - Deploy ArgoCD bằng Helm với file values tùy chỉnh [argocd/values.yaml](file:///home/helios/main/projects/devsecops-gitops-with-k8s/argocd/values.yaml):
-      ```bash
-      helm install argocd argo/argo-cd -n argocd --create-namespace -f argocd/values.yaml
-      ```
+## Pha 5: Tầng Đồ án (`project-nt548`), CI/CD & Cloudflare Zero Trust
+- [ ] Kiểm chứng luồng CD `ci.yml` (`RollingUpdate` khi cập nhật `app/`, rollback `git revert`) & Nightly Audit (`cron 0 0 * * *` / `run_nightly_scan`)
+- [ ] Niêm phong & đẩy `redis-auth-sealedsecret.yaml` (`[skip ci]`), apply `project-nt548/app-prod.yaml` và kiểm tra `app-prod` (`web-deployment` `replicas: 2`, `redis-0`, `nt548.helios.id.vn`)
+- [ ] Trỏ DNS Cloudflare (`vps.helios.id.vn`, `nt548.helios.id.vn`, `argocd.helios.id.vn`, `grafana.helios.id.vn`, `hubble.helios.id.vn`) & Cloudflare Zero Trust `K8s Admin`
 
-12. **Lấy mật khẩu admin ArgoCD**
-    - Lấy mật khẩu admin từ Secret `argocd-initial-admin-secret`:
-      ```bash
-      kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 --decode
-      ```
-13. **Khởi tạo Next.js App Router bằng CLI**
-    - Sử dụng pnpm để tạo ứng dụng Next.js:
-      ```bash
-      pnpm create next-app app \
-        --typescript \
-        --tailwind \
-        --eslint \
-        --app \
-        --src-dir \
-        --import-alias "@/*"
-      ```
-
-14. **Cấu hình Standalone & Endpoints kiểm tra sức khỏe**
-    - Bật `output: "standalone"` trong [app/next.config.ts](file:///home/helios/main/projects/devsecops-gitops-with-k8s/app/next.config.ts).
-    - Tạo các route kiểm tra probe cho Kubernetes:
-      - `app/src/app/healthz/route.ts` phục vụ `livenessProbe`.
-      - `app/src/app/ready/route.ts` phục vụ `readinessProbe`.
-
-15. **Tối ưu hóa Dockerfile & Bảo mật Non-Root**
-    - Tạo [app/Dockerfile](file:///home/helios/main/projects/devsecops-gitops-with-k8s/app/Dockerfile) dạng Multi-Stage build cho pnpm với base image bất biến `node:26.13.0-alpine3.23`.
-    - Cấu hình non-root user `10001:10001` và chown đồng bộ cho các thư mục `public`, `standalone`, `static`.
-    - Tạo file [app/.dockerignore](file:///home/helios/main/projects/devsecops-gitops-with-k8s/app/.dockerignore) loại trừ các tệp không cần thiết.
-
-16. **Cấu hình quyền Workflow trên GitHub Repository**
-    - Truy cập Settings $\rightarrow$ Actions $\rightarrow$ General $\rightarrow$ Workflow permissions.
-    - Chọn **Read and write permissions** và tích chọn **Allow GitHub Actions to create and approve pull requests** (đảm bảo CI pipeline có quyền push Git tag mới).
-
-17. **Đẩy mã nguồn lên Remote & Kích hoạt Pipeline CI/DevSecOps**
-    - Thực hiện đẩy mã nguồn ứng dụng Web Next.js 16 và toàn bộ cấu hình GitOps/K8s lên nhánh `main` trên GitHub.
-    - Đường ống CI/DevSecOps [.github/workflows/ci-pipe.yml](file:///home/helios/main/projects/devsecops-gitops-with-k8s/.github/workflows/ci-pipe.yml) tự động kích hoạt và thực thi thành công 100% (Gitleaks $\rightarrow$ Trivy FS $\rightarrow$ Hardened Docker Build $\rightarrow$ Trivy Image Security Gate $\rightarrow$ Push GHCR $\rightarrow$ Auto-update GitOps tag).
-    - **Thành phẩm đạt được:**
-      - **Image Container Production:** Đã được đóng gói, hardening bảo mật (non-root UID `10001:10001`, triệt tiêu toàn bộ CVE HIGH/CRITICAL) và xuất bản thành công lên GitHub Container Registry tại `ghcr.io/helios-ryuu/devsecops-gitops-with-k8s:latest`.
-      - **Tự động hóa GitOps:** Pipeline tự động cập nhật image tag mới vào `k8s-manifests/base/kustomization.yaml` trên remote, sẵn sàng cho ArgoCD kéo về đồng bộ triển khai lên cụm K3s.
-
-18. **Kéo commit cập nhật GitOps tag mới về máy local**
-    - Thực hiện lệnh:
-      ```bash
-      git pull origin main
-      ```
-    - Kiểm tra file `k8s-manifests/base/kustomization.yaml` đã được cập nhật tag mới của image container.
-
-19. **Kích hoạt Web App trên cụm K8s qua ArgoCD GitOps**
-    - Khởi tạo ứng dụng trên ArgoCD bằng file argocd/app.yaml:
-      ```bash
-      kubectl apply -f argocd/app.yaml
-      ```
-    - ArgoCD sẽ tự động thực hiện ngay lập tức:
-      - Tự tạo namespace production-app.
-      - Kéo image ghcr.io/helios-ryuu/devsecops-gitops-with-k8s:c4ea872... từ GHCR về chạy trên Worker node.
-      - Triển khai cơ sở dữ liệu Redis LTS 8.2.11 kèm probe kiểm tra sức khỏe.
-      - Cấu hình Traefik Ingress và áp dụng NetworkPolicy cô lập an ninh.
-    - Kiểm tra trạng thái triển khai:
-      - Xem các Pod đã Running 1/1 chưa
-      ```bash
-      kubectl get pods -n production-app -o wide
-      ```
-      - Xem Ingress đã nhận IP/Host chưa
-      ```bash
-      kubectl get ingress -n production-app
-      ```
-      - Xem các tài nguyên còn lại đã được tạo chưa
-      ```bash
-      kubectl get svc,cm,secret,pvc -n production-app
-      ```
-      - Có thể mở trình duyệt truy cập domain web app: https://nt548.helios.id.vn (Hoặc domain khác) để kiểm tra giao diện Next.js hiển thị lượt truy cập.
-20. **Kích hoạt hệ thống Giám sát (Monitoring Stack)**
-    - Thực hiện triển khai `kube-prometheus-stack` (Prometheus Operator, Prometheus, Grafana, Node Exporter, kube-state-metrics; Alertmanager tắt trong `monitoring/values.yaml`) bằng ArgoCD GitOps:
-      ```bash
-      kubectl apply -f argocd/monitoring.yaml
-      ```
-    - Kiểm tra trạng thái triển khai:
-      - Xem trạng thái tóm tắt (Sync Status & Health)
-      ```bash
-      kubectl get application -n argocd
-      ```
-      - Xem các Pod đã Running 1/1 chưa
-      ```bash
-      kubectl get pods -n monitoring -o wide
-      ```
-      - Xem Ingress đã nhận IP/Host chưa
-      ```bash
-      kubectl get ingress -n monitoring
-      ```
-    - Truy cập Grafana Dashboard: https://grafana.helios.id.vn (Hoặc domain khác) để kiểm tra các biểu đồ giám sát hệ thống.
-
-21. **Thiết lập bảo mật Cloudflare Zero Trust Access cho hạ tầng quản trị (K3s Admin)**
-    - Khởi tạo ứng dụng tự lưu trữ (Self-hosted Application) tên **`K3s Admin`** trên Cloudflare Zero Trust Dashboard để thiết lập tường lửa nhận diện danh tính (Identity-Aware Proxy) bảo vệ toàn bộ các cổng quản trị cụm.
-    - **Destinations (Tên miền đích được bảo vệ):**
-      - `argocd.helios.id.vn` (Giao diện điều phối GitOps ArgoCD)
-      - `grafana.helios.id.vn` (Giao diện giám sát số liệu Grafana Dashboard)
-    - **Access Policies (Chính sách kiểm soát truy cập):**
-      - Tên Policy: `Admin` (Action: `Allow`).
-      - Quy tắc xác thực: Bắt buộc đăng nhập và xác thực danh tính qua Email OTP / 2FA đối với email quản trị (`ngotiensy2005@gmail.com`).
-    - **Session Duration (Thời hạn phiên):** Cấu hình `1 week` (1 tuần) giúp tối ưu trải nghiệm quản trị, không phải nhập mã OTP liên tục nhiều lần trong ngày.
-    - **Kết quả đạt được:** Triệt tiêu hoàn toàn nguy cơ tấn công brute-force và quét lỗ hổng zero-day từ Internet công cộng vào ArgoCD & Grafana; chỉ có quản trị viên xác thực thành công mới được phép chạm tới Traefik Ingress trên VPS.
+<!-- Ghi chú của bạn cho Pha 5 -->

@@ -1,0 +1,55 @@
+# ==============================================================================
+# HELM VALUES: LONGHORN DISTRIBUTED STORAGE (2 REPLICAS TRÊN 2 WORKER)
+# Chart: longhorn/longhorn (https://charts.longhorn.io)
+# Install:
+#   helm repo add longhorn https://charts.longhorn.io && helm repo update
+#   helm install longhorn longhorn/longhorn -n longhorn-system --create-namespace -f platform-core/longhorn/values.yaml
+# ==============================================================================
+
+# Khóa toàn bộ user-deployed Pods (manager, driver-deployer, global-manager, ui) về cụm 2 worker onprem-lan
+global:
+  nodeSelector:
+    topology.kubernetes.io/zone: onprem-lan
+
+persistence:
+  defaultClass: true
+  defaultClassReplicaCount: 2
+
+defaultSettings:
+  createDefaultDiskLabeledNodes: true
+  defaultDataPath: /var/lib/longhorn
+  storageMinimalAvailablePercentage: 15
+  defaultReplicaCount: '{"v1":"2","v2":"2"}'
+  replicaSoftAntiAffinity: false
+  # Khóa cả system-managed Pods (instance-manager, engine-image, csi-plugin/sidecars) về 2 worker
+  systemManagedComponentsNodeSelector: "topology.kubernetes.io/zone:onprem-lan"
+
+# Giảm từ mặc định 3 -> 2 replicas để tránh thừa Pod/RAM trên cụm 2 worker
+longhornGlobalManager:
+  replicas: 2
+
+longhornUI:
+  replicas: 1
+
+csi:
+  attacherReplicaCount: 2
+  provisionerReplicaCount: 2
+  resizerReplicaCount: 2
+  snapshotterReplicaCount: 2
+
+# Bật serviceMonitor=true bằng `helm upgrade` sau khi Prometheus CRDs sẵn sàng ở Pha 4
+metrics:
+  serviceMonitor:
+    enabled: false
+
+ingress:
+  enabled: false
+
+networkPolicies:
+  metricsScrapeSources:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: monitoring
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: prometheus

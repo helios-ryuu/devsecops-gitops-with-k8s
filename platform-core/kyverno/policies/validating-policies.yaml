@@ -1,0 +1,200 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-non-root-security-context
+  annotations:
+    policies.kyverno.io/title: Require Non-Root Security Context
+    policies.kyverno.io/category: Pod Security Standards (Restricted)
+spec:
+  validationActions:
+    - Deny
+  evaluation:
+    background:
+      enabled: false
+  matchConstraints:
+    namespaceSelector:
+      matchLabels:
+        policy-tier: hardened
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+      - apiGroups: ["apps"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
+      - apiGroups: ["batch"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["jobs", "cronjobs"]
+  variables:
+    - name: podSpec
+      expression: >-
+        object.kind == 'CronJob' ? object.spec.jobTemplate.spec.template.spec : (has(object.spec.template) ? object.spec.template.spec : object.spec)
+    - name: allContainers
+      expression: >-
+        variables.podSpec.containers + (has(variables.podSpec.initContainers) ? variables.podSpec.initContainers : [])
+  validations:
+    - expression: >-
+        has(variables.podSpec.securityContext) &&
+        has(variables.podSpec.securityContext.runAsNonRoot) &&
+        variables.podSpec.securityContext.runAsNonRoot == true &&
+        has(variables.podSpec.securityContext.seccompProfile) &&
+        has(variables.podSpec.securityContext.seccompProfile.type) &&
+        variables.podSpec.securityContext.seccompProfile.type in ['RuntimeDefault', 'Localhost'] &&
+        variables.allContainers.all(c,
+          has(c.securityContext) &&
+          (!has(c.securityContext.runAsNonRoot) || c.securityContext.runAsNonRoot == true) &&
+          has(c.securityContext.allowPrivilegeEscalation) &&
+          c.securityContext.allowPrivilegeEscalation == false &&
+          has(c.securityContext.capabilities) &&
+          has(c.securityContext.capabilities.drop) &&
+          'ALL' in c.securityContext.capabilities.drop
+        )
+      message: "Pod trong namespace policy-tier=hardened bắt buộc chạy non-root, seccompProfile RuntimeDefault/Localhost, tắt allowPrivilegeEscalation và drop ALL capabilities."
+---
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-resource-requests-limits
+  annotations:
+    policies.kyverno.io/title: Require CPU and Memory Requests and Limits
+    policies.kyverno.io/category: Best Practices
+spec:
+  validationActions:
+    - Deny
+  evaluation:
+    background:
+      enabled: false
+  matchConstraints:
+    namespaceSelector:
+      matchLabels:
+        policy-tier: hardened
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+      - apiGroups: ["apps"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
+      - apiGroups: ["batch"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["jobs", "cronjobs"]
+  variables:
+    - name: podSpec
+      expression: >-
+        object.kind == 'CronJob' ? object.spec.jobTemplate.spec.template.spec : (has(object.spec.template) ? object.spec.template.spec : object.spec)
+    - name: allContainers
+      expression: >-
+        variables.podSpec.containers + (has(variables.podSpec.initContainers) ? variables.podSpec.initContainers : [])
+  validations:
+    - expression: >-
+        variables.allContainers.all(c,
+          has(c.resources) &&
+          has(c.resources.requests) &&
+          has(c.resources.requests.cpu) && c.resources.requests.cpu != '' &&
+          has(c.resources.requests.memory) && c.resources.requests.memory != '' &&
+          has(c.resources.limits) &&
+          has(c.resources.limits.cpu) && c.resources.limits.cpu != '' &&
+          has(c.resources.limits.memory) && c.resources.limits.memory != ''
+        )
+      message: "Mọi container trong namespace policy-tier=hardened phải khai báo đầy đủ resources.requests và resources.limits (cpu, memory)."
+---
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: disallow-latest-tag
+  annotations:
+    policies.kyverno.io/title: Disallow Latest Tag
+    policies.kyverno.io/category: Best Practices
+spec:
+  validationActions:
+    - Deny
+  evaluation:
+    background:
+      enabled: false
+  matchConstraints:
+    namespaceSelector:
+      matchLabels:
+        policy-tier: hardened
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+      - apiGroups: ["apps"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
+      - apiGroups: ["batch"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["jobs", "cronjobs"]
+  variables:
+    - name: podSpec
+      expression: >-
+        object.kind == 'CronJob' ? object.spec.jobTemplate.spec.template.spec : (has(object.spec.template) ? object.spec.template.spec : object.spec)
+    - name: allContainers
+      expression: >-
+        variables.podSpec.containers + (has(variables.podSpec.initContainers) ? variables.podSpec.initContainers : [])
+  validations:
+    - expression: >-
+        variables.allContainers.all(c,
+          ((c.image.substring(c.image.lastIndexOf('/') + 1).contains(':') &&
+            !c.image.endsWith(':') &&
+            !c.image.contains(':@')) ||
+           c.image.contains('@')) &&
+          !c.image.substring(c.image.lastIndexOf('/') + 1).endsWith(':latest') &&
+          !c.image.substring(c.image.lastIndexOf('/') + 1).contains(':latest@')
+        )
+      message: "Cấm sử dụng container image thiếu tag hoặc dùng tag ':latest'."
+---
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: restrict-allowed-registries
+  annotations:
+    policies.kyverno.io/title: Restrict Image Registries
+    policies.kyverno.io/category: Supply Chain Security
+spec:
+  validationActions:
+    - Deny
+  evaluation:
+    background:
+      enabled: false
+  matchConstraints:
+    namespaceSelector:
+      matchLabels:
+        policy-tier: hardened
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+      - apiGroups: ["apps"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
+      - apiGroups: ["batch"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["jobs", "cronjobs"]
+  variables:
+    - name: podSpec
+      expression: >-
+        object.kind == 'CronJob' ? object.spec.jobTemplate.spec.template.spec : (has(object.spec.template) ? object.spec.template.spec : object.spec)
+    - name: allContainers
+      expression: >-
+        variables.podSpec.containers + (has(variables.podSpec.initContainers) ? variables.podSpec.initContainers : [])
+  validations:
+    - expression: >-
+        variables.allContainers.all(c,
+          (c.image.startsWith('ghcr.io/helios-ryuu/') && size(c.image) > size('ghcr.io/helios-ryuu/')) ||
+          c.image.startsWith('docker.io/library/redis:') ||
+          c.image.startsWith('docker.io/library/redis@')
+        )
+      message: "Chỉ cho phép pull image từ registry hợp lệ (ghcr.io/helios-ryuu/* hoặc docker.io/library/redis:*)."

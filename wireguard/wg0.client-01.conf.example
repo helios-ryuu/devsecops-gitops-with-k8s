@@ -1,0 +1,21 @@
+# /etc/wireguard/wg0.conf trên client-01 (worker-01)
+[Interface]
+Address = 10.100.0.2/24
+ListenPort = 51820
+MTU = 1420
+PrivateKey = <CLIENT_01_PRIVATE_KEY>
+
+# Hub server (vps): định tuyến toàn dải 10.100.0.0/24 để client-fedora (.10), client-phone (.11), client-02 (.3) và server (.1) đều thấy nhau
+[Peer]
+PublicKey = <SERVER_PUBLIC_KEY>
+# vps.helios.id.vn là bản ghi A (DNS Only trên Cloudflare) trỏ về <VPS_PUBLIC_IP>
+Endpoint = vps.helios.id.vn:51820
+AllowedIPs = 10.100.0.0/24
+PersistentKeepalive = 25
+
+# Peer trực tiếp qua LAN 10.10.10.0/24 tới client-02 (worker-02): /32 ưu tiên hơn /24 để Longhorn đi thẳng LAN 1Gbps
+[Peer]
+PublicKey = <CLIENT_02_PUBLIC_KEY>
+Endpoint = <WORKER_02_LAN_IP>:51820
+AllowedIPs = 10.100.0.3/32
+PersistentKeepalive = 25

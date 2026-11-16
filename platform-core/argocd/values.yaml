@@ -1,0 +1,114 @@
+# ==============================================================================
+# HELM VALUES: ARGO CD — PLATFORM-CORE
+# Target: Cụm Kubernetes Hybrid kubeadm v1.37.1 (WireGuard wg0 + Cilium eBPF + Traefik HA)
+# Chart: argo/argo-cd (https://argoproj.github.io/argo-helm)
+# Install:
+#   helm repo add argo https://argoproj.github.io/argo-helm && helm repo update
+#   helm install argocd argo/argo-cd -n argocd --create-namespace -f platform-core/argocd/values.yaml
+# ==============================================================================
+
+global:
+  domain: argocd.helios.id.vn
+
+  # Khóa toàn bộ Pod & Job (kể cả redis-secret-init) về 2 Worker onprem-lan (tự giữ kubernetes.io/os: linux)
+  nodeSelector:
+    topology.kubernetes.io/zone: onprem-lan
+
+server:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    hostname: argocd.helios.id.vn
+    path: /
+    pathType: Prefix
+    # Traefik TLSStore (default) đã phục vụ cloudflare-origin-tls trên websecure
+    tls: false
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  metrics:
+    enabled: true
+    # Bật serviceMonitor=true bằng `helm upgrade` sau khi Prometheus CRDs sẵn sàng ở Pha 4
+    serviceMonitor:
+      enabled: false
+      additionalLabels:
+        release: monitoring
+
+configs:
+  params:
+    server.insecure: true
+    controller.repo.server.timeout.seconds: "300"
+
+  cm:
+    url: https://argocd.helios.id.vn
+    application.instanceLabelKey: argocd.argoproj.io/instance
+    timeout.reconciliation: 180s
+    exec.enabled: false
+    resource.customizations.health.networking.k8s.io_Ingress: |
+      hs = {}
+      hs.status = "Healthy"
+      return hs
+
+controller:
+  resources:
+    requests:
+      cpu: "150m"
+      memory: "256Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1024Mi"
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: false
+      additionalLabels:
+        release: monitoring
+
+repoServer:
+  env:
+    - name: ARGOCD_EXEC_TIMEOUT
+      value: "300s"
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: false
+      additionalLabels:
+        release: monitoring
+
+redis:
+  enabled: true
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+dex:
+  enabled: false
+
+notifications:
+  enabled: false
+
+applicationSet:
+  # Chart argo-cd không có applicationSet.enabled; đặt replicas=0 để không chạy Pod
+  replicas: 0

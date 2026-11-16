@@ -1,0 +1,116 @@
+# ==============================================================================
+# TRAEFIK HA HELM VALUES — LOADBALANCER MODE (CILIUM EBPF)
+# Chart: traefik/traefik (https://traefik.github.io/charts)
+# Install:
+#   helm repo add traefik https://traefik.github.io/charts && helm repo update
+#   helm install traefik traefik/traefik -n traefik --create-namespace -f platform-core/traefik/values.yaml
+# ==============================================================================
+
+ports:
+  web:
+    port: 8000
+    expose:
+      default: true
+    exposedPort: 80
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+
+  websecure:
+    port: 8443
+    expose:
+      default: true
+    exposedPort: 443
+    http:
+      tls:
+        enabled: true
+
+  # Giữ false để cổng :9100 không lộ ra Public IP LoadBalancer; metrics phục vụ qua Service ClusterIP riêng
+  metrics:
+    port: 9100
+    expose:
+      default: false
+    exposedPort: 9100
+
+  traefik:
+    port: 9000
+    expose:
+      default: false
+    exposedPort: 9000
+
+api:
+  dashboard: true
+  insecure: true
+
+ingressRoute:
+  dashboard:
+    enabled: false
+
+ingressClass:
+  enabled: true
+  isDefaultClass: true
+
+providers:
+  kubernetesIngress:
+    enabled: true
+    publishedService:
+      enabled: true
+  kubernetesCRD:
+    enabled: true
+
+log:
+  level: INFO
+
+accessLog:
+  enabled: true
+  format: common
+
+metrics:
+  prometheus:
+    entryPoint: metrics
+    addEntryPointsLabels: true
+    addRoutersLabels: true
+    addServicesLabels: true
+
+deployment:
+  replicas: 2
+
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 0
+    maxSurge: 1
+
+service:
+  enabled: true
+  spec:
+    type: LoadBalancer
+    externalTrafficPolicy: Cluster
+
+# Chạy 2 bản sao trên 2 Worker nodes khác nhau (worker-01 & worker-02), không chạy trên VPS Control Plane
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-role.kubernetes.io/control-plane
+              operator: DoesNotExist
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+          topologyKey: kubernetes.io/hostname
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "350m"
+    memory: "256Mi"

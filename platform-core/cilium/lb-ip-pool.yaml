@@ -1,0 +1,10 @@
+apiVersion: cilium.io/v2
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: vps-public-edge-pool
+spec:
+  blocks:
+    - cidr: "<VPS_PUBLIC_IP>/32"
+  serviceSelector:
+    matchLabels:
+      io.kubernetes.service.namespace: traefik

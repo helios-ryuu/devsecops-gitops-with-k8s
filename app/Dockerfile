@@ -33,8 +33,7 @@ RUN pnpm run build
 FROM node:26.13.0-alpine3.23 AS runner
 WORKDIR /app
 
-# Hardening: Gỡ bỏ npm, npx, corepack không cần thiết trong runtime standalone
-# Loại bỏ triệt để CVE (như brace-expansion trong bundled npm) và giảm attack surface
+# Hardening: Gỡ bỏ npm, npx, corepack để thu gọn runtime image
 RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 
 ENV NODE_ENV=production

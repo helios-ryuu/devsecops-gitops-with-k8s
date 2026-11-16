@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-prod
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/helios-ryuu/devsecops-gitops-with-k8s.git
+    targetRevision: main
+    path: project-nt548/k8s-manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: app-prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        policy-tier: hardened

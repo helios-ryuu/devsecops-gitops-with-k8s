@@ -1,0 +1,133 @@
+# ==============================================================================
+# HELM VALUES: KUBE-PROMETHEUS-STACK
+# Target: Cụm Kubernetes Hybrid kubeadm v1.37.1 (WireGuard wg0 + Cilium eBPF + Longhorn Storage)
+# Chart: prometheus-community/kube-prometheus-stack (https://prometheus-community.github.io/helm-charts)
+# Install:
+#   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts && helm repo update
+#   helm install monitoring prometheus-community/kube-prometheus-stack -n monitoring --create-namespace -f platform-core/monitoring/values.yaml
+# ==============================================================================
+
+# Tắt các exporter thành phần control-plane để tiết kiệm RAM trên 2 Worker 8GB và bỏ kubeProxy do Cilium eBPF thay thế
+kubeEtcd:
+  enabled: false
+
+kubeControllerManager:
+  enabled: false
+
+kubeScheduler:
+  enabled: false
+
+kubeProxy:
+  enabled: false
+
+prometheus-node-exporter:
+  enabled: true
+  tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
+
+prometheusOperator:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: "node-role.kubernetes.io/control-plane"
+                operator: "DoesNotExist"
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "100Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+kube-state-metrics:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: "node-role.kubernetes.io/control-plane"
+                operator: "DoesNotExist"
+  resources:
+    requests:
+      cpu: "25m"
+      memory: "64Mi"
+    limits:
+      cpu: "100m"
+      memory: "128Mi"
+
+prometheus:
+  enabled: true
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    retention: 7d
+    resources:
+      requests:
+        cpu: "150m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "1024Mi"
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: "node-role.kubernetes.io/control-plane"
+                  operator: "DoesNotExist"
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+
+grafana:
+  enabled: true
+  # Tránh lỗi Multi-Attach trên PVC Longhorn ReadWriteOnce khi upgrade/rollout sang worker khác
+  deploymentStrategy:
+    type: Recreate
+  admin:
+    existingSecret: grafana-admin-secret
+    userKey: admin-user
+    passwordKey: admin-password
+  grafana.ini:
+    server:
+      root_url: "https://grafana.helios.id.vn"
+      enforce_domain: false
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: "node-role.kubernetes.io/control-plane"
+                operator: "DoesNotExist"
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    hosts:
+      - grafana.helios.id.vn
+    path: /
+    pathType: Prefix
+  persistence:
+    enabled: true
+    storageClassName: longhorn
+    size: 5Gi
+
+alertmanager:
+  enabled: false

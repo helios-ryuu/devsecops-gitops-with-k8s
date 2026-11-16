@@ -1,0 +1,16 @@
+# ==============================================================================
+# KUBERNETES ETCD ENCRYPTION CONFIGURATION (AES-CBC)
+# Path trên server-01: /etc/kubernetes/enc/enc.yaml (chmod 600)
+# Sinh <BASE64_32_BYTE_KEY> trên server-01 bằng: head -c 32 /dev/urandom | base64
+# ==============================================================================
+apiVersion: apiserver.config.k8s.io/v1
+kind: EncryptionConfiguration
+resources:
+  - resources:
+      - secrets
+    providers:
+      - aescbc:
+          keys:
+            - name: key1
+              secret: "<BASE64_32_BYTE_KEY>"
+      - identity: {}

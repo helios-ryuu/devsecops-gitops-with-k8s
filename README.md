@@ -10,33 +10,32 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Kubernetes-K3s-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white" alt="K3s" />
-  <img src="https://img.shields.io/badge/Cloudflare-DNS_SSL-F38020?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Cloudflare" />
-  <img src="https://img.shields.io/badge/Tailscale-Mesh_VPN-000000?style=for-the-badge&logo=tailscale&logoColor=white" alt="Tailscale" />
+  <img src="https://img.shields.io/badge/Kubernetes-v1.37.1%20(kubeadm)-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white" alt="Kubernetes" />
+  <img src="https://img.shields.io/badge/WireGuard-wg0_Mesh-88171A?style=for-the-badge&logo=wireguard&logoColor=white" alt="WireGuard" />
+  <img src="https://img.shields.io/badge/Cilium-eBPF_CNI_&_LB-F8C517?style=for-the-badge&logo=cilium&logoColor=black" alt="Cilium" />
+  <img src="https://img.shields.io/badge/Traefik-HA_Ingress-24A1C1?style=for-the-badge&logo=traefikproxy&logoColor=white" alt="Traefik HA" />
+  <img src="https://img.shields.io/badge/Longhorn-Distributed_Storage-5F259F?style=for-the-badge" alt="Longhorn" />
   <img src="https://img.shields.io/badge/ArgoCD-GitOps-EF6B48?style=for-the-badge&logo=argo&logoColor=white" alt="ArgoCD" />
+  <img src="https://img.shields.io/badge/Kyverno-Policy_as_Code-00A86B?style=for-the-badge" alt="Kyverno" />
   <img src="https://img.shields.io/badge/GitHub_Actions-CI-2088FF?style=for-the-badge&logo=github-actions&logoColor=white" alt="GitHub Actions" />
-  <img src="https://img.shields.io/badge/Trivy-CVE_Scan-00A4A6?style=for-the-badge&logo=aqua&logoColor=white" alt="Trivy" />
-  <img src="https://img.shields.io/badge/Gitleaks-Secret_Scan-red?style=for-the-badge" alt="Gitleaks" />
+  <img src="https://img.shields.io/badge/Trivy-CVE_&_Config_Scan-00A4A6?style=for-the-badge&logo=aqua&logoColor=white" alt="Trivy" />
   <img src="https://img.shields.io/badge/Node.js-26_Alpine-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js 26" />
-  <img src="https://img.shields.io/badge/Prometheus-Monitoring-E6522C?style=for-the-badge&logo=prometheus&logoColor=white" alt="Prometheus" />
-  <img src="https://img.shields.io/badge/Grafana-Dashboard-F46800?style=for-the-badge&logo=grafana&logoColor=white" alt="Grafana" />
+  <img src="https://img.shields.io/badge/Prometheus_&_Grafana-Observability-E6522C?style=for-the-badge&logo=prometheus&logoColor=white" alt="Prometheus" />
 </p>
 
 ---
 
 ## MỤC LỤC
-- [1. Giới thiệu & Phân công nhóm](#1-giới-thiệu--phân-công-nhóm)
+- [1. Giới thiệu](#1-giới-thiệu)
 - [2. Tổng quan đề tài](#2-tổng-quan-đề-tài)
-- [3. Kiến trúc hệ thống & Luồng hoạt động](#3-kiến-trúc-hệ-thống--luồng-hoạt-động)
-- [4. Bảng tổng hợp công nghệ & Kỹ năng](#4-bảng-tổng-hợp-công-nghệ--kỹ-năng)
-- [5. Cấu trúc Repository (Monorepo)](#5-cấu-trúc-repository-monorepo)
-- [6. Kế hoạch triển khai 5 giai đoạn](#6-kế-hoạch-triển-khai-5-giai-đoạn-hoàn-thành-trước-05122026)
-- [7. Kịch bản Demo kiểm chứng](#7-kịch-bản-demo-kiểm-chứng)
-- [8. Tài liệu tham khảo](#8-tài-liệu-tham-khảo)
+- [3. Kiến trúc 2 tầng & Luồng vận hành](#3-kiến-trúc-2-tầng--luồng-vận-hành)
+- [4. Cấu trúc Repository](#4-cấu-trúc-repository)
+- [5. Kịch bản Demo kiểm chứng](#5-kịch-bản-demo-kiểm-chứng)
+- [6. Tài liệu chi tiết](#6-tài-liệu-chi-tiết)
 
 ---
 
-## 1. Giới thiệu & Phân công nhóm
+## 1. Giới thiệu
 
 ### 1.1 Thông tin chung
 - **Môn học:** NT548 - Công nghệ DevOps và Ứng dụng
@@ -49,202 +48,84 @@
 
 | STT | MSSV | Họ và Tên | Vai trò chính | Nhiệm vụ đảm nhiệm | Môi trường làm việc |
 |:---:|:---:|:---|:---|:---|:---|
-| 1 | 23521367 | **Ngô Tiến Sỹ** | **Platform & DevOps Lead** | • Quản trị cụm K3s 3-node qua Tailscale Mesh Network, cấu hình Taints/Tolerations.<br>• Cấu hình Traefik Ingress và trỏ DNS Cloudflare.<br>• Khởi tạo ArgoCD GitOps quản lý 2 Application (App & Monitoring).<br>• Xây dựng GitHub Actions: Gitleaks $\rightarrow$ Trivy Scan $\rightarrow$ Build Docker $\rightarrow$ GHCR $\rightarrow$ Git tag.<br>• Soạn thảo Kubernetes Manifests chuẩn và triển khai kube-prometheus-stack. | Toàn quyền Server (VPS & K3s Cluster), GitHub Actions & Git |
-| 2 | 23521222 | **Trần Hồng Phúc** | **Web Fullstack Dev** | • Phát triển Web 2 tầng (Next.js 16 App Router + Redis đếm lượt truy cập).<br>• Xây dựng endpoints `/healthz`, `/ready` phục vụ Kubernetes Probes.<br>• Đóng gói `Dockerfile` (`node:26.13.0-alpine3.23`, `USER 10001:10001` non-root). | 100% Localhost & Git (Thư mục `app/`) |
-| 3 | 23520600 | **Điền Quốc Huy** | **QA & Observability Report** | • Thiết kế testcases và thực hiện kiểm thử tải Web (Autocannon / Postman).<br>• Khai thác Grafana Web UI, theo dõi metrics CPU, RAM, HTTP traffic.<br>• Soạn thảo Báo cáo Quan sát (Observability) và đánh giá hiệu năng hệ thống. | 100% Postman/Autocannon & Grafana Web UI |
-| 4 | 22520804 | **Đặng Thế Long** | **Documentation & Demo Support** | • Hỗ trợ thực nghiệm và thu thập log/ảnh minh chứng 2 kịch bản demo.<br>• Chủ trì soạn thảo tài liệu Báo cáo đồ án môn học NT548 hoàn chỉnh.<br>• Thiết kế bộ Slide thuyết trình nghiệm thu đồ án. | 100% Google Docs / Word / Slide & Git |
+| 1 | 23521367 | **Ngô Tiến Sỹ** | **Platform & DevOps Lead** | • Thiết kế & vận hành mạng WireGuard `wg0`, Kubernetes Hybrid (`kubeadm v1.37.1`), Cilium eBPF LB + Hubble UI.<br>• Triển khai Traefik HA, Longhorn Storage, Bitnami Sealed Secrets, Kyverno Policy.<br>• Vận hành ArgoCD (`app-prod`), `kube-prometheus-stack` & Nightly GHCR Audit.<br>• Xây dựng GitHub Actions CI/DevSecOps (`ci.yml`). | Server VPS & Workers, GitHub Actions, GitOps |
+| 2 | 23521222 | **Trần Hồng Phúc** | **Web Fullstack Dev** | • Phát triển Web 2 tầng (Next.js 16 App Router + Redis đếm lượt truy cập + `APP_ENV`/`APP_VERSION`).<br>• Xây dựng endpoints `/healthz`, `/ready` kiểm tra Redis phục vụ Kubernetes Probes.<br>• Đóng gói `Dockerfile` (`node:26.13.0-alpine3.23`, `USER 10001:10001` non-root). | Localhost & Git (`app/`) |
+| 3 | 23520600 | **Điền Quốc Huy** | **QA & Observability Report** | • Thiết kế testcases và thực hiện kiểm thử tải Web (Autocannon / Postman) & RollingUpdate Zero-Downtime.<br>• Khai thác Grafana Web UI & Hubble UI theo dõi CPU, RAM, Cilium eBPF, Traefik.<br>• Soạn thảo Báo cáo Quan sát (Observability) và đánh giá hiệu năng hệ thống. | Postman / Autocannon & Grafana / Hubble Web UI |
+| 4 | 22520804 | **Đặng Thế Long** | **Documentation & Demo Support** | • Hỗ trợ thực nghiệm và thu thập log/ảnh minh chứng 5 kịch bản demo.<br>• Chủ trì soạn thảo tài liệu Báo cáo đồ án môn học NT548 hoàn chỉnh.<br>• Thiết kế bộ Slide thuyết trình và sơ đồ kiến trúc Draw.io. | Tài liệu Báo cáo / Slide / Draw.io & Git |
 
 ---
 
 ## 2. Tổng quan đề tài
 
-### 2.1 Tên chủ đề
-
-> **Xây dựng hệ thống DevSecOps và GitOps tự động hóa triển khai, bảo mật và giám sát ứng dụng trên hạ tầng Kubernetes Hybrid.**
-
-### 2.2 Nội dung thực hiện (5 nội dung cốt lõi)
-
-1. **Quản trị hạ tầng mạng & cụm Kubernetes Hybrid:**  
-   Cấu hình DNS Cloudflare, SSL/TLS Origin CA và Zero Trust Access trỏ tên miền về VPS Public IP. Vận hành cụm K3s 3-node (1 Control Plane VPS 6GB RAM + 2 Worker nodes on-premises 2x 8GB = 16GB, tổng 22GB RAM) kết nối bảo mật qua mạng Tailscale Overlay.
-2. **Thiết lập đường ống CI & DevSecOps tự động hóa:**  
-   Xây dựng GitHub Actions tích hợp rà soát bí mật mã nguồn (Gitleaks), quét lỗ hổng thư viện và container image (Trivy), tự động đóng gói image chuẩn `node:26.13.0-alpine3.23` với user non-root UID 10001 (`USER 10001:10001`), lưu trữ an toàn trên GitHub Container Registry (GHCR) và tự động cập nhật tag GitOps.
-3. **Triển khai Continuous Deployment (CD) theo mô hình GitOps:**  
-   Cấu hình ArgoCD tự động đồng bộ cấu hình ứng dụng từ Git repository xuống Kubernetes (`k8s-manifests/`), kích hoạt cơ chế tự phục hồi (Self-healing: `prune: true`, `selfHeal: true`) và hỗ trợ Rollback an toàn qua `git revert`.
-4. **Bảo mật Kubernetes (Runtime Security & NetworkPolicy):**  
-   Áp dụng Pod SecurityContext (`runAsNonRoot: true`, `runAsUser: 10001`, `allowPrivilegeEscalation: false`, `capabilities: {drop: [ALL]}`). Xây dựng NetworkPolicy trong namespace `production-app`, đảm bảo chỉ cho phép duy nhất Pod Web App (`app: web`) truy cập cổng 6379 của Redis (`app: redis`).
-5. **Hệ thống Giám sát & Báo cáo Quan sát (Observability):**  
-   Triển khai `kube-prometheus-stack` thông qua Helm/ArgoCD (`ServerSideApply=true`, vô hiệu hóa các exporter không dùng của K3s), thu thập metrics từ Node Exporter, Traefik (`:9100`) và ArgoCD (`ServiceMonitor`), khai thác giao diện Grafana Web UI để theo dõi tài nguyên và lập Báo cáo Quan sát & Đánh giá hiệu năng hệ thống.
-
-### 2.3 Kết quả dự kiến đạt được
-
-1. Hệ thống DNS Cloudflare, Zero Trust Access và cụm Kubernetes Hybrid 3-node vận hành ổn định qua Tailscale, phân tách rõ vai trò Control Plane và Worker nodes.
-2. Pipeline CI/DevSecOps vận hành tự động, chặn kịp thời mọi commit làm rò rỉ secret (Gitleaks) hoặc chứa lỗ hổng CVE nghiêm trọng có bản vá (Trivy).
-3. Ứng dụng Web 2 tầng (Next.js 16 + Redis) được triển khai tự động (Zero-touch deployment) qua ArgoCD với khả năng tự phục hồi trạng thái tức thì.
-4. Container ứng dụng vận hành an toàn ở chế độ non-root với đầy đủ SecurityContext bảo vệ.
-5. Dashboard Grafana hiển thị trực quan thông số CPU, RAM, trạng thái Pod và lưu lượng Traefik Ingress theo thời gian thực; có tài liệu Báo cáo Quan sát & Đo kiểm tải chi tiết.
+1. **Hạ tầng mạng & Kubernetes Hybrid chuẩn Production:**
+   Thiết lập mạng WireGuard `wg0` (`10.100.0.0/24`, endpoint `vps.helios.id.vn:51820` $\rightarrow$ `<VPS_PUBLIC_IP>`) nối `server-01` (VPS 6GB RAM, Control Plane) với `worker-01` và `worker-02` (2×8GB RAM on-premises nối thẳng LAN `10.10.10.0/24` 1Gbps). Sử dụng **Cilium eBPF CNI** (`kubeProxyReplacement: true`), cấp phát External IP `<VPS_PUBLIC_IP>/32` qua `CiliumLoadBalancerIPPool`, vận hành **Traefik HA (2 replicas)** và **Longhorn Distributed Storage (2 replicas)**.
+2. **Bảo mật đa lớp (Defense in Depth & Policy as Code):**
+   - **CI Gate:** Gitleaks, Trivy FS, `kubeconform` + Trivy Config (YAML thuần), Docker multi-stage build non-root (`UID 10001:10001`), Trivy Image trước khi đẩy lên **GHCR**.
+   - **Secret & Admission:** Bitnami Sealed Secrets (`kubeseal`), **Kyverno** (`admissionController` Enforce/Deny 4 `ValidatingPolicy` trên nhãn `policy-tier: hardened`), Cilium **NetworkPolicy** cô lập Redis StatefulSet (`UID 999`), và **Cloudflare Zero Trust Access** bảo vệ toàn bộ UI quản trị (`argocd.helios.id.vn`, `grafana.helios.id.vn`, `hubble.helios.id.vn`).
+   - **Runtime CVE:** **GitHub Actions Nightly Cron (`0 0 * * *`)** tự động pull các image tag đang triển khai trên GHCR và base image về runner để quét Trivy định kỳ (`0 MB` RAM cụm).
+3. **GitOps Continuous Delivery (`RollingUpdate` Zero-Downtime):**
+   - **ArgoCD Application (`app-prod`)** đồng bộ trực tiếp `project-nt548/k8s-manifests/` vào namespace `app-prod` (`nt548.helios.id.vn`).
+   - Triển khai **`Deployment web-deployment`** (`replicas: 2`, `RollingUpdate` `maxUnavailable: 0, maxSurge: 1`, `podAntiAffinity`) tự động cập nhật image tag & `APP_VERSION` từ CI và hỗ trợ `git revert` rollback tức thì.
+4. **Observability toàn diện:**
+   - Kết hợp `kube-prometheus-stack` (Prometheus + Grafana lưu trên Longhorn PVC) với **Hubble UI** quan sát flow gói tin Layer 4/7 và trạng thái `DROPPED` của NetworkPolicy theo thời gian thực.
 
 ---
 
-## 3. Kiến trúc hệ thống & Luồng hoạt động
+## 3. Kiến trúc 2 tầng & Luồng vận hành
 
-### 3.1 Sơ đồ kiến trúc tổng thể (Architecture Blueprint)
+Hệ thống chia rõ **2 tầng** trong cùng repository:
+- **Tầng 1 (`platform-core/`):** Nền tảng Kubernetes cố định dài hạn (`Cilium`, `Hubble`, `Sealed Secrets`, `Traefik HA`, `Longhorn`, `Prometheus/Grafana`, `ArgoCD`, `Kyverno`).
+- **Tầng 2 (`project-nt548/`):** Tài nguyên riêng của đồ án (Manifest YAML thuần cho `web-deployment` `replicas: 2`, `redis-statefulset`, `NetworkPolicy`, `Ingress`) neo tại [project-nt548/app-prod.yaml](./project-nt548/app-prod.yaml).
 
-```
-[Developer] ──(git push)──► [GitHub: Monorepo /app]
-                                   │
-                                   ▼
-                     [CI & DevSecOps Pipeline: GitHub Actions]
-                     ├─ 1. Gitleaks (Secret Leak Detection)
-                     ├─ 2. Trivy FS Scan (Dependency CVE Check)
-                     ├─ 3. Docker Multi-stage Build (node:26.13.0-alpine3.23, USER 10001)
-                     ├─ 4. Trivy Image Scan (--severity HIGH,CRITICAL --ignore-unfixed)
-                     ├─ 5. Push Image ──► [GitHub Container Registry: ghcr.io]
-                     └─ 6. Auto-update Image Tag (commit [skip ci])
-                                   │
-                                   ▼
-                     [GitOps Folder: /k8s-manifests]
-                                   │
-                                   ▼ (ArgoCD Auto-Sync: Kustomize)
-+---------------------------------------------------------------------------------+
-| Multi-node Kubernetes Cluster (K3s - Tailscale Mesh Network - 22GB RAM)         |
-|                                                                                 |
-|  [Control Plane: VPS 6GB RAM, Public IP] (Tainted: NoSchedule)                  |
-|  Internet ──► [Cloudflare DNS + SSL + Zero Trust] ──► [Traefik Ingress on VPS]  |
-|                                                              │ (toleration)     |
-|  [Worker Nodes: 2x On-Premises Servers (2x 8GB = 16GB RAM)]  │                  |
-|  +───────────────────────────────────────────────────────────┼───────────────+  |
-|  |  • [argocd]         : ArgoCD Application Controller       │               |  |
-|  |  • [production-app] : Web App Pods (Next.js 16) ◄─────────┘               |  |
-|  |                       │ (SecurityContext: non-root 10001, drop ALL)       |  |
-|  |                       ▼ (NetworkPolicy: Allow app:web -> Redis TCP 6379)  |  |
-|  |                       Redis Pod (Blocked from all unauthorized pods)      |  |
-|  |  • [monitoring]     : Prometheus + Grafana Dashboard (kube-prometheus)    |  |
-|  +───────────────────────────────────────────────────────────────────────────+  |
-+---------------------------------------------------------------------------------+
-```
-
-### 3.2 Luồng vận hành chi tiết
-
-1. **Giai đoạn 1 (Code & Security Scan):** Lập trình viên push code vào thư mục `app/`. GitHub Actions kích hoạt:
-   - Gitleaks kiểm tra không để lộ secret/token trong commit.
-   - Trivy quét dependencies để phát hiện lỗ hổng CVE thư viện.
-2. **Giai đoạn 2 (Build & Container Hardening):**
-   - Đóng gói container bằng `node:26.13.0-alpine3.23`, chạy với user non-root UID 10001 (`USER 10001:10001`).
-   - Trivy quét container image với cờ `--severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed`.
-   - Đẩy image lên GitHub Container Registry (`ghcr.io` public) kèm tag commit SHA và `latest`.
-3. **Giai đoạn 3 (GitOps Sync via ArgoCD):**
-   - Pipeline CI cập nhật tag image mới vào `k8s-manifests/base/kustomization.yaml`.
-   - ArgoCD phát hiện thay đổi và tự động đồng bộ (Auto-sync) xuống cụm K3s từ gốc `k8s-manifests/`.
-4. **Giai đoạn 4 (Traffic Routing & NetworkPolicy Isolation):**
-   - Cloudflare Zero Trust Access bảo vệ cổng quản trị (`argocd.helios.id.vn`, `grafana.helios.id.vn`) qua Email OTP; Traefik Ingress tiếp nhận traffic HTTPS (`cloudflare-origin-tls`) và định tuyến vào Web App ở namespace `production-app`.
-   - Web App chạy với Pod SecurityContext non-root an toàn.
-   - NetworkPolicy tại namespace `production-app` kiểm soát chặt chẽ: chỉ cho phép Pod mang label `app: web` kết nối cổng 6379 của Redis (`app: redis`), chặn mọi Pod lạ khác.
-5. **Giai đoạn 5 (Continuous Monitoring):**
-   - Prometheus tự động scrape chỉ số từ Node Exporter, `kube-state-metrics`, Traefik (`:9100`) và ArgoCD (`ServiceMonitors`).
-   - Grafana hiển thị thông số CPU, RAM, trạng thái Pod và lưu lượng mạng/HTTP qua Traefik Ingress.
+Chi tiết sơ đồ mạng WireGuard `wg0`, sơ đồ kiến trúc tổng thể ASCII, quy hoạch IP/RAM xem tại **[ARCHITECTURE.md](./ARCHITECTURE.md)** và hướng dẫn triển khai chi tiết từ đầu đến kết thúc xem tại **[RUNBOOK.md](./RUNBOOK.md)**.
 
 ---
 
-## 4. Bảng tổng hợp công nghệ & Kỹ năng
-
-| Thành phần | Công cụ sử dụng | Kỹ năng đạt được / Trọng tâm chứng chỉ |
-|:---|:---|:---|
-| **Networking & DNS** | Cloudflare DNS, Tailscale Mesh VPN | Quản trị định tuyến tên miền, SSL/TLS, kết nối mạng Overlay an toàn giữa VPS và Worker nodes on-premises. |
-| **Cluster Setup** | Linux (Ubuntu), K3s, Tailscale Mesh | **Trọng tâm CKA**: Cấu hình mạng Overlay, Taints/Tolerations, phân bổ tải đa node. |
-| **CI & DevSecOps** | GitHub Actions, Gitleaks, Trivy, GHCR | **Nền tảng CKS & DevSecOps**: Secret scanning, Quét CVE mã nguồn và Container image, Container Hardening non-root. |
-| **CD & GitOps** | ArgoCD | **Trọng tâm CKAD & GitOps**: Declarative Delivery, Auto-sync, Self-healing & Rollback. |
-| **K8s Security** | Traefik Ingress, Kubernetes NetworkPolicy, SecurityContext | **Trọng tâm CKAD & CKS**: Định tuyến Ingress HTTPS, SecurityContext non-root, cô lập mạng tầng database. |
-| **Observability** | Prometheus, Grafana (Helm `kube-prometheus-stack`) | Giám sát hạ tầng, Pod & Ingress metrics (`ServiceMonitor`), trực quan hóa chỉ số qua Grafana Web UI và lập Báo cáo Quan sát. |
-
----
-
-## 5. Cấu trúc Repository (Monorepo)
+## 4. Cấu trúc Repository
 
 ```text
 devsecops-gitops-with-k8s/
-├── README.md                           # Tài liệu tổng quan dự án
-├── WBS.md                              # Cấu trúc phân rã công việc (WBS) & timeline chi tiết (dùng cho Sheet)
-├── LOG.md                              # Nhật ký triển khai thực tế chi tiết từng bước
-├── architecture.drawio                 # Sơ đồ kiến trúc hệ thống (Draw.io)
-├── architecture.png                    # Ảnh sơ đồ kiến trúc xuất từ Draw.io
-├── argocd/                             # Cấu hình Application CRD & Values cho ArgoCD (Sỹ phụ trách)
-│   ├── app.yaml                        # Application triển khai GitOps Kustomize cho Web App & Redis
-│   ├── monitoring.yaml                 # Application triển khai kube-prometheus-stack (Multiple Sources)
-│   └── values.yaml                     # Helm values tùy biến ArgoCD (Ingress Traefik, Worker Affinity)
-├── app/                                # Mã nguồn ứng dụng Next.js 16 App Router (Phúc phụ trách)
-│   ├── src/app/                        # Next.js App Router (kèm API probe /healthz, /ready)
-│   ├── package.json                    # Khai báo pnpm, Next.js 16, React 19, Tailwind CSS v4
-│   ├── next.config.ts                  # Cấu hình output: standalone
-│   └── Dockerfile                      # Multi-stage build (node:26.13.0-alpine3.23, pnpm, non-root UID 10001)
-├── k8s-manifests/                      # Thư mục GitOps Kustomize quản lý ứng dụng (Sỹ phụ trách)
-│   ├── kustomization.yaml              # Root Kustomization: áp namespace production-app lên toàn bộ resources
-│   ├── base/                           # Tài nguyên Web App
-│   │   ├── kustomization.yaml          # Quản lý Image tag, ConfigMap, Deployment, Service, Ingress
-│   │   ├── deployment.yaml             # Web App Deployment (SecurityContext non-root UID 10001, probes)
-│   │   ├── service.yaml                # Web App Service ClusterIP cổng 3000
-│   │   ├── configmap.yaml              # Biến môi trường (REDIS_HOST: redis-service, PORT: 3000)
-│   │   └── ingress.yaml                # Traefik Ingress định tuyến nt548.helios.id.vn
-│   ├── database/                       # Tài nguyên Database
-│   │   ├── kustomization.yaml
-│   │   └── redis.yaml                  # Redis Deployment (LTS 8.2.11-alpine3.22, probes) & Service
-│   └── security/                       # Tài nguyên an ninh
-│       ├── kustomization.yaml
-│       └── network-policy.yaml         # Zero-trust cô lập traffic vào Redis
-├── k3s-config/                         # Cấu hình K3s Server & Agent nodes qua Tailscale
-│   ├── config.server-01.yaml           # Cấu hình Control Plane (disable traefik, flannel tailscale0)
-│   ├── config.agent-01.yaml            # Cấu hình Worker 01
-│   └── config.agent-02.yaml            # Cấu hình Worker 02
-├── monitoring/                         # Cấu hình giám sát (Sỹ setup, Huy khai thác)
-│   └── values.yaml                     # Values cho kube-prometheus-stack (tắt component K3s không dùng)
-├── traefik/                            # Cấu hình Traefik Ingress Controller qua Helm (Sỹ phụ trách)
-│   ├── values.yaml                     # Values Helm Traefik: HostPort 80/443, Metrics 9100, ClusterIP
-│   ├── tlsstore.yaml                   # TLSStore default nạp Cloudflare Origin CA cert
-│   └── cloudflare-origin-tls-secret.yaml # Secret TLS lưu cert & key
-├── scripts/                            # Kịch bản kiểm chứng tự động (Long & Sỹ phụ trách)
-│   └── demo.sh                         # Script hướng dẫn thuyết trình 3 kịch bản demo (Read-only)
-└── .github/workflows/                  # Đường ống CI/DevSecOps (Sỹ phụ trách)
-    └── ci-pipe.yml                     # Workflow: Gitleaks + Trivy + Build & Push GHCR + Kustomize Tag update
+├── ARCHITECTURE.md                     # Kiến trúc 2 tầng, sơ đồ ASCII tổng thể, quy hoạch IP/RAM & kịch bản demo
+├── RUNBOOK.md                          # Hướng dẫn triển khai đầy đủ từng bước từ Pha 0 đến kết thúc
+├── README.md                           # Tổng quan dự án NT548
+├── WBS.md                              # Cấu trúc phân rã công việc & timeline
+├── LOG.md                              # Nhật ký thực thi & checklist triển khai theo pha
+├── wireguard/                          # Cấu hình mẫu wg0.conf & hướng dẫn chuẩn bị host / Cloud NSG
+├── kubeadm-config/                     # Cấu hình kubeadm Init/Join (v1beta4) & EncryptionConfiguration
+├── app/                                # Ứng dụng Web Next.js 16 + Redis (UID 10001 non-root, APP_ENV/APP_VERSION)
+├── platform-core/                      # Tầng 1: Hạ tầng nền tảng dài hạn
+│   ├── cilium/                         # Cilium eBPF + Hubble UI & CiliumLoadBalancerIPPool
+│   ├── sealed-secrets/                 # Bitnami Sealed Secrets Controller & hướng dẫn kubeseal
+│   ├── traefik/                        # Traefik HA (LoadBalancer), TLSStore & ClusterIP metrics
+│   ├── longhorn/                       # Longhorn Distributed Storage (2 replicas)
+│   ├── monitoring/                     # kube-prometheus-stack (Longhorn PVC) & ServiceMonitors
+│   ├── kyverno/                        # Kyverno (admissionController) + 4 ValidatingPolicies (policy-tier: hardened)
+│   └── argocd/                         # ArgoCD values (GitOps cho Tầng 2 app-prod)
+├── project-nt548/                      # Tầng 2: Tài nguyên riêng của đồ án
+│   ├── k8s-manifests/                  # Manifest YAML thuần: web-deployment (RollingUpdate), Service, Ingress, Redis, NetworkPolicy
+│   ├── redis-auth-sealedsecret.example.yaml # Mẫu SealedSecret cho Redis Auth trong app-prod
+│   └── app-prod.yaml                   # ArgoCD Application Tầng 2 (namespace app-prod)
+├── .github/workflows/
+│   └── ci.yml                          # CI Gate, Deploy app-prod & Nightly GHCR Image Audit (cron 0 0 * * *, 0 MB RAM cụm)
+└── scripts/demo.sh                     # Script in hướng dẫn từng bước thực hiện 5 kịch bản demo
 ```
 
 ---
 
-## 6. Kế hoạch triển khai 5 giai đoạn (Hoàn thành trước 05/12/2026)
+## 5. Kịch bản Demo kiểm chứng
 
-| Giai đoạn | Thời gian | Mục tiêu hoàn thành (Definition of Done) | Người phụ trách chính |
-|:---|:---:|:---|:---|
-| **Phase 1: Khởi động** | Trước 01/11 | Chốt đề tài & phạm vi tinh giản; thống nhất tech stack; phân định trách nhiệm các thành viên. | Cả nhóm (Sỹ chủ trì) |
-| **Phase 2: Thiết kế & Setup** | 01/11 - 05/11 | Lập WBS đưa lên Sheet; vẽ topology K3s Hybrid & luồng GitOps; thống nhất API contract Web <-> K8s. | Sỹ, Long, Phúc |
-| **Phase 3: Triển khai & Tích hợp** | 06/11 - 20/11 | Dựng K3s 3-node qua Tailscale; trỏ DNS Cloudflare; vibe code Web Node.js + Redis; build Dockerfile non-root; viết CI GitHub Actions (Trivy/Gitleaks); cài ArgoCD sync tự động. | Sỹ (DevOps), Phúc (Web App) |
-| **Phase 4: Đo kiểm & Giám sát** | 21/11 - 28/11 | Dựng kube-prometheus-stack qua ArgoCD; kiểm thử tải Web (Autocannon/Postman); chụp biểu đồ Grafana viết Báo cáo Quan sát; lấy log 2 kịch bản demo. | Sỹ, Huy, Long |
-| **Phase 5: Báo cáo & Nghiệm thu** | 29/11 - 05/12 | Hoàn thiện Báo cáo đồ án môn học NT548; thiết kế Slide thuyết trình; nghiệm thu nội bộ và sẵn sàng trước ngày 06/12/2026. | Long, Huy, Cả nhóm |
-
----
-
-## 7. Kịch bản Demo kiểm chứng
-
-Khi báo cáo đồ án, nhóm chứng minh tính hiệu quả của hệ thống thông qua 2 kịch bản thực tế trực quan và trọng tâm:
-
-### Kịch bản 1: Kiểm chứng DevSecOps Pipeline (Trivy Gate)
-- **Hành động:** Cố tình thêm một thư viện có lỗ hổng CVE nghiêm trọng đã có bản vá (ví dụ `lodash@4.17.20`) vào `app/package.json` và commit lên Git.
-- **Kết quả:** Pipeline GitHub Actions dừng lại ở bước `Trivy FS Scan` với exit code 1 (báo đỏ), chặn toàn bộ các bước build Docker, đẩy image lên GHCR và cập nhật GitOps manifest.
-
-### Kịch bản 2: Kiểm chứng GitOps Self-healing & Rollback (ArgoCD)
-- **Tự phục hồi (Self-healing):**
-  - Thử nghiệm xóa Deployment trên cụm: `kubectl delete deploy web-deployment -n production-app`.
-  - $\rightarrow$ ArgoCD phát hiện sai lệch trạng thái mong muốn và tự động tái tạo lại Deployment ngay lập tức.
-- **Rollback tự động:**
-  - Thực hiện lệnh `git revert HEAD` trên repository Git.
-  - $\rightarrow$ ArgoCD phát hiện commit hoàn tác và tự động rollback ứng dụng về phiên bản ổn định trước đó trong vài giây.
+Chạy `./scripts/demo.sh` (hoặc `./scripts/demo.sh --all`) để hiển thị hướng dẫn và câu lệnh trình bày 5 kịch bản:
+1. **CI DevSecOps Gate:** Chặn commit rò rỉ secret, dính CVE (`Trivy FS`) hoặc manifest lỗi (`kubeconform` + `trivy config`).
+2. **Kyverno Enforce:** Chặn tức thì Pod vi phạm (`:latest`, chạy `root`, thiếu `limits`, sai registry) trong `app-prod`.
+3. **GitOps Continuous Delivery (`RollingUpdate` Zero-Downtime) & Instant Rollback:** Push commit lên `app/` kích hoạt CI build & cập nhật `project-nt548/k8s-manifests/deployment.yaml`, ArgoCD đồng bộ `RollingUpdate` (`maxUnavailable: 0, maxSurge: 1`) không rớt HTTP 200 và `git revert` rollback tức thì.
+4. **Zero-Trust Redis Isolation & Hubble UI:** Kiểm chứng NetworkPolicy chặn Pod lạ kết nối Redis `:6379` với luồng `DROPPED` trực quan trên Hubble UI.
+5. **Nightly GHCR Audit, Traefik HA & Longhorn Failover:** Kích hoạt tay `nightly-ghcr-image-scan` (`0 MB` RAM cụm), theo dõi tài nguyên trên Grafana, test xóa nóng Pod Traefik và drain node chứa `redis-0` không mất dữ liệu bộ đếm.
 
 ---
 
-## 8. Tài liệu tham khảo
+## 6. Tài liệu chi tiết
 
-1. [Tài liệu chính thức K3s - Lightweight Kubernetes](https://docs.k3s.io/)
-2. [Tài liệu chính thức ArgoCD GitOps](https://argo-cd.readthedocs.io/en/stable/)
-3. [Tài liệu Aqua Security Trivy](https://aquasecurity.github.io/trivy/)
-4. [Tài liệu Gitleaks Secret Scanner](https://github.com/gitleaks/gitleaks)
-5. [Tài liệu Cloudflare DNS & SSL/TLS](https://developers.cloudflare.com/dns/)
-6. [Tài liệu Tailscale Mesh VPN](https://tailscale.com/kb)
-7. [Tài liệu Prometheus Operator & Kube-Prometheus-Stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack)
-8. Giáo trình & bài giảng học phần NT548 - Công nghệ DevOps và Ứng dụng (UIT).
+1. **[RUNBOOK.md](./RUNBOOK.md)** — Hướng dẫn triển khai từng bước từ đầu đến kết thúc (Pha 0 $\rightarrow$ Pha 6) kèm kiểm chứng & thu hồi Tầng 2.
+2. **[ARCHITECTURE.md](./ARCHITECTURE.md)** — Kiến trúc 2 tầng, sơ đồ ASCII tổng thể, phân bổ IP/RAM, bảo mật đa lớp và 5 kịch bản demo.
+3. **[wireguard/README.md](./wireguard/README.md)** — Hướng dẫn cài đặt gói, `sysctl`, `open-iscsi`/`nfs-common`, tắt host firewall & khóa Cloud NSG, và kích hoạt `wg0` trên các node.
+4. **[platform-core/sealed-secrets/README.md](./platform-core/sealed-secrets/README.md)** — Hướng dẫn sao lưu master key và niêm phong secret bằng `kubeseal`.

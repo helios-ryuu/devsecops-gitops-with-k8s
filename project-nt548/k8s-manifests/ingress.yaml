@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+  namespace: app-prod
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: nt548.helios.id.vn
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web-service
+            port:
+              number: 3000

@@ -1,0 +1,21 @@
+# ==============================================================================
+# KUBEADM JOIN CONFIG — worker-01 (On-Premises Worker)
+# Target: Kubernetes v1.37.1 (kubeadm.k8s.io/v1beta4)
+# Path trên worker-01: /etc/kubernetes/kubeadm-join.yaml
+# ==============================================================================
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: JoinConfiguration
+discovery:
+  bootstrapToken:
+    apiServerEndpoint: "10.100.0.1:6443"
+    token: "<BOOTSTRAP_TOKEN>"
+    caCertHashes:
+      - "sha256:<DISCOVERY_CA_CERT_HASH>"
+nodeRegistration:
+  name: "worker-01"
+  criSocket: "unix:///run/containerd/containerd.sock"
+  kubeletExtraArgs:
+    - name: "node-ip"
+      value: "10.100.0.2"
+    - name: "node-labels"
+      value: "topology.kubernetes.io/zone=onprem-lan"

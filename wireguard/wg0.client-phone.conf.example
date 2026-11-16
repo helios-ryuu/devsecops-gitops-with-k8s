@@ -1,0 +1,13 @@
+# WireGuard config trên client-phone (điện thoại)
+[Interface]
+Address = 10.100.0.11/32
+MTU = 1420
+PrivateKey = <CLIENT_PHONE_PRIVATE_KEY>
+
+# Hub server (vps): định tuyến toàn dải 10.100.0.0/24 để giao tiếp hai chiều với server (.1), client-01 (.2), client-02 (.3) và client-fedora (.10)
+[Peer]
+PublicKey = <SERVER_PUBLIC_KEY>
+# vps.helios.id.vn là bản ghi A (DNS Only trên Cloudflare) trỏ về <VPS_PUBLIC_IP>
+Endpoint = vps.helios.id.vn:51820
+AllowedIPs = 10.100.0.0/24
+PersistentKeepalive = 25

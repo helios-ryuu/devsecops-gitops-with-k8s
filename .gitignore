@@ -1,2 +1,7 @@
 .obsidian/
 secrets/
+.rendered/
+wireguard/*.conf
+wireguard/*.key
+*-master-key.yaml
+*-unsealed*.yaml
