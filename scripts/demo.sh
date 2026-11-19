@@ -137,14 +137,15 @@ ${GREEN}[Bước 2] Kiểm chứng Traefik HA Zero-Downtime trên 2 Worker (work
     $ kubectl delete pod -n traefik \$(kubectl get pod -n traefik -l app.kubernetes.io/name=traefik -o jsonpath='{.items[0].metadata.name}')
   -> Quan sát kết quả HTTP 200 liên tục, không rớt kết nối nào.
 
-${GREEN}[Bước 3] Kiểm chứng Longhorn Storage Failover (không mất bộ đếm Redis):${NC}
+${GREEN}[Bước 3] Kiểm chứng Longhorn Storage Failover (RPO = 0, không mất bộ đếm Redis):${NC}
   $ kubectl get pods -n app-prod -o wide | grep redis-0
   - Ghi nhận số lượt truy cập hiện tại trên https://nt548.helios.id.vn
   - Drain node đang chứa redis-0 (thay <NODE_NAME> bằng worker-01 hoặc worker-02):
     $ kubectl drain <NODE_NAME> --ignore-daemonsets --delete-emptydir-data
-  - Chờ redis-0 khởi chạy lại trên worker còn lại, sau đó tải lại web và mở node lại:
+  - Chờ redis-0 khởi chạy lại trên worker còn lại (~30-60s để Longhorn detach/attach PVC RWO), sau đó tải lại web và mở node lại:
     $ kubectl get pods -n app-prod -o wide -w
     $ kubectl uncordon <NODE_NAME>
+  -> Lưu ý trình bày: Traefik đạt Zero-Downtime HA; còn Redis StatefulSet (1 replica, PVC RWO) gián đoạn ngắn lúc chuyển volume và đạt Data Durability (RPO = 0).
 
 EOF
 }

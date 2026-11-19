@@ -119,7 +119,7 @@ Chạy `./scripts/demo.sh` (hoặc `./scripts/demo.sh --all`) để hiển thị
 2. **Kyverno Enforce:** Chặn tức thì Pod vi phạm (`:latest`, chạy `root`, thiếu `limits`, sai registry) trong `app-prod`.
 3. **GitOps Continuous Delivery (`RollingUpdate` Zero-Downtime) & Instant Rollback:** Push commit lên `app/` kích hoạt CI build & cập nhật `project-nt548/k8s-manifests/deployment.yaml`, ArgoCD đồng bộ `RollingUpdate` (`maxUnavailable: 0, maxSurge: 1`) không rớt HTTP 200 và `git revert` rollback tức thì.
 4. **Zero-Trust Redis Isolation & Hubble UI:** Kiểm chứng NetworkPolicy chặn Pod lạ kết nối Redis `:6379` với luồng `DROPPED` trực quan trên Hubble UI.
-5. **Nightly GHCR Audit, Traefik HA & Longhorn Failover:** Kích hoạt tay `nightly-ghcr-image-scan` (`0 MB` RAM cụm), theo dõi tài nguyên trên Grafana, test xóa nóng Pod Traefik và drain node chứa `redis-0` không mất dữ liệu bộ đếm.
+5. **Nightly GHCR Audit, Traefik HA & Longhorn Failover:** Kích hoạt tay `nightly-ghcr-image-scan` (`0 MB` RAM cụm), theo dõi tài nguyên trên Grafana, test xóa nóng Pod Traefik (**Zero-Downtime HA**) và drain node chứa `redis-0` (tự phục hồi sau ~30–60s chuyển PVC `RWO`, **`RPO = 0`** không mất dữ liệu bộ đếm).
 
 ---
 

@@ -171,7 +171,7 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 
 ### 4.1. Ngân sách RAM (VPS 6GB & 2 Workers 8GB/máy)
 
-> **Tài nguyên khả dụng thực tế:** `server-01` (VPS 6GB RAM) còn **~5.8 GB** khả dụng (Control Plane + Cilium Agent + `node-exporter` dùng **~1.5 – 1.8 GB**, dư **~4.0 – 4.3 GB**). Hai Worker 8GB còn **~7.6 GB** (`worker-01`) và **~7.1 GB** (`worker-02`) khả dụng (~14.7 GB tổng 2 Workers). Để vừa ngân sách RAM, toàn bộ thành phần nền singleton (`Prometheus`, `Grafana`, `ArgoCD`, `Kyverno`, `Sealed Secrets`) giữ `replicas: 1`, tắt `dex`/`notifications`/`alertmanager`, tắt `Kyverno background/cleanup/reports` và đặt `applicationSet.replicas: 0`.
+> **Tài nguyên khả dụng thực tế:** `server-01` (VPS 6GB RAM) còn **~5.78 GiB** khả dụng (theo biểu đồ Grafana thực tế, Control Plane + Cilium Agent + `node-exporter` dùng **~1.9 – 2.0 GiB**, dư **~3.8 – 3.9 GiB**). Hai Worker 8GB còn **~7.6 GB** (`worker-01`) và **~7.1 GB** (`worker-02`) khả dụng (~14.7 GB tổng 2 Workers). Để vừa ngân sách RAM, toàn bộ thành phần nền singleton (`Prometheus`, `Grafana`, `ArgoCD`, `Kyverno`, `Sealed Secrets`) giữ `replicas: 1`, tắt `dex`/`notifications`/`alertmanager`, tắt `Kyverno background/cleanup/reports` và đặt `applicationSet.replicas: 0`.
 
 | Thành phần | Tầng | Cơ chế phân bổ | RAM thực tế tổng 2 Workers | Trung bình / 1 Worker (8GB) | Sau thu hồi Tầng 2 / Worker |
 |---|---|---|---|---:|---:|
@@ -201,6 +201,18 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 | Tên miền Public | Cloudflare Proxy | `nt548.helios.id.vn` | `CNAME` tới `vps.helios.id.vn` (Proxied), SSL Mode `Full (Strict)` |
 | Tên miền Quản trị | Cloudflare Zero Trust | `argocd.helios.id.vn`, `grafana.helios.id.vn`, `hubble.helios.id.vn` | `CNAME` tới `vps.helios.id.vn` (Proxied) + Access Policy `K8s Admin` (Email OTP) |
 
+### 4.3. Ghi chú Vận hành Thực tế & Giới hạn Thiết kế (Trade-offs & SPOF)
+
+1. **Điểm lỗi đơn (SPOF) có chủ đích theo ngân sách đồ án & hướng mở rộng Production:**
+   - **`server-01` (Control Plane & Edge Ingress VIP):** Do giới hạn 1 VPS, `server-01` vừa là Control Plane đơn lẻ vừa là điểm vào duy nhất của `CiliumLoadBalancerIPPool`. Hướng nâng cấp Production: nhân bản 3 Control Plane (`etcd` quorum) kết hợp Cloud Load Balancer hoặc Cilium BGP Control Plane.
+   - **`redis-0` (`StatefulSet`, `replicas: 1`):** Dùng PVC Longhorn `ReadWriteOnce (RWO)` đảm bảo **Data Durability (`RPO = 0`)** nhưng không phải Zero-Downtime khi chuyển node (gián đoạn ngắn ~30–60 giây để detach/attach PVC). Hướng nâng cấp Production: chuyển sang Redis Sentinel hoặc Redis Cluster.
+2. **Chiến lược Monorepo + `[skip ci]` & Mã hóa `etcd` (`aescbc`):**
+   - Dùng chung Monorepo kết hợp `paths` filter trong [ci.yml](./.github/workflows/ci.yml) và `[skip ci]` giúp quản lý tập trung ở quy mô đồ án, vẫn tách ranh giới GitOps (ArgoCD chỉ theo dõi `project-nt548/k8s-manifests/`). Doanh nghiệp lớn có thể tách riêng App Repo và GitOps Config Repo để phân quyền RBAC độc lập.
+   - `etcd` dùng `aescbc` nội bộ ([init-server-01.yaml](./kubeadm-config/init-server-01.yaml)) không phụ thuộc Cloud KMS ngoài; các Secret trên Git mã hóa bằng `kubeseal` kèm sao lưu ngoại tuyến master key ([platform-core/sealed-secrets/README.md](./platform-core/sealed-secrets/README.md)).
+3. **Quan sát thực tế trên Headlamp & Hubble UI:**
+   - Trong namespace `argocd`, Helm chart vẫn tạo Deployment/Service `argocd-applicationset-controller` nhưng đã đặt `applicationSet.replicas: 0` (`0` Pod chạy, `0 MB` RAM).
+   - Trên Hubble UI, luồng outbound từ `grafana` tới `world:443` là hành vi mặc định kiểm tra phiên bản/analytics của Grafana.
+
 ---
 
 ## 5. Kiểm tra Xác nhận Hệ thống & Kịch bản Demo
@@ -224,4 +236,4 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 2. **Kịch bản 2 – Kyverno Admission Policy Enforce:** Chạy `kubectl run test-violation -n app-prod --image=nginx:latest`; Kyverno (`admissionController`) từ chối ngay tại Kubernetes API Server do vi phạm root user, thiếu resource limits, tag `:latest` và registry ngoài whitelist.
 3. **Kịch bản 3 – GitOps Continuous Delivery (`RollingUpdate` Zero-Downtime) & Instant Git Rollback:** Chạy vòng lặp `curl` liên tục vào `https://nt548.helios.id.vn/ready`, đẩy commit mới lên `app/` để `ci.yml` cập nhật image + `APP_VERSION` trong `project-nt548/k8s-manifests/deployment.yaml` và ArgoCD đồng bộ `RollingUpdate` (`maxUnavailable: 0, maxSurge: 1`) không rớt request nào; sau đó chạy `git revert HEAD --no-edit && git push` để rollback tức thì.
 4. **Kịch bản 4 – NetworkPolicy Cô lập Redis & Hubble Observability:** Khởi chạy Pod hợp chuẩn Kyverno trong `app-prod` nhưng không mang nhãn `app: web` thử kết nối `redis-service.app-prod.svc.cluster.local:6379` $\rightarrow$ bị chặn đứng và hiển thị flow đỏ **`DROPPED`** trên Hubble UI (`https://hubble.helios.id.vn`).
-5. **Kịch bản 5 – Nightly GHCR CVE Audit (`0 MB` RAM cụm), Traefik HA & Longhorn Failover:** Kích hoạt tay job quét hàng đêm `nightly-ghcr-image-scan` (`run_nightly_scan=true`) trên GitHub Actions + xem Dashboard tài nguyên trên Grafana (`https://grafana.helios.id.vn`); xóa nóng 1 Pod Traefik trong lúc `curl` liên tục để chứng minh 0% rớt HTTP 200; sau đó `kubectl drain` worker chứa `redis-0` để chứng minh Redis chuyển sang worker còn lại và giữ nguyên bộ đếm lượt truy cập trên Longhorn PVC.
+5. **Kịch bản 5 – Nightly GHCR CVE Audit (`0 MB` RAM cụm), Traefik HA & Longhorn Failover:** Kích hoạt tay job quét hàng đêm `nightly-ghcr-image-scan` (`run_nightly_scan=true`) trên GitHub Actions + xem Dashboard tài nguyên trên Grafana (`https://grafana.helios.id.vn`); xóa nóng 1 Pod Traefik trong lúc `curl` liên tục để chứng minh **Zero-Downtime HA** (`0%` rớt HTTP 200); sau đó `kubectl drain` worker chứa `redis-0` để chứng minh **High Availability & Data Durability (`RPO = 0`)** — gián đoạn ngắn ~30–60 giây khi Longhorn detach/attach PVC `RWO` sang worker còn lại, tự phục hồi và giữ nguyên bộ đếm lượt truy cập.
