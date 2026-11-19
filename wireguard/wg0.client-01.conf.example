@@ -13,7 +13,7 @@ Endpoint = vps.helios.id.vn:51820
 AllowedIPs = 10.100.0.0/24
 PersistentKeepalive = 25
 
-# Peer trực tiếp qua LAN 10.10.10.0/24 tới client-02 (worker-02): /32 ưu tiên hơn /24 để Longhorn đi thẳng LAN 1Gbps
+# Peer trực tiếp qua LAN 10.10.0.0/24 tới client-02 (worker-02): /32 ưu tiên hơn /24 để Longhorn đi thẳng LAN 1Gbps
 [Peer]
 PublicKey = <CLIENT_02_PUBLIC_KEY>
 Endpoint = <WORKER_02_LAN_IP>:51820

@@ -80,7 +80,7 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 #  |  +------------------------------------------------------------------------------------------------------------------------+  |  # |        |  | | Trivy FS (app/) | HIGH,CRITICAL, ignore-unfixed -> 1  | |   | [skip ci] |
 #  |                             | K8s Control/API (:6443 <-> kubelet)                     | VIP & Pod VXLAN Traffic              |  # |        |  | +-------------------------------------------------------+ |   | update    |
 #  |                             v  [ Cilium VXLAN (UDP :8472, MTU 1340) bọc trong WireGuard wg0 (UDP :51820, MTU 1420) ]         |  # |        |  |                             | (needs: secret-scan)        |   | deploy    |
-#  |  +--- ON-PREMISES WORKERS (8GB/máy | zone=onprem-lan | LAN 10.10.10.0/24) ------------------------------------------------+  |  # |        |  |                             v                             |   |           |
+#  |  +--- ON-PREMISES WORKERS (8GB/máy | zone=onprem-lan | LAN 10.10.0.0/24) -------------------------------------------------+  |  # |        |  |                             v                             |   |           |
 #  |  |                                                                                                                        |  |  # |        |  | +--- [Job 3: manifest-security-gate] -------------------+ |   |           |
 #  |  | +-------------------------------------------------+                +-------------------------------------------------+ |  |  # |        |  | | kubeconform -strict (manifests, kyverno, monit.)      | |   |           |
 #  |  | | WORKER-01 (wg0: 10.100.0.2 | SSH :61122)        |  Direct LAN    | WORKER-02 (wg0: 10.100.0.3 | SSH :61222)        | |  |  # |        |  | | + Trivy Config Scan (k8s-manifests/, HIGH/CRITICAL)   | |   |           |
@@ -134,10 +134,10 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 ### 3.1. Định tuyến Hybrid Mesh WireGuard (`wg0`) & Luồng Traffic Public
 
 1. **Tối ưu LAN nội bộ cho Longhorn & Pod-to-Pod (`worker-01` $\leftrightarrow$ `worker-02`):**
-   - `worker-01` (`10.100.0.2/24`) và `worker-02` (`10.100.0.3/24`) đặt tại mạng LAN gia đình **`10.10.10.0/24`**, cố định IP LAN qua DHCP Reservation (`<WORKER_01_LAN_IP>`, `<WORKER_02_LAN_IP>`).
+   - `worker-01` (`10.100.0.2/24`) và `worker-02` (`10.100.0.3/24`) đặt tại mạng LAN gia đình **`10.10.0.0/24`**, cố định IP tĩnh (`Static IP` qua `netplan`, nằm ngoài dải DHCP pool `10.10.0.50–254`: `<WORKER_01_LAN_IP>`, `<WORKER_02_LAN_IP>`).
    - Trên mỗi worker khai báo **2 Peer WireGuard**:
      - Peer tới `server` (`vps.helios.id.vn:51820` — bản ghi `A` DNS Only $\rightarrow$ `<VPS_PUBLIC_IP>`): `AllowedIPs = 10.100.0.0/24` giúp 5 node (`server`, `client-01`, `client-02`, `client-fedora`, `client-phone`) thông mạng hai chiều dù ở LAN hay qua Internet.
-     - Peer trực tiếp tới worker đối diện (`<PEER_LAN_IP>:51820` trong `10.10.10.0/24`): `AllowedIPs = 10.100.0.3/32` (hoặc `.2/32`). Nhờ **Longest-Prefix Match (`/32` ưu tiên hơn `/24`)**, toàn bộ lưu lượng Longhorn replication và Cilium VXLAN giữa 2 worker đi thẳng qua mạng LAN 1Gbps (~0.3ms), không vòng qua VPS.
+     - Peer trực tiếp tới worker đối diện (`<PEER_LAN_IP>:51820` trong `10.10.0.0/24`): `AllowedIPs = 10.100.0.3/32` (hoặc `.2/32`). Nhờ **Longest-Prefix Match (`/32` ưu tiên hơn `/24`)**, toàn bộ lưu lượng Longhorn replication và Cilium VXLAN giữa 2 worker đi thẳng qua mạng LAN 1Gbps (~0.3ms), không vòng qua VPS.
 2. **Luồng truy cập Internet $\rightarrow$ Pod trên Worker:**
    - User $\rightarrow$ **Cloudflare Edge** (`nt548.helios.id.vn`, `argocd.helios.id.vn`, `grafana.helios.id.vn`, `hubble.helios.id.vn` trỏ `CNAME` Proxied $\rightarrow$ `vps.helios.id.vn`; 3 domain quản trị được bảo vệ thêm bởi **Cloudflare Zero Trust Access** OTP) $\rightarrow$ Public IP `<VPS_PUBLIC_IP>:443` trên `server-01`.
    - `server-01` chạy **Cilium eBPF (`kubeProxyReplacement: true`)** quảng bá `CiliumLoadBalancerIPPool` (`<VPS_PUBLIC_IP>/32`) gắn cho Service `LoadBalancer` của **Traefik** (`externalTrafficPolicy: Cluster`).
@@ -148,7 +148,7 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 
 1. **Tầng Host & Cloud NSG:**
    - Trên `server-01`, **Cloud Firewall (NSG)** chỉ mở Ingress IPv4 `61022/tcp`, `80/tcp`, `443/tcp`, `51820/udp` (`+ ICMP`), chặn tuyệt đối `6443/tcp`, `9100/tcp`, `10250/tcp`, `8472/udp`.
-   - Cả 3 node tắt `ufw`/`firewalld` (tránh xung đột chain `FORWARD` với Cilium eBPF và `wg0`), bật `net.ipv4.ip_forward=1`, `rp_filter=0`, và giữ tắt `Cilium hostFirewall` (do `wg0` là giao diện L3). Trên LAN `10.10.10.0/24`, 2 worker được bảo vệ bởi Router NAT và SSH Key-only (`PasswordAuthentication no`).
+   - Cả 3 node tắt `ufw`/`firewalld` (tránh xung đột chain `FORWARD` với Cilium eBPF và `wg0`), bật `net.ipv4.ip_forward=1`, `rp_filter=0`, và giữ tắt `Cilium hostFirewall` (do `wg0` là giao diện L3). Trên LAN `10.10.0.0/24`, 2 worker được bảo vệ bởi Router NAT và SSH Key-only (`PasswordAuthentication no`).
    - API Server bật mã hóa Secrets trên `etcd` bằng `aescbc` (`/etc/kubernetes/enc/enc.yaml`).
 2. **Tầng Secrets & Policy-as-Code:**
    - Mọi Secret lưu trên Git đều được mã hóa bằng **`kubeseal`** (`cloudflare-origin-tls`, `grafana-admin-secret` ở Tầng 1; `redis-auth-secret` ở Tầng 2), master key sao lưu ngoại tuyến.
@@ -194,8 +194,8 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 |---|---|---|---|
 | `server-01` (`heliosvps`, 6GB) | `eth0` / `wg0` | `<VPS_PUBLIC_IP>` / `10.100.0.1/24` | SSH **`61022/tcp`**, API `10.100.0.1:6443`, `CiliumLoadBalancerIPPool` `<VPS_PUBLIC_IP>/32` |
 | Bản ghi `A` Public VPS | Cloudflare (DNS Only) | `vps.helios.id.vn` $\rightarrow$ `<VPS_PUBLIC_IP>` | Tắt Proxy (đám mây xám) cho WireGuard UDP `:51820` & SSH `:61022` |
-| `worker-01` (8GB) | `wg0` / LAN | `10.100.0.2/24` / `<WORKER_01_LAN_IP>` | SSH **`61122/tcp`**, DHCP Reservation `10.10.10.0/24`, Longhorn `199GB` (`/var/lib/longhorn`) |
-| `worker-02` (8GB) | `wg0` / LAN | `10.100.0.3/24` / `<WORKER_02_LAN_IP>` | SSH **`61222/tcp`**, DHCP Reservation `10.10.10.0/24`, Longhorn `461GB` trên `/` (`/var/lib/longhorn`) |
+| `worker-01` (8GB) | `wg0` / LAN | `10.100.0.2/24` / `<WORKER_01_LAN_IP>` | SSH **`61122/tcp`**, Static IP `10.10.0.0/24` (ngoài DHCP `.50–.254`), Longhorn `199GB` (`/var/lib/longhorn`) |
+| `worker-02` (8GB) | `wg0` / LAN | `10.100.0.3/24` / `<WORKER_02_LAN_IP>` | SSH **`61222/tcp`**, Static IP `10.10.0.0/24` (ngoài DHCP `.50–.254`), Longhorn `461GB` trên `/` (`/var/lib/longhorn`) |
 | `client-fedora` / `client-phone` | `wg0` | `10.100.0.10/32` / `10.100.0.11/32` | Quản trị cụm (`kubectl`, `helm`, SSH) qua Hub `vps.helios.id.vn:51820` |
 | Pod CIDR / Service CIDR | Overlay | `10.42.0.0/16` (`MTU 1340`) / `10.43.0.0/16` | Cilium VXLAN & CoreDNS `10.43.0.10` |
 | Tên miền Public | Cloudflare Proxy | `nt548.helios.id.vn` | `CNAME` tới `vps.helios.id.vn` (Proxied), SSL Mode `Full (Strict)` |

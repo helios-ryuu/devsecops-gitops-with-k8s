@@ -69,8 +69,8 @@ sudo iptables -L -n
 1. **VPS `server` (`heliosvps` / `server-01`, SSH `61022/tcp`) — Khóa tại Cloud Firewall (NSG):**
    - **Chỉ mở Ingress IPv4 (`0.0.0.0/0`):** `61022/tcp` (SSH Admin), `80/tcp` (HTTP), `443/tcp` (HTTPS), `51820/udp` (WireGuard `wg0`) và `ICMP`.
    - **Xóa sạch wildcard Ingress cũ** (`IPv4 TCP 0.0.0.0/0`, `IPv4 UDP 0.0.0.0/0`, `IPv6 ::/0`) và giữ **Egress** mở. Các cổng `6443/tcp`, `9100/tcp`, `10250/tcp`, `8472/udp` bị chặn từ Internet tại tầng Cloud NSG.
-2. **2 Worker tại nhà `client-01` (`worker-01`, `61122/tcp`) & `client-02` (`worker-02`, `61222/tcp`) trong LAN `10.10.10.0/24`:**
-   - Tin cậy **Router NAT** (không port-forward WAN vào 2 worker), đặt **DHCP Reservation** trong `10.10.10.0/24` và bật **SSH Key-only** (`PasswordAuthentication no`).
+2. **2 Worker tại nhà `client-01` (`worker-01`, `61122/tcp`) & `client-02` (`worker-02`, `61222/tcp`) trong LAN `10.10.0.0/24`:**
+   - Tin cậy **Router NAT** (không port-forward WAN vào 2 worker), đặt **Static IP** trong `10.10.0.0/24` ngoài dải DHCP pool (`.50–.254`) và bật **SSH Key-only** (`PasswordAuthentication no`).
    - *(Tùy chọn)* Có thể tách 2 worker sang VLAN hoặc dùng Wi-Fi khách riêng trên Router nếu mạng LAN nhà có nhiều thiết bị IoT/khách không tin cậy.
 
 ## 4. Sinh cặp khóa, Kích hoạt `wg0` & Thông mạng 5 Node

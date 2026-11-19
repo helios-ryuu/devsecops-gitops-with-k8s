@@ -11,8 +11,8 @@ Tài liệu hướng dẫn thao tác từng bước để dựng hoàn chỉnh h
 | Thành phần | Node / Giá trị | Thông số & Ghi chú |
 |---|---|---|
 | Control Plane (VPS Ubuntu) | `server-01` (`heliosvps`) | User `helios` • SSH **`61022/tcp`** • **6GB RAM** (~5.3–5.5GB khả dụng) • Public IP `<VPS_PUBLIC_IP>` • `A`: `vps.helios.id.vn` (DNS Only) • `wg0`: `10.100.0.1/24` |
-| Worker 1 (On-Prem Ubuntu) | `worker-01` | User `helios` • SSH **`61122/tcp`** (LAN `10.10.10.0/24` & `wg0`) • **8GB RAM** (~7.3–7.5GB khả dụng) • `wg0`: `10.100.0.2/24` • Longhorn `/var/lib/longhorn` (`199GB`) |
-| Worker 2 (On-Prem Ubuntu) | `worker-02` | User `helios` • SSH **`61222/tcp`** (LAN `10.10.10.0/24` & `wg0`) • **8GB RAM** (~7.3–7.5GB khả dụng) • `wg0`: `10.100.0.3/24` • Longhorn `/` (`461GB` trống) |
+| Worker 1 (On-Prem Ubuntu) | `worker-01` | User `helios` • SSH **`61122/tcp`** (LAN `10.10.0.0/24` & `wg0`) • **8GB RAM** (~7.3–7.5GB khả dụng) • `wg0`: `10.100.0.2/24` • Longhorn `/var/lib/longhorn` (`199GB`) |
+| Worker 2 (On-Prem Ubuntu) | `worker-02` | User `helios` • SSH **`61222/tcp`** (LAN `10.10.0.0/24` & `wg0`) • **8GB RAM** (~7.3–7.5GB khả dụng) • `wg0`: `10.100.0.3/24` • Longhorn `/` (`461GB` trống) |
 | Máy quản trị (Fedora) | `laptop` | `wg0`: `10.100.0.10/32` • Chạy `kubectl`, `helm`, `kubeseal`, `ssh` |
 | Pod CIDR / Service CIDR | `10.42.0.0/16` / `10.43.0.0/16` | Cilium VXLAN `MTU 1340` • CoreDNS `10.43.0.10` |
 | Tên miền Public | `nt548.helios.id.vn` | `CNAME -> vps.helios.id.vn` (Cloudflare Proxied, SSL `Full (Strict)`) |
@@ -62,7 +62,7 @@ Mô hình bảo mật biên của cụm tách bạch khỏi nhân Linux trên t�
 - **Lý do tắt `ufw` và `firewalld`:** Trong cụm Kubernetes dùng **Cilium eBPF (`kubeProxyReplacement: true`)** và **WireGuard (`wg0`)**, bật song song `ufw`/`firewalld` dễ làm xóa hoặc xung đột bảng luật định tuyến của Cilium, đồng thời chain `FORWARD` mặc định của `ufw` chặn lưu lượng Pod/VXLAN. Do `wg0` là giao diện tầng L3 (không có Ethernet header), **Cilium `hostFirewall`** cũng không được bật để tránh rớt gói `UnknownEthernetType`.
 - **Phân tầng bảo vệ thay thế (nằm ngoài OS):**
   - Trên **VPS (`server-01` / `heliosvps`)**: Mọi cổng nội bộ/nhạy cảm (`6443/tcp`, `9100/tcp`, `10250/tcp`, `8472/udp`) được chặn hoàn toàn tại **Cloud Firewall (NSG)** của nhà cung cấp VPS (cấu hình ở **Bước 0.5**).
-  - Trên **2 Worker tại nhà (`worker-01` & `worker-02` trong `10.10.10.0/24`)**: Tin cậy **Router NAT** (không mở port-forwarding từ WAN vào LAN) kết hợp **SSH Key-only** (`PasswordAuthentication no`, cổng `61122`/`61222`). *(Khuyến nghị: Nếu LAN nhà có nhiều thiết bị IoT/khách không tin cậy, hãy tách 2 worker vào VLAN hoặc tách Wi-Fi khách trên Router.)*
+  - Trên **2 Worker tại nhà (`worker-01` & `worker-02` trong `10.10.0.0/24`)**: Tin cậy **Router NAT** (không mở port-forwarding từ WAN vào LAN) kết hợp **SSH Key-only** (`PasswordAuthentication no`, cổng `61122`/`61222`). *(Khuyến nghị: Nếu LAN nhà có nhiều thiết bị IoT/khách không tin cậy, hãy tách 2 worker vào VLAN hoặc tách Wi-Fi khách trên Router.)*
 
 Thực hiện lần lượt trên **cả 3 node** (`server-01` SSH `61022`, `worker-01` SSH `61122`, `worker-02` SSH `61222`):
 
@@ -106,7 +106,7 @@ export VPS_PUBLIC_IP="<IP_PUBLIC_VPS_THUC_TE>"
 
 ### 0.5. Đặt IP LAN tĩnh, Cloud Firewall VPS & Cloudflare DNS / Origin TLS
 
-1. **Router gia đình (`10.10.10.0/24`):** Cấu hình **DHCP Reservation** theo địa chỉ MAC để cố định `<WORKER_01_LAN_IP>` (`worker-01`) và `<WORKER_02_LAN_IP>` (`worker-02`) trong dải `10.10.10.0/24`.
+1. **Router & Static IP LAN (`10.10.0.0/24`):** Giới hạn dải DHCP động trên Router (`10.10.0.50` – `10.10.0.254`) và cấu hình **Static IP (`netplan`)** nằm ngoài vùng DHCP cho `<WORKER_01_LAN_IP>` (`worker-01`) và `<WORKER_02_LAN_IP>` (`worker-02`).
 2. **Cloud Firewall (NSG) của nhà cung cấp VPS (`server-01`):**
    - Khóa biên ngoài của VPS ngay tại tầng hạ tầng Cloud theo thứ tự **thêm rule mới trước — xóa rule wildcard sau** để bảo toàn phiên SSH `61022` đang chạy:
    - **Bước 2a — Thêm 4 rule Ingress IPv4 chuẩn (giữ `Ingress IPv4 ICMP` và toàn bộ `Egress` mở):**
@@ -183,7 +183,7 @@ sudo mkdir -p /etc/wireguard
 wg genkey | sudo tee /etc/wireguard/private.key | wg pubkey | sudo tee /etc/wireguard/public.key
 ```
 
-Điền khóa, `Endpoint = vps.helios.id.vn:51820` và IP LAN thực tế (`10.10.10.x`) vào `/etc/wireguard/wg0.conf`:
+Điền khóa, `Endpoint = vps.helios.id.vn:51820` và IP LAN thực tế (`10.10.0.x`) vào `/etc/wireguard/wg0.conf`:
 - `server` (`heliosvps` / `server-01` — `.1`): [wireguard/wg0.server.conf.example](./wireguard/wg0.server.conf.example)
 - `client-01` (`worker-01` — `.2`): [wireguard/wg0.client-01.conf.example](./wireguard/wg0.client-01.conf.example) *(Peer `client-02` dùng `<WORKER_02_LAN_IP>:51820` và `AllowedIPs = 10.100.0.3/32`)*
 - `client-02` (`worker-02` — `.3`): [wireguard/wg0.client-02.conf.example](./wireguard/wg0.client-02.conf.example) *(Peer `client-01` dùng `<WORKER_01_LAN_IP>:51820` và `AllowedIPs = 10.100.0.2/32`)*

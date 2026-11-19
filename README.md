@@ -58,7 +58,7 @@
 ## 2. Tổng quan đề tài
 
 1. **Hạ tầng mạng & Kubernetes Hybrid chuẩn Production:**
-   Thiết lập mạng WireGuard `wg0` (`10.100.0.0/24`, endpoint `vps.helios.id.vn:51820` $\rightarrow$ `<VPS_PUBLIC_IP>`) nối `server-01` (VPS 6GB RAM, Control Plane) với `worker-01` và `worker-02` (2×8GB RAM on-premises nối thẳng LAN `10.10.10.0/24` 1Gbps). Sử dụng **Cilium eBPF CNI** (`kubeProxyReplacement: true`), cấp phát External IP `<VPS_PUBLIC_IP>/32` qua `CiliumLoadBalancerIPPool`, vận hành **Traefik HA (2 replicas)** và **Longhorn Distributed Storage (2 replicas)**.
+   Thiết lập mạng WireGuard `wg0` (`10.100.0.0/24`, endpoint `vps.helios.id.vn:51820` $\rightarrow$ `<VPS_PUBLIC_IP>`) nối `server-01` (VPS 6GB RAM, Control Plane) với `worker-01` và `worker-02` (2×8GB RAM on-premises nối thẳng LAN `10.10.0.0/24` 1Gbps). Sử dụng **Cilium eBPF CNI** (`kubeProxyReplacement: true`), cấp phát External IP `<VPS_PUBLIC_IP>/32` qua `CiliumLoadBalancerIPPool`, vận hành **Traefik HA (2 replicas)** và **Longhorn Distributed Storage (2 replicas)**.
 2. **Bảo mật đa lớp (Defense in Depth & Policy as Code):**
    - **CI Gate:** Gitleaks, Trivy FS, `kubeconform` + Trivy Config (YAML thuần), Docker multi-stage build non-root (`UID 10001:10001`), Trivy Image trước khi đẩy lên **GHCR**.
    - **Secret & Admission:** Bitnami Sealed Secrets (`kubeseal`), **Kyverno** (`admissionController` Enforce/Deny 4 `ValidatingPolicy` trên nhãn `policy-tier: hardened`), Cilium **NetworkPolicy** cô lập Redis StatefulSet (`UID 999`), và **Cloudflare Zero Trust Access** bảo vệ toàn bộ UI quản trị (`argocd.helios.id.vn`, `grafana.helios.id.vn`, `hubble.helios.id.vn`).

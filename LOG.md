@@ -6,7 +6,7 @@
 - [x] Xác nhận cổng `sshd` thực tế (`61022` trên `server-01`, `61122` trên `worker-01`, `61222` trên `worker-02`), cấu hình SSH key-only (`PasswordAuthentication no`) và kiểm tra `~/.kube/config` trên `laptop`
 - [x] Tắt `ufw` / `firewalld` trên cả 3 node và xác minh `iptables` ở trạng thái `policy ACCEPT`
 - [x] Cài công cụ trên `laptop` (Fedora) (`kubectl`, `helm`, `kubeseal`, `cilium`, `wireguard-tools`) và khai báo biến `export VPS_PUBLIC_IP`
-- [x] Đặt DHCP Reservation LAN `10.10.10.0/24`, khóa Cloud Firewall (NSG) VPS (`61022/tcp`, `80/tcp`, `443/tcp`, `51820/udp`, `ICMP` IPv4), trỏ Cloudflare DNS & tạo Origin Certificate
+- [x] Giới hạn DHCP pool Router (`10.10.0.50–254`) & đặt Static IP LAN `10.10.0.0/24`, khóa Cloud Firewall (NSG) VPS (`61022/tcp`, `80/tcp`, `443/tcp`, `51820/udp`, `ICMP` IPv4), trỏ Cloudflare DNS & tạo Origin Certificate
 
 <!-- Ghi chú của bạn cho Pha 0 -->
 
