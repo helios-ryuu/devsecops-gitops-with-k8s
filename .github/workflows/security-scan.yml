@@ -3,43 +3,24 @@ name: DevSecOps Security Gates
 on:
   workflow_call:
     inputs:
-      app_dir:
-        description: "Thư mục mã nguồn ứng dụng cần quét Trivy FS"
-        type: string
-        default: "app"
-      kubeconform_paths:
-        description: "Danh sách thư mục manifest Kubernetes cần validate (phân cách bằng dấu cách)"
-        type: string
-        default: "project-nt548/k8s-manifests platform-core/kyverno/policies platform-core/monitoring/servicemonitors"
-      trivy_config_path:
-        description: "Thư mục manifest cần quét misconfiguration bằng Trivy Config"
-        type: string
-        default: "project-nt548/k8s-manifests"
-      severity:
-        description: "Ngưỡng mức độ nghiêm trọng CVE/Config để chặn pipeline"
-        type: string
-        default: "HIGH,CRITICAL"
-      ignore_unfixed:
-        description: "Bỏ qua các CVE chưa có bản vá"
-        type: boolean
-        default: true
-      kubeconform_version:
-        description: "Phiên bản kubeconform CLI"
-        type: string
-        default: "0.6.7"
+      app_dir: { type: string, default: "app" }
+      manifest_paths: { type: string, default: "project-nt548/k8s-manifests platform-core/kyverno/policies platform-core/monitoring/servicemonitors" }
+      trivy_config_path: { type: string, default: "project-nt548/k8s-manifests" }
+      severity: { type: string, default: "HIGH,CRITICAL" }
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   secret-scan:
     name: 1. Secret Scanning (Gitleaks)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v3
+      - uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -48,45 +29,32 @@ jobs:
     needs: secret-scan
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-
-      - name: Trivy FS Scan (Dependencies)
-        uses: aquasecurity/trivy-action@v0.35.0
-        with:
-          scan-type: "fs"
-          scan-ref: ${{ inputs.app_dir }}
-          severity: ${{ inputs.severity }}
-          exit-code: "1"
-          ignore-unfixed: ${{ inputs.ignore_unfixed }}
+      - uses: actions/checkout@v6
+      - uses: aquasecurity/setup-trivy@v0.3.1
+      - name: Trivy FS Scan
+        env:
+          APP_DIR: ${{ inputs.app_dir }}
+          SEVERITY: ${{ inputs.severity }}
+        run: trivy fs --severity "$SEVERITY" --ignore-unfixed --exit-code 1 "$APP_DIR"
 
   manifest-security-gate:
     name: 3. Kubernetes Manifest & Config Gate
     needs: secret-scan
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-
-      - name: Install kubeconform
+      - uses: actions/checkout@v6
+      - name: Validate Manifests (kubeconform)
         env:
-          KUBECONFORM_VERSION: ${{ inputs.kubeconform_version }}
+          MANIFEST_PATHS: ${{ inputs.manifest_paths }}
+          KUBECONFORM_VERSION: ${{ vars.KUBECONFORM_VERSION || '0.6.7' }}
         run: |
           curl -sSL "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
-            | tar -xz -C /tmp kubeconform
-          sudo mv /tmp/kubeconform /usr/local/bin/kubeconform
-
-      - name: Validate Kubernetes Manifests (kubeconform)
-        env:
-          KUBECONFORM_PATHS: ${{ inputs.kubeconform_paths }}
-        run: |
-          read -r -a PATHS <<< "$KUBECONFORM_PATHS"
+            | sudo tar -xz -C /usr/local/bin kubeconform
+          read -r -a PATHS <<< "$MANIFEST_PATHS"
           kubeconform -strict -ignore-missing-schemas -summary "${PATHS[@]}"
-
-      - name: Trivy Config Scan (Kubernetes Manifests)
-        uses: aquasecurity/trivy-action@v0.35.0
-        with:
-          scan-type: "config"
-          scan-ref: ${{ inputs.trivy_config_path }}
-          severity: ${{ inputs.severity }}
-          exit-code: "1"
+      - uses: aquasecurity/setup-trivy@v0.3.1
+      - name: Trivy Config Scan
+        env:
+          CONFIG_PATH: ${{ inputs.trivy_config_path }}
+          SEVERITY: ${{ inputs.severity }}
+        run: trivy config --severity "$SEVERITY" --exit-code 1 "$CONFIG_PATH"

@@ -6,10 +6,13 @@ on:
   workflow_dispatch:
     inputs:
       severity:
-        description: "Ngưỡng mức độ CVE để cảnh báo/fail"
-        required: false
+        description: "Ngưỡng mức độ CVE để fail"
         default: "HIGH,CRITICAL"
         type: string
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   nightly-ghcr-image-scan:
@@ -21,39 +24,25 @@ jobs:
     env:
       REGISTRY: ${{ vars.CONTAINER_REGISTRY || 'ghcr.io' }}
       MANIFEST_FILES: ${{ vars.NIGHTLY_SCAN_MANIFESTS || 'project-nt548/k8s-manifests/deployment.yaml project-nt548/k8s-manifests/redis-statefulset.yaml' }}
-      TRIVY_SEVERITY: ${{ inputs.severity || vars.TRIVY_SEVERITY || 'HIGH,CRITICAL' }}
+      SEVERITY: ${{ inputs.severity || vars.TRIVY_SEVERITY || 'HIGH,CRITICAL' }}
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
-      - name: Log in to Container Registry
-        uses: docker/login-action@v4
+      - uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Trivy
-        uses: aquasecurity/setup-trivy@v0.3.1
+      - uses: aquasecurity/setup-trivy@v0.3.1
 
-      - name: Pull Active Deployed Images & Run Trivy Scan
+      - name: Pull & Scan Active Images (yq + Trivy)
         run: |
-          IMAGES=$(python3 -c '
-          import os, re
-          imgs = []
-          for path in os.environ["MANIFEST_FILES"].split():
-              txt = open(path).read()
-              imgs.extend(re.findall(r"image:\s+(\S+)", txt))
-          print("\n".join(dict.fromkeys(imgs)))
-          ')
-          if [ -z "$IMAGES" ]; then
-            echo "Error: No active images extracted for Trivy scan"
-            exit 1
-          fi
-          echo "Active deployed images to scan (severity: ${TRIVY_SEVERITY}):"
-          echo "$IMAGES"
-          for IMG in $IMAGES; do
+          read -r -a FILES <<< "$MANIFEST_FILES"
+          mapfile -t IMAGES < <(yq eval-all --no-doc '.. | .image? | select(. != null and . != "")' "${FILES[@]}" | sort -u)
+          [[ "${#IMAGES[@]}" -gt 0 ]] || { echo "No active images found" >&2; exit 1; }
+          for IMG in "${IMAGES[@]}"; do
             echo "=== Pulling & Scanning $IMG ==="
             docker pull "$IMG"
-            trivy image --severity "$TRIVY_SEVERITY" --ignore-unfixed --exit-code 1 "$IMG"
+            trivy image --severity "$SEVERITY" --ignore-unfixed --exit-code 1 "$IMG"
           done

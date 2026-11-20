@@ -105,10 +105,10 @@ devsecops-gitops-with-k8s/
 ├── project-nt548/                      # Tầng 2: Tài nguyên riêng của đồ án
 │   ├── k8s-manifests/                  # Manifest YAML thuần: web-deployment, Service, Ingress, Redis, ExternalSecret, NetworkPolicy
 │   └── app-prod.yaml                   # ArgoCD Application Tầng 2 (namespace app-prod)
-├── .github/workflows/                  # Kiến trúc Modular CI/CD (workflow_call)
-│   ├── ci.yml                          # Orchestrator CI/CD (tham số hóa qua vars.*, gọi 2 workflow con)
+├── .github/workflows/                  # Kiến trúc Modular CI/CD (workflow_call + vars.* + yq + setup-trivy)
+│   ├── ci.yml                          # Orchestrator CI/CD (gọi security-scan.yml & build-deploy.yml)
 │   ├── security-scan.yml               # workflow_call: Gitleaks, Trivy FS, kubeconform & Trivy Config
-│   ├── build-deploy.yml                # workflow_call: Buildx, Trivy Image Gate, Push GHCR & GitOps tag update
+│   ├── build-deploy.yml                # workflow_call: Buildx, Trivy Image Gate, Push GHCR & update YAML (yq)
 │   └── nightly-audit.yml               # Nightly GHCR Image Audit tách riêng (cron 0 0 * * *, 0 MB RAM cụm)
 └── scripts/demo.sh                     # Script in hướng dẫn từng bước thực hiện 5 kịch bản demo
 ```

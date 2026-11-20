@@ -44,8 +44,8 @@ devsecops-gitops-with-k8s/
 ├── .github/workflows/
 │   ├── ci.yml                                # Orchestrator CI/CD (gọi workflow_call, tham số hóa qua vars.*)
 │   ├── security-scan.yml                     # workflow_call: Gitleaks, Trivy FS, kubeconform & Trivy Config
-│   ├── build-deploy.yml                      # workflow_call: Buildx, Trivy Image Gate, push GHCR & update GitOps tag
-│   └── nightly-audit.yml                     # Audit CVE định kỳ 00:00 UTC cho các image active (0 MB RAM cụm)
+│   ├── build-deploy.yml                      # workflow_call: Buildx, Trivy Image Gate, push GHCR & update YAML (yq)
+│   └── nightly-audit.yml                     # Audit CVE định kỳ 00:00 UTC cho các image active (yq + Trivy, 0 MB RAM)
 ├── project-nt548/                            # TẦNG 2: GitOps Application & Manifests đồ án NT548
 │   ├── app-prod.yaml                         # ArgoCD Application Tầng 2 (namespace app-prod, nhãn policy-tier=hardened)
 │   └── k8s-manifests/                        # Manifest YAML thuần: web-deployment (RollingUpdate), Service, Ingress, ConfigMap, Redis, SecretStore/ExternalSecret, NetworkPolicy
@@ -128,7 +128,7 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 | **Storage & Secrets** | Thiếu lưu trữ phân tán & quản lý Secret tập trung | **Longhorn (`replicas: 2` qua LAN 1Gbps)** + **HashiCorp Vault (Longhorn PVC) & External Secrets Operator (Kubernetes Auth)** |
 | **Admission Policy** | Không có | **Kyverno (`admissionController`)** + **4 CEL `ValidatingPolicy` (`Deny`)** trên `policy-tier=hardened` |
 | **Phạm vi ArgoCD** | Quản lý cả `monitoring` lẫn app; chạy `ApplicationSet` thừa | Chỉ quản lý Tầng 2 (`app-prod`); `applicationSet.replicas: 0`; tắt `dex`/`notifications`; `monitoring` cài ở Tầng 1 |
-| **Manifests & CI/CD** | 3 job trong `ci-pipe.yml` + Kustomize `kustomization.yaml` | Kiến trúc **Modular Workflows (`workflow_call`)** tách 4 file (`ci.yml`, `security-scan.yml`, `build-deploy.yml`, `nightly-audit.yml`), tham số hóa qua `vars.*`/`inputs`, pin tag `trivy-action@v0.35.0` + **YAML thuần** (`project-nt548/k8s-manifests/`) |
+| **Manifests & CI/CD** | 3 job trong `ci-pipe.yml` + Kustomize `kustomization.yaml` | Kiến trúc **Modular Workflows (`workflow_call`)** tách 4 file (`ci.yml`, `security-scan.yml`, `build-deploy.yml`, `nightly-audit.yml`), tham số hóa qua `vars.*`, dùng `yq` & `setup-trivy@v0.3.1` + **YAML thuần** (`project-nt548/k8s-manifests/`) |
 
 ---
 

@@ -2,16 +2,14 @@ name: CI & DevSecOps Gate
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
       - "app/**"
       - "project-nt548/**"
       - "platform-core/kyverno/policies/**"
       - ".github/workflows/**"
   pull_request:
-    branches:
-      - main
+    branches: [main]
     paths:
       - "app/**"
       - "project-nt548/**"
@@ -31,10 +29,9 @@ jobs:
     uses: ./.github/workflows/security-scan.yml
     with:
       app_dir: ${{ vars.APP_DIR || 'app' }}
-      kubeconform_paths: ${{ vars.KUBECONFORM_PATHS || 'project-nt548/k8s-manifests platform-core/kyverno/policies platform-core/monitoring/servicemonitors' }}
+      manifest_paths: ${{ vars.KUBECONFORM_PATHS || 'project-nt548/k8s-manifests platform-core/kyverno/policies platform-core/monitoring/servicemonitors' }}
       trivy_config_path: ${{ vars.TRIVY_CONFIG_PATH || 'project-nt548/k8s-manifests' }}
       severity: ${{ vars.TRIVY_SEVERITY || 'HIGH,CRITICAL' }}
-      kubeconform_version: ${{ vars.KUBECONFORM_VERSION || '0.6.7' }}
 
   build-and-deploy-prod:
     name: Build, Scan & GitOps Deploy (app-prod)
@@ -44,16 +41,10 @@ jobs:
       packages: write
     uses: ./.github/workflows/build-deploy.yml
     with:
-      registry: ${{ vars.CONTAINER_REGISTRY || 'ghcr.io' }}
-      image_name: ${{ github.repository }}
-      image_tag: ${{ github.sha }}
       context: ${{ vars.DOCKER_CONTEXT || './app' }}
-      dockerfile: ${{ vars.DOCKERFILE_PATH || './app/Dockerfile' }}
+      deployment_file: ${{ vars.GITOPS_DEPLOYMENT_FILE || 'project-nt548/k8s-manifests/deployment.yaml' }}
       severity: ${{ vars.TRIVY_SEVERITY || 'HIGH,CRITICAL' }}
       push_and_deploy: ${{ github.event_name != 'pull_request' }}
-      deployment_file: ${{ vars.GITOPS_DEPLOYMENT_FILE || 'project-nt548/k8s-manifests/deployment.yaml' }}
       target_branch: ${{ vars.GITOPS_TARGET_BRANCH || 'main' }}
-      git_user_name: ${{ vars.GITOPS_BOT_NAME || 'GitHub Actions' }}
-      git_user_email: ${{ vars.GITOPS_BOT_EMAIL || 'action@github.com' }}
     secrets:
       GITOPS_TOKEN: ${{ secrets.GITOPS_TOKEN }}
