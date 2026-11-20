@@ -1,0 +1,49 @@
+# ==============================================================================
+# HELM VALUES: EXTERNAL SECRETS OPERATOR (ESO — NON-HA, ONPREM-LAN)
+# Chart (OCI): oci://ghcr.io/external-secrets/charts/external-secrets
+# Install:
+#   helm install external-secrets oci://ghcr.io/external-secrets/charts/external-secrets \
+#     -n external-secrets --create-namespace -f platform-core/external-secrets/values.yaml
+# ==============================================================================
+
+installCRDs: true
+
+global:
+  nodeSelector:
+    topology.kubernetes.io/zone: onprem-lan
+
+# Tái sử dụng Vault token trong thời hạn TTL để giảm tải Kubernetes Auth (TokenReview)
+vault:
+  enableTokenCache: true
+
+replicaCount: 1
+resources:
+  requests:
+    cpu: "25m"
+    memory: "64Mi"
+  limits:
+    cpu: "100m"
+    memory: "256Mi"
+
+webhook:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: "15m"
+      memory: "32Mi"
+    limits:
+      cpu: "100m"
+      memory: "128Mi"
+
+certController:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: "15m"
+      memory: "32Mi"
+    limits:
+      cpu: "100m"
+      memory: "128Mi"
+
+serviceMonitor:
+  enabled: false

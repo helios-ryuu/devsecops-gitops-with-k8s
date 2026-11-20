@@ -3,5 +3,5 @@ secrets/
 .rendered/
 wireguard/*.conf
 wireguard/*.key
-*-master-key.yaml
-*-unsealed*.yaml
+vault-init-keys*
+*unseal-key*

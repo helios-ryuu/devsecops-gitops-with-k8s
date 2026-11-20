@@ -48,7 +48,7 @@
 
 | STT | MSSV | Họ và Tên | Vai trò chính | Nhiệm vụ đảm nhiệm | Môi trường làm việc |
 |:---:|:---:|:---|:---|:---|:---|
-| 1 | 23521367 | **Ngô Tiến Sỹ** | **Platform & DevOps Lead** | • Thiết kế & vận hành mạng WireGuard `wg0`, Kubernetes Hybrid (`kubeadm v1.37.1`), Cilium eBPF LB + Hubble UI.<br>• Triển khai Traefik HA, Longhorn Storage, Bitnami Sealed Secrets, Kyverno Policy.<br>• Vận hành ArgoCD (`app-prod`), `kube-prometheus-stack` & Nightly GHCR Audit.<br>• Xây dựng GitHub Actions CI/DevSecOps (`ci.yml`). | Server VPS & Workers, GitHub Actions, GitOps |
+| 1 | 23521367 | **Ngô Tiến Sỹ** | **Platform & DevOps Lead** | • Thiết kế & vận hành mạng WireGuard `wg0`, Kubernetes Hybrid (`kubeadm v1.37.1`), Cilium eBPF LB + Hubble UI.<br>• Triển khai Traefik HA, Longhorn Storage, HashiCorp Vault & ESO (Kubernetes Auth), Kyverno Policy.<br>• Vận hành ArgoCD (`app-prod`), `kube-prometheus-stack` & Nightly GHCR Audit.<br>• Xây dựng GitHub Actions CI/DevSecOps (`ci.yml`). | Server VPS & Workers, GitHub Actions, GitOps |
 | 2 | 23521222 | **Trần Hồng Phúc** | **Web Fullstack Dev** | • Phát triển Web 2 tầng (Next.js 16 App Router + Redis đếm lượt truy cập + `APP_ENV`/`APP_VERSION`).<br>• Xây dựng endpoints `/healthz`, `/ready` kiểm tra Redis phục vụ Kubernetes Probes.<br>• Đóng gói `Dockerfile` (`node:26.13.0-alpine3.23`, `USER 10001:10001` non-root). | Localhost & Git (`app/`) |
 | 3 | 23520600 | **Điền Quốc Huy** | **QA & Observability Report** | • Thiết kế testcases và thực hiện kiểm thử tải Web (Autocannon / Postman) & RollingUpdate Zero-Downtime.<br>• Khai thác Grafana Web UI & Hubble UI theo dõi CPU, RAM, Cilium eBPF, Traefik.<br>• Soạn thảo Báo cáo Quan sát (Observability) và đánh giá hiệu năng hệ thống. | Postman / Autocannon & Grafana / Hubble Web UI |
 | 4 | 22520804 | **Đặng Thế Long** | **Documentation & Demo Support** | • Hỗ trợ thực nghiệm và thu thập log/ảnh minh chứng 5 kịch bản demo.<br>• Chủ trì soạn thảo tài liệu Báo cáo đồ án môn học NT548 hoàn chỉnh.<br>• Thiết kế bộ Slide thuyết trình và sơ đồ kiến trúc Draw.io. | Tài liệu Báo cáo / Slide / Draw.io & Git |
@@ -61,7 +61,7 @@
    Thiết lập mạng WireGuard `wg0` (`10.100.0.0/24`, endpoint `vps.helios.id.vn:51820` $\rightarrow$ `<VPS_PUBLIC_IP>`) nối `server-01` (VPS 6GB RAM, Control Plane) với `worker-01` và `worker-02` (2×8GB RAM on-premises nối thẳng LAN `10.10.0.0/24` 1Gbps). Sử dụng **Cilium eBPF CNI** (`kubeProxyReplacement: true`), cấp phát External IP `<VPS_PUBLIC_IP>/32` qua `CiliumLoadBalancerIPPool`, vận hành **Traefik HA (2 replicas)** và **Longhorn Distributed Storage (2 replicas)**.
 2. **Bảo mật đa lớp (Defense in Depth & Policy as Code):**
    - **CI Gate:** Gitleaks, Trivy FS, `kubeconform` + Trivy Config (YAML thuần), Docker multi-stage build non-root (`UID 10001:10001`), Trivy Image trước khi đẩy lên **GHCR**.
-   - **Secret & Admission:** Bitnami Sealed Secrets (`kubeseal`), **Kyverno** (`admissionController` Enforce/Deny 4 `ValidatingPolicy` trên nhãn `policy-tier: hardened`), Cilium **NetworkPolicy** cô lập Redis StatefulSet (`UID 999`), và **Cloudflare Zero Trust Access** bảo vệ toàn bộ UI quản trị (`argocd.helios.id.vn`, `grafana.helios.id.vn`, `hubble.helios.id.vn`).
+   - **Secret & Admission:** **HashiCorp Vault** (Longhorn PVC `2Gi`, UI chỉ mở nội bộ qua `port-forward`) kết hợp **External Secrets Operator (ESO)** xác thực bằng **Kubernetes Auth** (tách `ServiceAccount` & `SecretStore` theo từng namespace, **Zero Static Secret**), **Kyverno** (`admissionController` Enforce/Deny 4 `ValidatingPolicy` trên nhãn `policy-tier: hardened`), Cilium **NetworkPolicy** cô lập Redis StatefulSet (`UID 999`), và **Cloudflare Zero Trust Access** bảo vệ toàn bộ UI quản trị (`argocd.helios.id.vn`, `grafana.helios.id.vn`, `hubble.helios.id.vn`).
    - **Runtime CVE:** **GitHub Actions Nightly Cron (`0 0 * * *`)** tự động pull các image tag đang triển khai trên GHCR và base image về runner để quét Trivy định kỳ (`0 MB` RAM cụm).
 3. **GitOps Continuous Delivery (`RollingUpdate` Zero-Downtime):**
    - **ArgoCD Application (`app-prod`)** đồng bộ trực tiếp `project-nt548/k8s-manifests/` vào namespace `app-prod` (`nt548.helios.id.vn`).
@@ -74,8 +74,8 @@
 ## 3. Kiến trúc 2 tầng & Luồng vận hành
 
 Hệ thống chia rõ **2 tầng** trong cùng repository:
-- **Tầng 1 (`platform-core/`):** Nền tảng Kubernetes cố định dài hạn (`Cilium`, `Hubble`, `Sealed Secrets`, `Traefik HA`, `Longhorn`, `Prometheus/Grafana`, `ArgoCD`, `Kyverno`).
-- **Tầng 2 (`project-nt548/`):** Tài nguyên riêng của đồ án (Manifest YAML thuần cho `web-deployment` `replicas: 2`, `redis-statefulset`, `NetworkPolicy`, `Ingress`) neo tại [project-nt548/app-prod.yaml](./project-nt548/app-prod.yaml).
+- **Tầng 1 (`platform-core/`):** Nền tảng Kubernetes cố định dài hạn (`Cilium`, `Hubble`, `Longhorn`, `HashiCorp Vault`, `External Secrets Operator`, `Traefik HA`, `Prometheus/Grafana`, `ArgoCD`, `Kyverno`).
+- **Tầng 2 (`project-nt548/`):** Tài nguyên riêng của đồ án (Manifest YAML thuần cho `web-deployment` `replicas: 2`, `redis-statefulset`, `SecretStore`/`ExternalSecret`, `NetworkPolicy`, `Ingress`) neo tại [project-nt548/app-prod.yaml](./project-nt548/app-prod.yaml).
 
 Chi tiết sơ đồ mạng WireGuard `wg0`, sơ đồ kiến trúc tổng thể ASCII, quy hoạch IP/RAM xem tại **[ARCHITECTURE.md](./ARCHITECTURE.md)** và hướng dẫn triển khai chi tiết từ đầu đến kết thúc xem tại **[RUNBOOK.md](./RUNBOOK.md)**.
 
@@ -95,15 +95,15 @@ devsecops-gitops-with-k8s/
 ├── app/                                # Ứng dụng Web Next.js 16 + Redis (UID 10001 non-root, APP_ENV/APP_VERSION)
 ├── platform-core/                      # Tầng 1: Hạ tầng nền tảng dài hạn
 │   ├── cilium/                         # Cilium eBPF + Hubble UI & CiliumLoadBalancerIPPool
-│   ├── sealed-secrets/                 # Bitnami Sealed Secrets Controller & hướng dẫn kubeseal
-│   ├── traefik/                        # Traefik HA (LoadBalancer), TLSStore & ClusterIP metrics
 │   ├── longhorn/                       # Longhorn Distributed Storage (2 replicas)
-│   ├── monitoring/                     # kube-prometheus-stack (Longhorn PVC) & ServiceMonitors
+│   ├── vault/                          # HashiCorp Vault (Longhorn PVC 2Gi) & hướng dẫn KV v2 / Kubernetes Auth
+│   ├── external-secrets/               # External Secrets Operator (ESO — Kubernetes Auth, Zero Static Secret)
+│   ├── traefik/                        # Traefik HA (LoadBalancer), TLSStore, ExternalSecret & ClusterIP metrics
+│   ├── monitoring/                     # kube-prometheus-stack (Longhorn PVC), ExternalSecret & ServiceMonitors
 │   ├── kyverno/                        # Kyverno (admissionController) + 4 ValidatingPolicies (policy-tier: hardened)
 │   └── argocd/                         # ArgoCD values (GitOps cho Tầng 2 app-prod)
 ├── project-nt548/                      # Tầng 2: Tài nguyên riêng của đồ án
-│   ├── k8s-manifests/                  # Manifest YAML thuần: web-deployment (RollingUpdate), Service, Ingress, Redis, NetworkPolicy
-│   ├── redis-auth-sealedsecret.example.yaml # Mẫu SealedSecret cho Redis Auth trong app-prod
+│   ├── k8s-manifests/                  # Manifest YAML thuần: web-deployment, Service, Ingress, Redis, ExternalSecret, NetworkPolicy
 │   └── app-prod.yaml                   # ArgoCD Application Tầng 2 (namespace app-prod)
 ├── .github/workflows/
 │   └── ci.yml                          # CI Gate, Deploy app-prod & Nightly GHCR Image Audit (cron 0 0 * * *, 0 MB RAM cụm)
@@ -128,4 +128,4 @@ Chạy `./scripts/demo.sh` (hoặc `./scripts/demo.sh --all`) để hiển thị
 1. **[RUNBOOK.md](./RUNBOOK.md)** — Hướng dẫn triển khai từng bước từ đầu đến kết thúc (Pha 0 $\rightarrow$ Pha 6) kèm kiểm chứng & thu hồi Tầng 2.
 2. **[ARCHITECTURE.md](./ARCHITECTURE.md)** — Kiến trúc 2 tầng, sơ đồ ASCII tổng thể, phân bổ IP/RAM, bảo mật đa lớp và 5 kịch bản demo.
 3. **[wireguard/README.md](./wireguard/README.md)** — Hướng dẫn cài đặt gói, `sysctl`, `open-iscsi`/`nfs-common`, tắt host firewall & khóa Cloud NSG, và kích hoạt `wg0` trên các node.
-4. **[platform-core/sealed-secrets/README.md](./platform-core/sealed-secrets/README.md)** — Hướng dẫn sao lưu master key và niêm phong secret bằng `kubeseal`.
+4. **[platform-core/vault/README.md](./platform-core/vault/README.md)** — Hướng dẫn khởi tạo/unseal HashiCorp Vault (1 khóa), cấu hình KV v2 + Kubernetes Auth từng bước, mở Vault UI qua `port-forward` và quy trình xoay vòng (rotate) bí mật với ESO.

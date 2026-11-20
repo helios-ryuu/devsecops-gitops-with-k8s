@@ -1,0 +1,66 @@
+# ==============================================================================
+# HELM VALUES: HASHICORP VAULT STANDALONE (ON-PREM LONGHORN STORAGE)
+# Chart: hashicorp/vault (https://helm.releases.hashicorp.com)
+# Install:
+#   helm repo add hashicorp https://helm.releases.hashicorp.com && helm repo update
+#   helm install vault hashicorp/vault -n vault --create-namespace -f platform-core/vault/values.yaml
+# ==============================================================================
+
+global:
+  enabled: true
+  tlsDisable: true
+
+# Tắt Vault Agent Injector & CSI Driver vì cụm dùng External Secrets Operator (ESO) để đồng bộ Secret
+injector:
+  enabled: false
+
+csi:
+  enabled: false
+
+server:
+  enabled: true
+  # Khóa Pod Vault về 2 Worker onprem-lan (không chạy trên VPS Control Plane)
+  nodeSelector:
+    topology.kubernetes.io/zone: onprem-lan
+
+  # Cấp quyền system:auth-delegator cho ServiceAccount vault để xác thực TokenReview (Kubernetes Auth)
+  authDelegator:
+    enabled: true
+
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "192Mi"
+    limits:
+      cpu: "250m"
+      memory: "512Mi"
+
+  standalone:
+    enabled: true
+    config: |
+      ui = true
+      listener "tcp" {
+        tls_disable = 1
+        address = "[::]:8200"
+        cluster_address = "[::]:8201"
+      }
+      storage "file" {
+        path = "/vault/data"
+      }
+
+  ha:
+    enabled: false
+
+  # Lưu dữ liệu mã hóa Vault trên Longhorn PVC (2 replicas đồng bộ qua LAN 1Gbps)
+  dataStorage:
+    enabled: true
+    size: 2Gi
+    storageClass: longhorn
+    accessMode: ReadWriteOnce
+
+  auditStorage:
+    enabled: false
+
+# Tắt Service vault-ui phụ để tối giản; Web UI đã bật qua `ui = true` ở trên và truy cập nội bộ bằng `kubectl port-forward -n vault svc/vault 8200:8200`
+ui:
+  enabled: false

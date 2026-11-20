@@ -1,8 +1,8 @@
 # KIẾN TRÚC HỆ THỐNG — PLATFORM ENGINEERING & DEVSECOPS (ĐỒ ÁN NT548)
 
-Tài liệu mô tả kiến trúc hoàn chỉnh đã chuyển đổi và triển khai của hệ thống Kubernetes Hybrid-Cloud trên nền tảng **Kubernetes v1.37.1 (`kubeadm` + `containerd.io 2.3.6`) + WireGuard (`wg0`) + Cilium eBPF + Traefik HA + Longhorn + ArgoCD GitOps + Bitnami Sealed Secrets + Kyverno + `kube-prometheus-stack` + GitHub Actions CI/CD (DevSecOps Gates & Nightly GHCR Image Audit)**.
+Tài liệu mô tả kiến trúc hoàn chỉnh đã chuyển đổi và triển khai của hệ thống Kubernetes Hybrid-Cloud trên nền tảng **Kubernetes v1.37.1 (`kubeadm` + `containerd.io 2.3.6`) + WireGuard (`wg0`) + Cilium eBPF + Traefik HA + Longhorn + HashiCorp Vault & External Secrets Operator (ESO) + ArgoCD GitOps + Kyverno + `kube-prometheus-stack` + GitHub Actions CI/CD (DevSecOps Gates & Nightly GHCR Image Audit)**.
 
-> Các tài liệu liên quan: [README.md](./README.md) • [RUNBOOK.md](./RUNBOOK.md) • [WBS.md](./WBS.md) • [LOG.md](./LOG.md) • [wireguard/README.md](./wireguard/README.md) • [platform-core/sealed-secrets/README.md](./platform-core/sealed-secrets/README.md)
+> Các tài liệu liên quan: [README.md](./README.md) • [RUNBOOK.md](./RUNBOOK.md) • [WBS.md](./WBS.md) • [LOG.md](./LOG.md) • [wireguard/README.md](./wireguard/README.md) • [platform-core/vault/README.md](./platform-core/vault/README.md)
 
 ---
 
@@ -12,8 +12,8 @@ Hệ thống được tổ chức thành 2 tầng độc lập nhằm tái sử 
 
 | Tầng | Thư mục / Thành phần | Chu kỳ vòng đời | Cơ chế quản lý |
 |---|---|---|---|
-| **Tầng 1: Platform Core Infrastructure** | `wireguard/`, `kubeadm-config/`, `platform-core/` (`cilium`, `sealed-secrets`, `traefik`, `longhorn`, `monitoring`, `kyverno`, `argocd`) | Dựng một lần, vận hành lâu dài cho toàn cụm | `kubeadm` + `helm` + `kubectl` *(ArgoCD chỉ quản lý Tầng 2)* |
-| **Tầng 2: Project NT548 (App & DevSecOps)** | `app/`, `.github/workflows/ci.yml`, `project-nt548/` (`app-prod`, `web-deployment` `replicas: 2`, `redis` StatefulSet, `NetworkPolicy`) | Triển khai & thu hồi theo vòng đời đồ án | GitHub Actions (`ci.yml`) + [project-nt548/app-prod.yaml](./project-nt548/app-prod.yaml) (`Application`) |
+| **Tầng 1: Platform Core Infrastructure** | `wireguard/`, `kubeadm-config/`, `platform-core/` (`cilium`, `longhorn`, `vault`, `external-secrets`, `traefik`, `monitoring`, `kyverno`, `argocd`) | Dựng một lần, vận hành lâu dài cho toàn cụm | `kubeadm` + `helm` + `kubectl` *(ArgoCD chỉ quản lý Tầng 2)* |
+| **Tầng 2: Project NT548 (App & DevSecOps)** | `app/`, `.github/workflows/ci.yml`, `project-nt548/` (`app-prod`, `web-deployment` `replicas: 2`, `redis` StatefulSet, `SecretStore`/`ExternalSecret`, `NetworkPolicy`) | Triển khai & thu hồi theo vòng đời đồ án | GitHub Actions (`ci.yml`) + [project-nt548/app-prod.yaml](./project-nt548/app-prod.yaml) (`Application`) |
 
 > Thu hồi toàn bộ Tầng 2 sau khi bảo vệ đồ án mà không ảnh hưởng cụm nền (xóa Application trước rồi xóa Namespace để dọn sạch PVC Longhorn & Secret):
 > `kubectl delete -f project-nt548/app-prod.yaml && kubectl delete namespace app-prod`
@@ -33,10 +33,11 @@ devsecops-gitops-with-k8s/
 ├── kubeadm-config/                           # Cấu hình kubeadm Init/Join (v1beta4) & EncryptionConfiguration
 ├── platform-core/                            # TẦNG 1: Hạ tầng nền tảng cụm
 │   ├── cilium/                               # Cilium eBPF (kubeProxyReplacement, MTU 1340, Hubble, IP Pool)
-│   ├── sealed-secrets/                       # Bitnami Sealed Secrets Controller & hướng dẫn sao lưu master key
-│   ├── traefik/                              # Traefik HA (replicas: 2), TLSStore & ClusterIP metrics-service (:9100)
 │   ├── longhorn/                             # Longhorn StorageClass (replicas: 2, metricsScrapeSources :9500)
-│   ├── monitoring/                           # kube-prometheus-stack (Longhorn PVC) & ServiceMonitor Traefik
+│   ├── vault/                                # HashiCorp Vault (Longhorn PVC 2Gi) & hướng dẫn cấu hình KV v2 / K8s Auth
+│   ├── external-secrets/                     # External Secrets Operator (ESO, onprem-lan, Zero Static Secret)
+│   ├── traefik/                              # Traefik HA (replicas: 2), TLSStore, SecretStore/ExternalSecret & metrics (:9100)
+│   ├── monitoring/                           # kube-prometheus-stack (Longhorn PVC), SecretStore/ExternalSecret & ServiceMonitor
 │   ├── kyverno/                              # Kyverno (admissionController) + 4 CEL ValidatingPolicy (policy-tier=hardened)
 │   └── argocd/                               # ArgoCD values (GitOps chuyên biệt cho Tầng 2 app-prod)
 ├── app/                                      # TẦNG 2: Next.js 16 Standalone (UID 10001, APP_ENV/APP_VERSION, Pure-TCP Redis)
@@ -44,8 +45,7 @@ devsecops-gitops-with-k8s/
 │   └── ci.yml                                # CI DevSecOps Gate, push GHCR, deploy app-prod & Nightly GHCR Audit (cron 00:00 UTC)
 ├── project-nt548/                            # TẦNG 2: GitOps Application & Manifests đồ án NT548
 │   ├── app-prod.yaml                         # ArgoCD Application Tầng 2 (namespace app-prod, nhãn policy-tier=hardened)
-│   ├── redis-auth-sealedsecret.example.yaml  # Mẫu SealedSecret sinh bằng kubeseal cho Redis Auth
-│   └── k8s-manifests/                        # Manifest YAML thuần: web-deployment (RollingUpdate), Service, Ingress, ConfigMap, Redis, NetworkPolicy
+│   └── k8s-manifests/                        # Manifest YAML thuần: web-deployment (RollingUpdate), Service, Ingress, ConfigMap, Redis, SecretStore/ExternalSecret, NetworkPolicy
 └── scripts/
     └── demo.sh                               # Script in hướng dẫn 5 kịch bản Demo (chỉ đọc, an toàn)
 ```
@@ -99,19 +99,19 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 #  |  | |  |  * Prometheus, Grafana :3000, Hubble UI           |  |  * Default StorageClass qua LAN 1Gbps                 |  | |  |  #          |  | Trigger: Cron '0 0 * * *' (00:00 UTC) | workflow_dispatch |               |
 #  |  | |  |  * (dex/notifications/alertmanager tắt)           |  |  * Metrics :9500 (NetworkPolicy -> Pod prometheus)    |  | |  |  #          |  | Extract images: deployment.yaml + redis-statefulset.yaml  |               |
 #  |  | |  +---------------------------------------------------+  +-------------------------------------------------------+  | |  |  #          |  | docker pull + trivy image HIGH,CRITICAL --ignore-unfixed  |<--------------+
-#  |  | |  * [ns: kyverno] 4 CEL ValidatingPolicy (Deny)  |  [ns: kube-system] Bitnami Sealed Secrets (kubeseal) + CoreDNS   | |  |  #          |  | -> Audit CVE hằng đêm trên Runner (0 MB RAM cụm K8s)      |
+#  |  | |  * [ns: kyverno] 4 CEL ValidatingPolicy (Deny)  |  [ns: vault & external-secrets] Vault (KV v2) + ESO (K8s Auth)   | |  |  #          |  | -> Audit CVE hằng đêm trên Runner (0 MB RAM cụm K8s)      |
 #  |  | +--------------------------------------------------------------------------------------------------------------------+ |  |  #          |  +-----------------------------------------------------------+
 #  |  | +--- TẦNG 2: PROJECT NT548 - [ns: app-prod] (policy-tier=hardened | Managed by ArgoCD) ------------------------------+ |  |  #          |
 #  |  | |  +--------------------------------------------+     :6379/TCP      +--------------------------------------------+  | |  |  #          |  +--- TỔNG HỢP 2 RANH GIỚI MẠNG & PHÒNG THỦ CHIỀU SÂU -----------------------+
 #  |  | |  | redis-0 (StatefulSet)                      |<------------------>| web-deployment x2 (Next.js 16, Rolling)    |  | |  |  #          |  | [1] Ranh giới 1 - WireGuard Mesh (wg0: 10.100.0.0/24, MTU 1420, :51820)   |
 #  |  | |  |  * PVC -> Longhorn (2 Replicas LAN)        | (allow-web-to-red) |  * containerd 2.3.6 pulls ghcr.io/<sha>   <=============Pull GHCR+  |     * Lớp mã hóa nối VPS (.1), Workers (.2/.3) và Admin (.10/.11).        |
 #  |  | |  +--------------------------------------------+                    +--------------------------------------------+  | |  |  #             |     * Worker<->Worker: Direct LAN /32 (bypass Internet -> 1Gbps ~0.3ms).  |
-#  |  | |  * Bảo vệ: NetworkPolicy allow-web-to-redis + 4 Kyverno CEL (non-root, seccomp, limits, ghcr) + SealedSecret       | |  |  #             | [2] Ranh giới 2 - Cilium VXLAN Overlay (Pod 10.42/16 MTU 1340 | Svc 10.43)|
+#  |  | |  * Bảo vệ: NetworkPolicy allow-web-to-redis + 4 Kyverno CEL (non-root, seccomp, limits, ghcr) + Vault/ESO          | |  |  #             | [2] Ranh giới 2 - Cilium VXLAN Overlay (Pod 10.42/16 MTU 1340 | Svc 10.43)|
 #  |  | +--------------------------------------------------------------------------------------------------------------------+ |  |  #             |     * Lồng bên trong wg0 cho Pod/Service; Admin .10/.11 KHÔNG vào đây.    |
 #  |  +------------------------------------------------------------------------------------------------------------------------+  |  #             |     * Public HTTPS: eth0 (Cloud NSG) -> Cilium LB VIP -> Traefik HA Pod.  |
 #  +--- END RANH GIỚI 2 (CILIUM K8S OVERLAY) -------------------------------------------------------------------------------------+  #             | [3] Defense-in-Depth (Từ Edge tới Container Runtime):                     |
 #   * Pod<->Pod, Pod<->Service đi qua Cilium eBPF & VXLAN (MTU 1340) bên trong Ranh giới 2.                                          #             |     Cloudflare WAF/Access -> Cloud NSG -> wg0 /32 -> Cilium eBPF NetPol   |
-#   * Admin Peers (.10/.11) và Direct LAN /32 (Worker<->Worker) chạy ở WireGuard wg0 (MTU 1420) bên ngoài K8s Overlay.               #             |     -> Kubeseal + 4 Kyverno CEL + CI Gate + Nightly Scan (0 MB RAM K8s).  |
+#   * Admin Peers (.10/.11) và Direct LAN /32 (Worker<->Worker) chạy ở WireGuard wg0 (MTU 1420) bên ngoài K8s Overlay.               #             |     -> Vault/ESO (K8s Auth) + 4 Kyverno CEL + CI Gate + Nightly Scan.     |
 #=== END RANH GIỚI 1 (WIREGUARD MESH wg0) ===========================================================================================#             +---------------------------------------------------------------------------+
 ```
 
@@ -122,7 +122,7 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 | **VPN & CNI** | Tailscale (`tailscale0`) + K3s Flannel | **WireGuard Hub-and-Spoke + Direct LAN `/32` (`wg0`)** + **Cilium eBPF (`kubeProxyReplacement=true`, VXLAN `MTU 1340`)** + **Hubble UI** |
 | **Kubernetes** | K3s đơn giản | **`kubeadm v1.37.1` + `containerd.io 2.3.6`** (`aescbc` EncryptionConfiguration) |
 | **Ingress & TLS** | 1 Pod `traefik-controller` dùng `hostPort 80/443` trên `server-01` | **Traefik HA (`replicas: 2` trên 2 Worker)** qua **Cilium `LoadBalancer` IP Pool (`<VPS_PUBLIC_IP>/32`)**, `TLSStore` Cloudflare Origin, Service `traefik-metrics:9100` tách riêng |
-| **Storage & Secrets** | Thiếu lưu trữ phân tán & mã hóa Secret trên Git | **Longhorn (`replicas: 2` qua LAN 1Gbps)** + **Bitnami Sealed Secrets (`kubeseal`)** |
+| **Storage & Secrets** | Thiếu lưu trữ phân tán & quản lý Secret tập trung | **Longhorn (`replicas: 2` qua LAN 1Gbps)** + **HashiCorp Vault (Longhorn PVC) & External Secrets Operator (Kubernetes Auth)** |
 | **Admission Policy** | Không có | **Kyverno (`admissionController`)** + **4 CEL `ValidatingPolicy` (`Deny`)** trên `policy-tier=hardened` |
 | **Phạm vi ArgoCD** | Quản lý cả `monitoring` lẫn app; chạy `ApplicationSet` thừa | Chỉ quản lý Tầng 2 (`app-prod`); `applicationSet.replicas: 0`; tắt `dex`/`notifications`; `monitoring` cài ở Tầng 1 |
 | **Manifests & CI/CD** | 3 job trong `ci-pipe.yml` + Kustomize `kustomization.yaml` | 5 job trong `ci.yml` (thêm **`kubeconform` + `Trivy Config`** và **`nightly-ghcr-image-scan`** `0 MB` RAM) + **YAML thuần** (`project-nt548/k8s-manifests/`) |
@@ -151,7 +151,7 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
    - Cả 3 node tắt `ufw`/`firewalld` (tránh xung đột chain `FORWARD` với Cilium eBPF và `wg0`), bật `net.ipv4.ip_forward=1`, `rp_filter=0`, và giữ tắt `Cilium hostFirewall` (do `wg0` là giao diện L3). Trên LAN `10.10.0.0/24`, 2 worker được bảo vệ bởi Router NAT và SSH Key-only (`PasswordAuthentication no`).
    - API Server bật mã hóa Secrets trên `etcd` bằng `aescbc` (`/etc/kubernetes/enc/enc.yaml`).
 2. **Tầng Secrets & Policy-as-Code:**
-   - Mọi Secret lưu trên Git đều được mã hóa bằng **`kubeseal`** (`cloudflare-origin-tls`, `grafana-admin-secret` ở Tầng 1; `redis-auth-secret` ở Tầng 2), master key sao lưu ngoại tuyến.
+   - Toàn bộ bí mật (`cloudflare-origin-tls`, `grafana-admin-secret` ở Tầng 1; `redis-auth-secret` ở Tầng 2) được lưu trữ & xoay vòng tập trung trong **HashiCorp Vault** (self-hosted trên Longhorn PVC `2Gi`, UI chỉ mở nội bộ qua `kubectl port-forward`, không expose ra Internet) và đồng bộ tự động vào cụm bằng **External Secrets Operator (ESO)** theo mô hình **Zero Static Secret**: mỗi namespace có riêng 1 `ServiceAccount` (`eso-vault-auth`, `automountServiceAccountToken: false`), 1 `SecretStore` (namespace-scoped), 1 Vault Policy và 1 Vault Role xác thực qua **Kubernetes Auth** (TTL `15m`). Khóa khởi tạo Vault (`-key-shares=1 -key-threshold=1`) được sao lưu ngoại tuyến ([platform-core/vault/README.md](./platform-core/vault/README.md)).
    - **Kyverno (`admissionController`)** chạy 4 CEL `ValidatingPolicy` (`Deny`) giới hạn vào namespace mang nhãn **`policy-tier: hardened`** (tự động gắn trên `app-prod` qua `managedNamespaceMetadata`), bắt buộc `runAsNonRoot: true`, `seccompProfile: RuntimeDefault`, `allowPrivilegeEscalation: false`, `capabilities.drop: [ALL]`, đủ `requests`/`limits`, cấm `:latest` và khóa registry về `ghcr.io/helios-ryuu/*` hoặc `docker.io/library/redis:*`.
 3. **Tầng NetworkPolicy eBPF (Cilium):**
    - Trong `app-prod`, `NetworkPolicy allow-web-to-redis` chỉ cho phép Pod mang nhãn `app: web` kết nối TCP `6379` tới `redis-0`; mọi Pod khác trong namespace bị chặn và hiện flow `DROPPED` trên Hubble UI.
@@ -171,7 +171,7 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 
 ### 4.1. Ngân sách RAM (VPS 6GB & 2 Workers 8GB/máy)
 
-> **Tài nguyên khả dụng thực tế:** `server-01` (VPS 6GB RAM) còn **~5.78 GiB** khả dụng (theo biểu đồ Grafana thực tế, Control Plane + Cilium Agent + `node-exporter` dùng **~1.9 – 2.0 GiB**, dư **~3.8 – 3.9 GiB**). Hai Worker 8GB còn **~7.6 GB** (`worker-01`) và **~7.1 GB** (`worker-02`) khả dụng (~14.7 GB tổng 2 Workers). Để vừa ngân sách RAM, toàn bộ thành phần nền singleton (`Prometheus`, `Grafana`, `ArgoCD`, `Kyverno`, `Sealed Secrets`) giữ `replicas: 1`, tắt `dex`/`notifications`/`alertmanager`, tắt `Kyverno background/cleanup/reports` và đặt `applicationSet.replicas: 0`.
+> **Tài nguyên khả dụng thực tế:** `server-01` (VPS 6GB RAM) còn **~5.78 GiB** khả dụng (theo biểu đồ Grafana thực tế, Control Plane + Cilium Agent + `node-exporter` dùng **~1.9 – 2.0 GiB**, dư **~3.8 – 3.9 GiB**). Hai Worker 8GB còn **~7.6 GB** (`worker-01`) và **~7.1 GB** (`worker-02`) khả dụng (~14.7 GB tổng 2 Workers). Để vừa ngân sách RAM, toàn bộ thành phần nền singleton (`Prometheus`, `Grafana`, `ArgoCD`, `Kyverno`, `Vault`, `ESO`) giữ `replicas: 1`, tắt `dex`/`notifications`/`alertmanager`, tắt `Vault injector`, tắt `Kyverno background/cleanup/reports` và đặt `applicationSet.replicas: 0`.
 
 | Thành phần | Tầng | Cơ chế phân bổ | RAM thực tế tổng 2 Workers | Trung bình / 1 Worker (8GB) | Sau thu hồi Tầng 2 / Worker |
 |---|---|---|---|---:|---:|
@@ -182,11 +182,12 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 | Longhorn (`replicas: 2` trên 2 Worker) | Core | `longhorn-system` | ~1.00 – 1.50 GB | ~0.50 – 0.75 GB | ~0.45 – 0.70 GB |
 | `kube-prometheus-stack` (Prometheus + Grafana) | Core | `monitoring` (Singleton) | ~0.80 – 1.20 GB | ~0.40 – 0.60 GB | ~0.40 – 0.60 GB |
 | ArgoCD (`dex/notifications: false`, `applicationSet.replicas: 0`) | Core | `argocd` (Singleton) | ~0.50 – 0.80 GB | ~0.25 – 0.40 GB | ~0.25 – 0.40 GB |
-| Bitnami Sealed Secrets | Core | `kube-system` (Singleton) | ~0.04 – 0.06 GB | ~0.02 – 0.03 GB | ~0.02 – 0.03 GB |
+| HashiCorp Vault (Standalone, Longhorn `2Gi`, `injector: false`) | Core | `vault` (Singleton) | ~0.20 – 0.35 GB | ~0.10 – 0.18 GB | ~0.10 – 0.18 GB |
+| External Secrets Operator (ESO: controller/webhook/cert) | Core | `external-secrets` (Singleton) | ~0.12 – 0.18 GB | ~0.06 – 0.09 GB | ~0.06 – 0.09 GB |
 | Kyverno (`admissionController` `replicas: 1`, 4 rules) | Core | `kyverno` (Singleton) | ~0.15 – 0.25 GB | ~0.08 – 0.13 GB | ~0.08 – 0.13 GB |
 | **GitHub Actions Nightly GHCR Audit (`0 0 * * *`)** | **Project** | GitHub Runner | **0 MB** | **0 MB** | **0 MB** |
 | **App `app-prod` (`web-deployment` x2 & `redis-0`)** | **Project** | `app-prod` | ~0.25 – 0.40 GB | ~0.13 – 0.20 GB | **0 GB** |
-| **TỔNG CỘNG (tính cả ~0.65 GB/máy mặc định)** | | | **~5.4 – 7.4 GB** *(trên 16GB)* | **~2.7 – 3.7 GB** *(dư ~4.3–5.3 GB)* | **~2.5 – 3.45 GB** |
+| **TỔNG CỘNG (tính cả ~0.65 GB/máy mặc định)** | | | **~5.7 – 7.9 GB** *(trên 16GB)* | **~2.85 – 3.95 GB** *(dư ~4.0–5.1 GB)* | **~2.7 – 3.75 GB** |
 
 ### 4.2. Quy hoạch IP, Cổng SSH, Ổ đĩa & Tên miền
 
@@ -208,7 +209,7 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
    - **`redis-0` (`StatefulSet`, `replicas: 1`):** Dùng PVC Longhorn `ReadWriteOnce (RWO)` đảm bảo **Data Durability (`RPO = 0`)** nhưng không phải Zero-Downtime khi chuyển node (gián đoạn ngắn ~30–60 giây để detach/attach PVC). Hướng nâng cấp Production: chuyển sang Redis Sentinel hoặc Redis Cluster.
 2. **Chiến lược Monorepo + `[skip ci]` & Mã hóa `etcd` (`aescbc`):**
    - Dùng chung Monorepo kết hợp `paths` filter trong [ci.yml](./.github/workflows/ci.yml) và `[skip ci]` giúp quản lý tập trung ở quy mô đồ án, vẫn tách ranh giới GitOps (ArgoCD chỉ theo dõi `project-nt548/k8s-manifests/`). Doanh nghiệp lớn có thể tách riêng App Repo và GitOps Config Repo để phân quyền RBAC độc lập.
-   - `etcd` dùng `aescbc` nội bộ ([init-server-01.yaml](./kubeadm-config/init-server-01.yaml)) không phụ thuộc Cloud KMS ngoài; các Secret trên Git mã hóa bằng `kubeseal` kèm sao lưu ngoại tuyến master key ([platform-core/sealed-secrets/README.md](./platform-core/sealed-secrets/README.md)).
+   - `etcd` dùng `aescbc` nội bộ ([init-server-01.yaml](./kubeadm-config/init-server-01.yaml)) kết hợp **HashiCorp Vault** standalone (khởi tạo 1 khóa duy nhất `-key-shares=1 -key-threshold=1`, lưu trên Longhorn PVC `2Gi`) và **ESO** (Kubernetes Auth, tách `SecretStore` theo namespace); khi reboot worker, các K8s `Secret` đã đồng bộ vẫn duy trì cho ứng dụng chạy và chỉ cần 1 lệnh `vault operator unseal` để tiếp tục đồng bộ/rotate ([platform-core/vault/README.md](./platform-core/vault/README.md)). Hướng nâng cấp Production: chạy Vault HA 3 node với Raft + Cloud KMS Auto-Unseal.
 3. **Quan sát thực tế trên Headlamp & Hubble UI:**
    - Trong namespace `argocd`, Helm chart vẫn tạo Deployment/Service `argocd-applicationset-controller` nhưng đã đặt `applicationSet.replicas: 0` (`0` Pod chạy, `0 MB` RAM).
    - Trên Hubble UI, luồng outbound từ `grafana` tới `world:443` là hành vi mặc định kiểm tra phiên bản/analytics của Grafana.
@@ -224,7 +225,7 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 | 1 | WireGuard Mesh & LAN Direct | `sudo wg show` & `mtr -c 5 10.100.0.3` (từ `worker-01`) | Endpoint worker $\leftrightarrow$ worker là IP LAN, RTT < 1ms |
 | 2 | Cổng Public & Cluster Security | `nmap -Pn -p 61022,80,443,6443,9100,10250 vps.helios.id.vn` (từ Internet) | `6443, 9100, 10250` bị `filtered`/chặn; chỉ mở `61022, 80, 443, 51820/udp` |
 | 3 | Cilium eBPF & Nodes Ready | `cilium status` & `kubectl get nodes -o wide` | 3/3 `Ready`; `server-01` có `NoSchedule`; IP Internal `10.100.0.1..3` |
-| 4 | Traefik HA & Longhorn Replicas | `kubectl get svc,pods -n traefik` & Longhorn UI (`Node`) | Service LB mang IP `<VPS_PUBLIC_IP>`; Longhorn nhận diện đúng `10.100.0.2`, `.3` |
+| 4 | Traefik HA, Vault/ESO & Longhorn | `kubectl get svc,pods -n traefik`, `kubectl get externalsecret -A` & Longhorn UI | Service LB mang IP `<VPS_PUBLIC_IP>`; 3 `ExternalSecret` đạt `SecretSynced`; Longhorn nhận diện đúng `10.100.0.2`, `.3` |
 | 5 | ArgoCD GitOps & Monitoring | `kubectl get applications -n argocd`, `hubble observe` & Grafana | Applications `Synced / Healthy`; Grafana có đủ CPU/RAM/Traefik/Cilium/Longhorn `:9500` |
 | 6 | Kyverno Enforcement | `kubectl run test -n app-prod --image=nginx:latest` | API Server chặn ngay lập tức bởi Admission Policy |
 | 7 | CI/CD & Nightly GHCR Audit | Push code thử + chạy `ci.yml` (`run_nightly_scan=true`) | Job CI pass các gate CVE/Config/Secret; Nightly Job pull & scan sạch image active (`0 MB` RAM cụm) |

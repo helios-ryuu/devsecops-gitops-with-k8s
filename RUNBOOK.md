@@ -2,7 +2,7 @@
 
 Tài liệu hướng dẫn thao tác từng bước để dựng hoàn chỉnh hạ tầng mạng WireGuard, cụm Kubernetes Hybrid (`kubeadm v1.37.1`), **Tầng 1 (Platform Core Infrastructure)** rồi mới đưa mã nguồn lên GitHub kích hoạt CI/CD, image GHCR, đồng bộ GitOps ArgoCD và triển khai **Tầng 2 (Project NT548 — RollingUpdate Continuous Delivery)** từ máy quản trị **Fedora (`laptop`)**.
 
-> Tài liệu tham khảo: [ARCHITECTURE.md](./ARCHITECTURE.md) • [README.md](./README.md) • [wireguard/README.md](./wireguard/README.md) • [platform-core/sealed-secrets/README.md](./platform-core/sealed-secrets/README.md)
+> Tài liệu tham khảo: [ARCHITECTURE.md](./ARCHITECTURE.md) • [README.md](./README.md) • [wireguard/README.md](./wireguard/README.md) • [platform-core/vault/README.md](./platform-core/vault/README.md)
 
 ---
 
@@ -13,7 +13,7 @@ Tài liệu hướng dẫn thao tác từng bước để dựng hoàn chỉnh h
 | Control Plane (VPS Ubuntu) | `server-01` (`heliosvps`) | User `helios` • SSH **`61022/tcp`** • **6GB RAM** (~5.3–5.5GB khả dụng) • Public IP `<VPS_PUBLIC_IP>` • `A`: `vps.helios.id.vn` (DNS Only) • `wg0`: `10.100.0.1/24` |
 | Worker 1 (On-Prem Ubuntu) | `worker-01` | User `helios` • SSH **`61122/tcp`** (LAN `10.10.0.0/24` & `wg0`) • **8GB RAM** (~7.3–7.5GB khả dụng) • `wg0`: `10.100.0.2/24` • Longhorn `/var/lib/longhorn` (`199GB`) |
 | Worker 2 (On-Prem Ubuntu) | `worker-02` | User `helios` • SSH **`61222/tcp`** (LAN `10.10.0.0/24` & `wg0`) • **8GB RAM** (~7.3–7.5GB khả dụng) • `wg0`: `10.100.0.3/24` • Longhorn `/` (`461GB` trống) |
-| Máy quản trị (Fedora) | `laptop` | `wg0`: `10.100.0.10/32` • Chạy `kubectl`, `helm`, `kubeseal`, `ssh` |
+| Máy quản trị (Fedora) | `laptop` | `wg0`: `10.100.0.10/32` • Chạy `kubectl`, `helm`, `cilium`, `jq`, `ssh` |
 | Pod CIDR / Service CIDR | `10.42.0.0/16` / `10.43.0.0/16` | Cilium VXLAN `MTU 1340` • CoreDNS `10.43.0.10` |
 | Tên miền Public | `nt548.helios.id.vn` | `CNAME -> vps.helios.id.vn` (Cloudflare Proxied, SSL `Full (Strict)`) |
 | Tên miền Quản trị | `argocd.helios.id.vn`, `grafana.helios.id.vn`, `hubble.helios.id.vn` | `CNAME -> vps.helios.id.vn` (Cloudflare Proxied + Zero Trust `K8s Admin` Email OTP) |
@@ -89,13 +89,13 @@ sudo iptables -L -n
 sudo dnf install -y wireguard-tools curl jq git vim
 ```
 
-Cài `kubectl` (`v1.37.1`), `helm`, `kubeseal` và `cilium` CLI vào `/usr/local/bin/` (theo phiên bản ổn định tương ứng) và kiểm tra tại thư mục repository:
+Cài `kubectl` (`v1.37.1`), `helm` và `cilium` CLI vào `/usr/local/bin/` (theo phiên bản ổn định tương ứng) và kiểm tra tại thư mục repository:
 
 ```bash
 cd /path/to/devsecops-gitops-with-k8s
 kubectl version --client
 helm version
-kubeseal --version
+jq --version
 ```
 
 Khai báo tạm biến `VPS_PUBLIC_IP` trên phiên terminal `laptop`:
@@ -267,7 +267,7 @@ nmap -Pn -p 61022,80,443,6443,9100,10250 vps.helios.id.vn
 
 ---
 
-## Pha 2: Khởi tạo Kubernetes `v1.37.1` (`kubeadm`), Cilium eBPF + Hubble UI & Sealed Secrets
+## Pha 2: Khởi tạo Kubernetes `v1.37.1` (`kubeadm`) & Cilium eBPF + Hubble UI
 
 ### 2.1. Tắt Swap, Nạp `overlay`, Cài `containerd.io` `2.3.6` & Gói Kubernetes `v1.37.1` (Cả 3 Node)
 
@@ -431,81 +431,13 @@ cilium status
 # server-01 có taint node-role.kubernetes.io/control-plane:NoSchedule và kubeProxyReplacement active
 ```
 
-### 2.5. Cài Bitnami Sealed Secrets, Sao lưu Master Key & Niêm phong Secrets
-
-```bash
-helm repo add sealed-secrets https://bitnami.github.io/sealed-secrets
-helm repo update
-
-helm install sealed-secrets sealed-secrets/sealed-secrets \
-  --namespace kube-system \
-  -f platform-core/sealed-secrets/values.yaml
-
-kubectl -n kube-system rollout status deploy/sealed-secrets-controller --timeout=180s
-```
-
-> **BẮT BUỘC:** Sao lưu Master Key ra ngoài thư mục repo trên máy quản trị (tuyệt đối không commit lên Git). Controller mặc định tự xoay khóa mỗi 30 ngày (`720h`), vì vậy nếu sau này chạy `kubeseal` lại bạn cần xuất cập nhật tệp backup này và lưu kèm 3 giá trị gốc trong trình quản lý mật khẩu:
-
-```bash
-kubectl get secret -n kube-system \
-  -l sealedsecrets.bitnami.com/sealed-secrets-key \
-  -o yaml > ~/sealed-secrets-master-key.yaml
-chmod 600 ~/sealed-secrets-master-key.yaml
-```
-
-Tạo sẵn 2 namespace nền tảng (idempotent) và niêm phong + apply 2 Secret: `cloudflare-origin-tls` và `grafana-admin-secret`; riêng `app-prod` và `redis-auth-secret` thuộc Tầng 2 sẽ thực hiện ở Pha `5.1` để giữ cụm nền tách biệt hoàn toàn với dự án):
-
-```bash
-kubectl create namespace traefik --dry-run=client -o yaml | kubectl apply -f -
-kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
-
-# 1. Seal & apply Cloudflare Origin TLS vào namespace traefik (dùng cho toàn cụm *.helios.id.vn)
-kubectl create secret tls cloudflare-origin-tls \
-  --namespace traefik \
-  --cert=secrets/tls.crt \
-  --key=secrets/tls.key \
-  --dry-run=client -o yaml | kubeseal \
-  --controller-name=sealed-secrets-controller \
-  --controller-namespace=kube-system \
-  --format yaml | tee platform-core/traefik/cloudflare-origin-tls-sealedsecret.yaml | kubectl apply -f -
-
-# 2. Seal & apply Grafana Admin Secret vào namespace monitoring
-kubectl create secret generic grafana-admin-secret \
-  --namespace monitoring \
-  --from-literal=admin-user="admin" \
-  --from-literal=admin-password="<STRONG_GRAFANA_PASSWORD>" \
-  --dry-run=client -o yaml | kubeseal \
-  --controller-name=sealed-secrets-controller \
-  --controller-namespace=kube-system \
-  --format yaml | tee platform-core/monitoring/grafana-admin-sealedsecret.yaml | kubectl apply -f -
-
-# Xác nhận controller đã giải mã đủ 2 Secret Tầng 1 trên cụm
-kubectl get secret cloudflare-origin-tls -n traefik
-kubectl get secret grafana-admin-secret -n monitoring
-```
-
 ---
 
-## Pha 3: Edge Gateway (Traefik HA) & Distributed Storage (Longhorn)
+## Pha 3: Distributed Storage (Longhorn), HashiCorp Vault + ESO & Edge Gateway (Traefik HA)
 
-### 3.1. Cài đặt Traefik HA (`replicas: 2`)
+### 3.1. Cài đặt Longhorn Distributed Block Storage
 
-```bash
-helm repo add traefik https://traefik.github.io/charts
-helm repo update
-
-helm install traefik traefik/traefik \
-  --namespace traefik \
-  -f platform-core/traefik/values.yaml
-
-kubectl apply -f platform-core/traefik/tlsstore.yaml
-kubectl apply -f platform-core/traefik/metrics-service.yaml
-kubectl get svc,pods -n traefik -o wide
-```
-
-> Xác nhận Service `traefik` nhận `TYPE=LoadBalancer` và `EXTERNAL-IP` khớp với `$VPS_PUBLIC_IP` (`<VPS_PUBLIC_IP>`), đồng thời 2 Pod Traefik chạy trên 2 worker khác nhau (`worker-01` và `worker-02`).
-
-### 3.2. Cài đặt Longhorn Distributed Block Storage
+Cài đặt Longhorn trước để cấp phát PVC `longhorn` (`replicas: 2` qua LAN 1Gbps) cho HashiCorp Vault, Prometheus, Grafana và Redis:
 
 ```bash
 # Đảm bảo 2 worker có đủ nhãn zone (global.nodeSelector) và nhãn tạo disk mặc định (idempotent)
@@ -533,13 +465,153 @@ kubectl port-forward svc/longhorn-frontend 8080:80 -n longhorn-system
 
 Truy cập `http://127.0.0.1:8080` -> mục **Node**: xác nhận `worker-01` có IP `10.100.0.2` (`199GB`), `worker-02` có IP `10.100.0.3` (`461GB` trên `/var/lib/longhorn`), trạng thái **Schedulable / Ready**.
 
+### 3.2. Cài đặt HashiCorp Vault, Bootstrap Kubernetes Auth & External Secrets Operator (ESO)
+
+1. **Cài HashiCorp Vault (Standalone, Longhorn PVC `2Gi`, tắt `injector`) & Khởi tạo 1 khóa duy nhất:**
+
+```bash
+helm repo add hashicorp https://helm.releases.hashicorp.com
+helm repo update
+
+helm install vault hashicorp/vault \
+  --namespace vault \
+  --create-namespace \
+  -f platform-core/vault/values.yaml
+
+# Đợi vault-0 ở trạng thái 0/1 Running (bình thường khi chưa init/unseal) rồi kiểm tra status
+kubectl -n vault get pods -w
+kubectl exec -n vault vault-0 -- vault status || true
+
+# Khởi tạo Vault với 1 khóa duy nhất (-key-shares=1 -key-threshold=1) và lưu ngoại tuyến
+kubectl exec -n vault vault-0 -- vault operator init -key-shares=1 -key-threshold=1 \
+  > ~/vault-init-keys.txt
+chmod 600 ~/vault-init-keys.txt
+cat ~/vault-init-keys.txt
+```
+
+> **BẮT BUỘC:** Sao lưu `~/vault-init-keys.txt` (`Unseal Key 1` và `Initial Root Token`) vào trình quản lý mật khẩu ngoại tuyến; **tuyệt đối không commit lên Git**.
+
+Mở khóa Vault (chỉ 1 lệnh duy nhất), bật KV v2 & Kubernetes Auth, nạp 3 bí mật (`traefik`, `monitoring`, `app-prod`) và tạo 3 cặp Policy/Role tách biệt theo từng namespace:
+
+```bash
+kubectl exec -n vault vault-0 -- vault operator unseal "<UNSEAL_KEY>"
+kubectl -n vault wait --for=condition=Ready pod/vault-0 --timeout=120s
+
+export VAULT_TOKEN="<INITIAL_ROOT_TOKEN>"
+export GRAFANA_USER="admin"
+export GRAFANA_PASS="<STRONG_GRAFANA_PASSWORD>"
+export REDIS_PASS="<STRONG_REDIS_PROD_PASSWORD>"
+
+# 1. Bật KV v2 (secret/) & Kubernetes Auth
+kubectl exec -n vault vault-0 -- env VAULT_TOKEN="$VAULT_TOKEN" vault secrets enable -path=secret kv-v2
+kubectl exec -n vault vault-0 -- env VAULT_TOKEN="$VAULT_TOKEN" vault auth enable kubernetes
+kubectl exec -n vault vault-0 -- env VAULT_TOKEN="$VAULT_TOKEN" vault write auth/kubernetes/config \
+  kubernetes_host="https://kubernetes.default.svc:443"
+
+# 2. Nạp 3 Secret chuẩn vào Vault KV v2
+jq -n --rawfile crt secrets/tls.crt --rawfile key secrets/tls.key '{"tls.crt": $crt, "tls.key": $key}' | \
+  kubectl exec -i -n vault vault-0 -- env VAULT_TOKEN="$VAULT_TOKEN" \
+    vault kv put secret/traefik/cloudflare-origin-tls -
+
+jq -n --arg user "$GRAFANA_USER" --arg pass "$GRAFANA_PASS" '{"admin-user": $user, "admin-password": $pass}' | \
+  kubectl exec -i -n vault vault-0 -- env VAULT_TOKEN="$VAULT_TOKEN" \
+    vault kv put secret/monitoring/grafana-admin -
+
+jq -n --arg pass "$REDIS_PASS" '{"password": $pass}' | \
+  kubectl exec -i -n vault vault-0 -- env VAULT_TOKEN="$VAULT_TOKEN" \
+    vault kv put secret/app-prod/redis-auth -
+
+# 3. Tạo 3 Vault Policy tách biệt (Least-Privilege)
+kubectl exec -i -n vault vault-0 -- env VAULT_TOKEN="$VAULT_TOKEN" \
+  vault policy write eso-traefik-policy - <<'EOF'
+path "secret/data/traefik/*" { capabilities = ["read"] }
+EOF
+
+kubectl exec -i -n vault vault-0 -- env VAULT_TOKEN="$VAULT_TOKEN" \
+  vault policy write eso-monitoring-policy - <<'EOF'
+path "secret/data/monitoring/*" { capabilities = ["read"] }
+EOF
+
+kubectl exec -i -n vault vault-0 -- env VAULT_TOKEN="$VAULT_TOKEN" \
+  vault policy write eso-app-prod-policy - <<'EOF'
+path "secret/data/app-prod/*" { capabilities = ["read"] }
+EOF
+
+# 4. Tạo 3 Kubernetes Auth Role gắn chặt ServiceAccount & Namespace
+kubectl exec -n vault vault-0 -- env VAULT_TOKEN="$VAULT_TOKEN" \
+  vault write auth/kubernetes/role/eso-traefik \
+    bound_service_account_names=eso-vault-auth \
+    bound_service_account_namespaces=traefik \
+    policies=eso-traefik-policy ttl=15m
+
+kubectl exec -n vault vault-0 -- env VAULT_TOKEN="$VAULT_TOKEN" \
+  vault write auth/kubernetes/role/eso-monitoring \
+    bound_service_account_names=eso-vault-auth \
+    bound_service_account_namespaces=monitoring \
+    policies=eso-monitoring-policy ttl=15m
+
+kubectl exec -n vault vault-0 -- env VAULT_TOKEN="$VAULT_TOKEN" \
+  vault write auth/kubernetes/role/eso-app-prod \
+    bound_service_account_names=eso-vault-auth \
+    bound_service_account_namespaces=app-prod \
+    policies=eso-app-prod-policy ttl=15m
+
+unset VAULT_TOKEN GRAFANA_USER GRAFANA_PASS REDIS_PASS
+```
+
+> Vault UI không expose ra Internet; khi cần xem/sửa/rotate secret qua Web UI, dùng `kubectl port-forward -n vault svc/vault 8200:8200` (chi tiết xem tại [platform-core/vault/README.md](./platform-core/vault/README.md)).
+
+2. **Cài External Secrets Operator (ESO) qua OCI Registry (`ghcr.io`) & Đồng bộ 2 Secret Tầng 1 (`traefik`, `monitoring`):**
+
+```bash
+helm install external-secrets oci://ghcr.io/external-secrets/charts/external-secrets \
+  --namespace external-secrets \
+  --create-namespace \
+  -f platform-core/external-secrets/values.yaml
+
+kubectl -n external-secrets rollout status deploy/external-secrets --timeout=180s
+kubectl -n external-secrets rollout status deploy/external-secrets-webhook --timeout=180s
+kubectl -n external-secrets rollout status deploy/external-secrets-cert-controller --timeout=180s
+
+# Tạo sẵn 2 namespace nền tảng và apply ServiceAccount + SecretStore + ExternalSecret
+kubectl create namespace traefik --dry-run=client -o yaml | kubectl apply -f -
+kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
+
+kubectl apply -f platform-core/traefik/vault-secretstore.yaml \
+  -f platform-core/traefik/cloudflare-origin-tls-externalsecret.yaml
+kubectl apply -f platform-core/monitoring/vault-secretstore.yaml \
+  -f platform-core/monitoring/grafana-admin-externalsecret.yaml
+
+# Xác nhận ESO đã đồng bộ thành công 2 Secret Tầng 1 (STATUS = SecretSynced, READY = True)
+kubectl get secretstore,externalsecret -A
+kubectl get secret cloudflare-origin-tls -n traefik
+kubectl get secret grafana-admin-secret -n monitoring
+```
+
+### 3.3. Cài đặt Traefik HA (`replicas: 2`)
+
+```bash
+helm repo add traefik https://traefik.github.io/charts
+helm repo update
+
+helm install traefik traefik/traefik \
+  --namespace traefik \
+  -f platform-core/traefik/values.yaml
+
+kubectl apply -f platform-core/traefik/tlsstore.yaml
+kubectl apply -f platform-core/traefik/metrics-service.yaml
+kubectl get svc,pods -n traefik -o wide
+```
+
+> Xác nhận Service `traefik` nhận `TYPE=LoadBalancer` và `EXTERNAL-IP` khớp với `$VPS_PUBLIC_IP` (`<VPS_PUBLIC_IP>`), đồng thời 2 Pod Traefik chạy trên 2 worker khác nhau (`worker-01` và `worker-02`).
+
 ---
 
 ## Pha 4: Monitoring Stack, Kyverno Policy, ArgoCD & Kích hoạt CI/GHCR
 
 ### 4.1. Cài đặt Monitoring Stack (`kube-prometheus-stack`), Kyverno (`ValidatingPolicies`) & ArgoCD
 
-1. **Cài Monitoring Stack & `traefik-metrics` ServiceMonitor** (namespace `monitoring` đã có sẵn `grafana-admin-secret` từ Pha 2.5):
+1. **Cài Monitoring Stack & `traefik-metrics` ServiceMonitor** (namespace `monitoring` đã có sẵn `grafana-admin-secret` đồng bộ từ Vault qua ESO ở Pha `3.2`):
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
@@ -638,7 +710,7 @@ Sau khi toàn bộ Platform Core Tầng 1 (`0.1` $\rightarrow$ `4.2`) đã vận
      - **Repository permissions:** đặt **Contents: Read and write** *(giữ `Metadata: Read-only`)*.
    - Lưu token vừa tạo vào Repository **Settings -> Secrets and variables -> Actions -> New repository secret** với tên **`GITOPS_TOKEN`**.
    - Trong **Settings -> Rules -> Rulesets** của nhánh `main`, giữ rule bảo vệ PR (*Require a pull request before merging*) và đảm bảo **Bypass list** có **Repository admin** (*Always allow*) để tài khoản Admin và `GITOPS_TOKEN` đẩy commit tag `[skip ci]` hợp lệ.
-3. Kiểm tra `git status` để chắc chắn không chứa IP VPS thật hay các tệp nhạy cảm trong `secrets/` (`tls.crt`, `tls.key`) và `~/sealed-secrets-master-key.yaml` *(các tệp `*-sealedsecret.yaml` đã được mã hóa an toàn)*, sau đó stage toàn bộ thay đổi, commit và push lên nhánh `main`:
+3. Kiểm tra `git status` để chắc chắn không chứa IP VPS thật hay các tệp nhạy cảm trong `secrets/` (`tls.crt`, `tls.key`) và `~/vault-init-keys.txt` *(các manifest `SecretStore`/`ExternalSecret` chỉ chứa tham chiếu đường dẫn Vault, hoàn toàn an toàn khi lưu trên Git)*, sau đó stage toàn bộ thay đổi, commit và push lên nhánh `main`:
 
 ```bash
 git status
@@ -660,35 +732,19 @@ git pull --rebase origin main
 
 ## Pha 5: Triển khai Tầng 2 (`project-nt548`), Zero Trust & Vận hành CI/CD
 
-### 5.1. Niêm phong `redis-auth-secret` & Kích hoạt Application Tầng 2 (`app-prod`)
+### 5.1. Kích hoạt Application Tầng 2 (`app-prod`) & Đồng bộ `redis-auth-secret` từ Vault
 
-1. Niêm phong `redis-auth-secret` cho namespace `app-prod` (không cần tạo namespace trước; `kubeseal` dùng `--dry-run=client` để sinh manifest mã hóa sẵn rồi đẩy lên Git trước khi ArgoCD sync):
-
-```bash
-kubectl create secret generic redis-auth-secret \
-  --namespace app-prod \
-  --from-literal=password="<STRONG_REDIS_PROD_PASSWORD>" \
-  --dry-run=client -o yaml | kubeseal \
-  --controller-name=sealed-secrets-controller \
-  --controller-namespace=kube-system \
-  --format yaml > project-nt548/k8s-manifests/redis-auth-sealedsecret.yaml
-
-git add project-nt548/k8s-manifests/redis-auth-sealedsecret.yaml
-git commit -m "chore(prod): add sealed redis-auth-secret [skip ci]"
-git push origin main
-```
-
-2. Kích hoạt Application Tầng 2 (ArgoCD tự tạo namespace `app-prod` kèm nhãn `policy-tier=hardened`, đồng bộ toàn bộ `project-nt548/k8s-manifests/` và `sealed-secrets-controller` tự giải mã `redis-auth-secret`):
+Vì `secret/app-prod/redis-auth` và role `eso-app-prod` đã được cấu hình sẵn trong Vault ở Pha `3.2`, bạn chỉ cần kích hoạt Application Tầng 2 — ArgoCD sẽ tự tạo namespace `app-prod` kèm nhãn `policy-tier=hardened`, đồng bộ toàn bộ `project-nt548/k8s-manifests/` (bao gồm `ServiceAccount/eso-vault-auth`, `SecretStore/vault-backend` và `ExternalSecret/redis-auth-secret`), và ESO sẽ tự đồng bộ `redis-auth-secret` từ Vault:
 
 ```bash
 kubectl apply -f project-nt548/app-prod.yaml
 kubectl get applications -n argocd -w
 kubectl get ns app-prod --show-labels
 # Xác nhận namespace app-prod mang nhãn policy-tier=hardened
-kubectl -n app-prod get pods,pvc,svc,ingress
+kubectl -n app-prod get secretstore,externalsecret,secret,pods,pvc,svc,ingress
 ```
 
-*(ArgoCD đồng bộ `app-prod` với image `<NEW_SHA>` đã build từ Bước `4.3` cùng `redis-auth-sealedsecret.yaml`; nếu thấy Pod báo `CreateContainerConfigError` trong vài giây đầu lúc chờ controller giải mã Secret, kubelet sẽ tự khởi động lại và lên `Running`.)*
+*(ArgoCD đồng bộ `app-prod` với image `<NEW_SHA>` đã build từ Bước `4.3` cùng `redis-auth-externalsecret.yaml`; nếu thấy Pod báo `CreateContainerConfigError` trong vài giây đầu lúc chờ ESO đồng bộ Secret từ Vault, kubelet sẽ tự khởi động lại và lên `Running`.)*
 
 ### 5.2. Bảo vệ tên miền quản trị với Cloudflare Zero Trust Access
 
@@ -753,8 +809,8 @@ kubectl delete namespace app-prod
 kubectl get ns | grep app-prod
 # Xóa Application trước để ArgoCD dừng reconcile và xóa tài nguyên con,
 # sau đó xóa namespace app-prod để dọn sạch PVC Longhorn (1Gi) và Secret còn lại;
-# toàn bộ cụm chuẩn Tầng 1 (Cilium, Sealed Secrets, Traefik HA + cloudflare-origin-tls,
-# Longhorn, Monitoring + grafana-admin-secret, ArgoCD, Kyverno) vẫn giữ nguyên 100%.
+# toàn bộ cụm chuẩn Tầng 1 (Cilium, Longhorn, HashiCorp Vault + ESO, Traefik HA + cloudflare-origin-tls,
+# Monitoring + grafana-admin-secret, ArgoCD, Kyverno) vẫn giữ nguyên 100%.
 ```
 
 *(Tùy chọn trên Cloudflare DNS: xóa hoặc tắt bản ghi CNAME `nt548.helios.id.vn` sau khi thu hồi Tầng 2.)*

@@ -5,7 +5,7 @@
 ## Pha 0: Chuẩn bị Hạ tầng, Tắt Host Firewall An toàn SSH & Công cụ Quản trị
 - [x] Xác nhận cổng `sshd` thực tế (`61022` trên `server-01`, `61122` trên `worker-01`, `61222` trên `worker-02`), cấu hình SSH key-only (`PasswordAuthentication no`) và kiểm tra `~/.kube/config` trên `laptop`
 - [x] Tắt `ufw` / `firewalld` trên cả 3 node và xác minh `iptables` ở trạng thái `policy ACCEPT`
-- [x] Cài công cụ trên `laptop` (Fedora) (`kubectl`, `helm`, `kubeseal`, `cilium`, `wireguard-tools`) và khai báo biến `export VPS_PUBLIC_IP`
+- [x] Cài công cụ trên `laptop` (Fedora) (`kubectl`, `helm`, `cilium`, `jq`, `wireguard-tools`) và khai báo biến `export VPS_PUBLIC_IP`
 - [x] Giới hạn DHCP pool Router (`10.10.0.50–254`) & đặt Static IP LAN `10.10.0.0/24`, khóa Cloud Firewall (NSG) VPS (`61022/tcp`, `80/tcp`, `443/tcp`, `51820/udp`, `ICMP` IPv4), trỏ Cloudflare DNS & tạo Origin Certificate
 
 <!-- Ghi chú của bạn cho Pha 0 -->
@@ -20,19 +20,19 @@
 <!-- Ghi chú của bạn cho Pha 1 -->
 
 
-## Pha 2: Kubernetes v1.37.1 (`kubeadm`), Cilium eBPF + Hubble UI & Sealed Secrets
+## Pha 2: Kubernetes v1.37.1 (`kubeadm`) & Cilium eBPF + Hubble UI
 - [x] Tắt Swap vĩnh viễn, nạp `overlay` và cài đặt `containerd.io 2.3.6` (`SystemdCgroup = true`) + `kubelet`/`kubeadm`/`kubectl` `v1.37.1` trên cả 3 node
 - [x] Tạo `/etc/kubernetes/enc/enc.yaml` (`aescbc`), chạy `kubeadm init` trên `server-01`, `kubeadm join` + gán nhãn `node.longhorn.io/create-default-disk=true` cho `worker-01`, `worker-02`
 - [x] Cài đặt Cilium eBPF CNI/LB + `CiliumLoadBalancerIPPool` (`<VPS_PUBLIC_IP>/32`) + Hubble UI
-- [x] Cài đặt Sealed Secrets Controller & sao lưu `~/sealed-secrets-master-key.yaml`
-- [x] Tạo & apply 2 `SealedSecret` Tầng 1 (`cloudflare-origin-tls`, `grafana-admin-secret`)
 
 <!-- Ghi chú của bạn cho Pha 2 -->
 
 
-## Pha 3: Traefik HA (`LoadBalancer`) & Longhorn Storage
-- [x] Cài đặt Traefik HA (`replicas: 2`), `traefik-metrics` (`ClusterIP: 9100`), `TLSStore`
+## Pha 3: Longhorn Storage, HashiCorp Vault + ESO & Traefik HA (`LoadBalancer`)
 - [x] Cài đặt Longhorn (`replicas: 2`) và kiểm tra Node IP trong Longhorn UI (`10.100.0.2 <-> 10.100.0.3`)
+- [x] Cài đặt HashiCorp Vault (Longhorn PVC `2Gi`), khởi tạo 1 khóa (`-key-shares=1 -key-threshold=1`), sao lưu `~/vault-init-keys.txt` ngoại tuyến, `unseal`, nạp 3 bí mật KV v2 & cấu hình Kubernetes Auth (3 Least-Privilege Policies/Roles)
+- [x] Cài đặt External Secrets Operator (ESO) & apply `ServiceAccount`/`SecretStore`/`ExternalSecret` Tầng 1 (`cloudflare-origin-tls`, `grafana-admin-secret`) đạt `SecretSynced`
+- [x] Cài đặt Traefik HA (`replicas: 2`), `traefik-metrics` (`ClusterIP: 9100`), `TLSStore`
 
 <!-- Ghi chú của bạn cho Pha 3 -->
 
@@ -49,7 +49,7 @@
 
 ## Pha 5: Tầng Đồ án (`project-nt548`), CI/CD & Cloudflare Zero Trust
 - [ ] Kiểm chứng luồng CD `ci.yml` (`RollingUpdate` khi cập nhật `app/`, rollback `git revert`) & Nightly Audit (`cron 0 0 * * *` / `run_nightly_scan`)
-- [ ] Niêm phong & đẩy `redis-auth-sealedsecret.yaml` (`[skip ci]`), apply `project-nt548/app-prod.yaml` và kiểm tra `app-prod` (`web-deployment` `replicas: 2`, `redis-0`, `nt548.helios.id.vn`)
+- [ ] Apply `project-nt548/app-prod.yaml`, xác nhận ESO đồng bộ `redis-auth-secret` từ Vault (`SecretSynced`) và kiểm tra `app-prod` (`web-deployment` `replicas: 2`, `redis-0`, `nt548.helios.id.vn`)
 - [ ] Trỏ DNS Cloudflare (`vps.helios.id.vn`, `nt548.helios.id.vn`, `argocd.helios.id.vn`, `grafana.helios.id.vn`, `hubble.helios.id.vn`) & Cloudflare Zero Trust `K8s Admin`
 
 <!-- Ghi chú của bạn cho Pha 5 -->
