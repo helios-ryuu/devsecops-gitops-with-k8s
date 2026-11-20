@@ -2,7 +2,7 @@
 
 Tài liệu mô tả kiến trúc hoàn chỉnh đã chuyển đổi và triển khai của hệ thống Kubernetes Hybrid-Cloud trên nền tảng **Kubernetes v1.37.1 (`kubeadm` + `containerd.io 2.3.6`) + WireGuard (`wg0`) + Cilium eBPF + Traefik HA + Longhorn + HashiCorp Vault & External Secrets Operator (ESO) + ArgoCD GitOps + Kyverno + `kube-prometheus-stack` + GitHub Actions CI/CD (DevSecOps Gates & Nightly GHCR Image Audit)**.
 
-> Các tài liệu liên quan: [README.md](./README.md) • [RUNBOOK.md](./RUNBOOK.md) • [WBS.md](./WBS.md) • [LOG.md](./LOG.md) • [wireguard/README.md](./wireguard/README.md) • [platform-core/vault/README.md](./platform-core/vault/README.md)
+> Các tài liệu liên quan: [README.md](../README.md) • [RUNBOOK.md](./RUNBOOK.md) • [WBS.md](./WBS.md) • [LOG.md](./LOG.md) • [wireguard/README.md](../wireguard/README.md) • [platform-core/vault/README.md](../platform-core/vault/README.md)
 
 ---
 
@@ -13,7 +13,7 @@ Hệ thống được tổ chức thành 2 tầng độc lập nhằm tái sử 
 | Tầng | Thư mục / Thành phần | Chu kỳ vòng đời | Cơ chế quản lý |
 |---|---|---|---|
 | **Tầng 1: Platform Core Infrastructure** | `wireguard/`, `kubeadm-config/`, `platform-core/` (`cilium`, `longhorn`, `vault`, `external-secrets`, `traefik`, `monitoring`, `kyverno`, `argocd`) | Dựng một lần, vận hành lâu dài cho toàn cụm | `kubeadm` + `helm` + `kubectl` *(ArgoCD chỉ quản lý Tầng 2)* |
-| **Tầng 2: Project NT548 (App & DevSecOps)** | `app/`, `.github/workflows/ci.yml`, `project-nt548/` (`app-prod`, `web-deployment` `replicas: 2`, `redis` StatefulSet, `SecretStore`/`ExternalSecret`, `NetworkPolicy`) | Triển khai & thu hồi theo vòng đời đồ án | GitHub Actions (`ci.yml`) + [project-nt548/app-prod.yaml](./project-nt548/app-prod.yaml) (`Application`) |
+| **Tầng 2: Project NT548 (App & DevSecOps)** | `app/`, `.github/workflows/ci.yml`, `project-nt548/` (`app-prod`, `web-deployment` `replicas: 2`, `redis` StatefulSet, `SecretStore`/`ExternalSecret`, `NetworkPolicy`) | Triển khai & thu hồi theo vòng đời đồ án | GitHub Actions (`ci.yml`) + [project-nt548/app-prod.yaml](../project-nt548/app-prod.yaml) (`Application`) |
 
 > Thu hồi toàn bộ Tầng 2 sau khi bảo vệ đồ án mà không ảnh hưởng cụm nền (xóa Application trước rồi xóa Namespace để dọn sạch PVC Longhorn & Secret):
 > `kubectl delete -f project-nt548/app-prod.yaml && kubectl delete namespace app-prod`
@@ -23,10 +23,12 @@ Hệ thống được tổ chức thành 2 tầng độc lập nhằm tái sử 
 ```text
 devsecops-gitops-with-k8s/
 ├── README.md                                 # Tổng quan đồ án, phân công thành viên & kịch bản demo
-├── ARCHITECTURE.md                           # Kiến trúc 2 tầng, sơ đồ ASCII tổng thể, quy hoạch IP/RAM & kiểm chứng
-├── RUNBOOK.md                                # Hướng dẫn thao tác từng bước (Pha 0 -> Pha 6)
-├── WBS.md                                    # Cấu trúc phân chia công việc (WBS) & mốc thời gian
-├── LOG.md                                    # Nhật ký thực thi & checklist triển khai theo pha
+├── docs/                                     # Tài liệu kiến trúc, vận hành & quản lý đồ án
+│   ├── ARCHITECTURE.md                       # Kiến trúc 2 tầng, sơ đồ ASCII tổng thể, quy hoạch IP/RAM & kiểm chứng
+│   ├── RUNBOOK.md                            # Hướng dẫn thao tác từng bước (Pha 0 -> Pha 6)
+│   ├── WBS.md                                # Cấu trúc phân chia công việc (WBS) & mốc thời gian
+│   └── LOG.md                                # Nhật ký thực thi & checklist triển khai theo pha
+├── diagrams/                                 # Sơ đồ kiến trúc tổng thể (architecture.drawio, 2x/4x PNG)
 ├── wireguard/                                # Hub-and-Spoke wg0 + hướng dẫn chuẩn bị host & khóa biên
 │   ├── README.md
 │   └── wg0.*.conf.example                    # server, client-01, client-02, client-fedora, client-phone
@@ -93,12 +95,12 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 #  |  | +------------------------+------------------------+                +------------------------+------------------------+ |  |  # |        |  | +--- [Job 4: build-and-deploy-prod] --------------------+ |   |           |
 #  |  |                          v                                                                  v                          |  |  # |        |  | | 1. Buildx + Trivy Image Gate (HIGH,CRITICAL, unfixed) | |   |           |
 #  |  | +--- TẦNG 1: PLATFORM CORE (Platform Infrastructure & DevSecOps Services trên zone: onprem-lan) ---------------------+ |  |  # |        |  | | 2. Push ghcr.io/<repo>:<git-sha> (no :latest)         | |   |           |
-#  |  | |  +---------------------------------------------------+  +-------------------------------------------------------+  | |  |  # |        |  | | 3. Regex update image & APP_VERSION (deployment.yaml) | |   |           |
+#  |  | |  +---------------------------------------------------+  +-------------------------------------------------------+  | |  |  # |        |  | | 3. yq update image & APP_VERSION (deployment.yaml)    | |   |           |
 #  |  | |  | [ns: traefik] HA x2 (AntiAffinity, :80/:443)      |  | [ns: argocd] GitOps Singleton (quản lý Tầng 2)        |  | |  |  # |        |  | | 4. git commit '[skip ci]' & push origin HEAD:main     | |---+           |
 #  |  | |  |  * Cloudflare Origin TLS, metrics :9100 ClusterIP |  |  * Poll project-nt548/k8s-manifests/ -> sync app-prod<=============+        |  | +-------------------------------------------------------+ |               |
 #  |  | |  +---------------------------------------------------+  +-------------------------------------------------------+  | |  |  #          |  +-----------------------------------------------------------+               |
 #  |  | |  +---------------------------------------------------+  +-------------------------------------------------------+  | |  |  #          |                                                                   Cron 00:00 |
-#  |  | |  | [ns: monitoring] kube-prometheus-stack (x1)       |  | [ns: longhorn-system] Distributed Storage (2 Repl)    |  | |  |  #          |  +--- [Job 5: nightly-ghcr-image-scan] ----------------------+    UTC Audit  |
+#  |  | |  | [ns: monitoring] kube-prometheus-stack (x1)       |  | [ns: longhorn-system] Distributed Storage (2 Repl)    |  | |  |  #          |  +--- [nightly-audit.yml] Nightly GHCR Image Audit ----------+    UTC Audit  |
 #  |  | |  |  * Prometheus, Grafana :3000, Hubble UI           |  |  * Default StorageClass qua LAN 1Gbps                 |  | |  |  #          |  | Trigger: Cron '0 0 * * *' (00:00 UTC) | workflow_dispatch |               |
 #  |  | |  |  * (dex/notifications/alertmanager tắt)           |  |  * Metrics :9500 (NetworkPolicy -> Pod prometheus)    |  | |  |  #          |  | Extract images: deployment.yaml + redis-statefulset.yaml  |               |
 #  |  | |  +---------------------------------------------------+  +-------------------------------------------------------+  | |  |  #          |  | docker pull + trivy image HIGH,CRITICAL --ignore-unfixed  |<--------------+
@@ -154,19 +156,19 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
    - Cả 3 node tắt `ufw`/`firewalld` (tránh xung đột chain `FORWARD` với Cilium eBPF và `wg0`), bật `net.ipv4.ip_forward=1`, `rp_filter=0`, và giữ tắt `Cilium hostFirewall` (do `wg0` là giao diện L3). Trên LAN `10.10.0.0/24`, 2 worker được bảo vệ bởi Router NAT và SSH Key-only (`PasswordAuthentication no`).
    - API Server bật mã hóa Secrets trên `etcd` bằng `aescbc` (`/etc/kubernetes/enc/enc.yaml`).
 2. **Tầng Secrets & Policy-as-Code:**
-   - Toàn bộ bí mật (`cloudflare-origin-tls`, `grafana-admin-secret` ở Tầng 1; `redis-auth-secret` ở Tầng 2) được lưu trữ & xoay vòng tập trung trong **HashiCorp Vault** (self-hosted trên Longhorn PVC `2Gi`, UI chỉ mở nội bộ qua `kubectl port-forward`, không expose ra Internet) và đồng bộ tự động vào cụm bằng **External Secrets Operator (ESO)** theo mô hình **Zero Static Secret**: mỗi namespace có riêng 1 `ServiceAccount` (`eso-vault-auth`, `automountServiceAccountToken: false`), 1 `SecretStore` (namespace-scoped), 1 Vault Policy và 1 Vault Role xác thực qua **Kubernetes Auth** (TTL `15m`). Khóa khởi tạo Vault (`-key-shares=1 -key-threshold=1`) được sao lưu ngoại tuyến ([platform-core/vault/README.md](./platform-core/vault/README.md)).
+   - Toàn bộ bí mật (`cloudflare-origin-tls`, `grafana-admin-secret` ở Tầng 1; `redis-auth-secret` ở Tầng 2) được lưu trữ & xoay vòng tập trung trong **HashiCorp Vault** (self-hosted trên Longhorn PVC `2Gi`, UI chỉ mở nội bộ qua `kubectl port-forward`, không expose ra Internet) và đồng bộ tự động vào cụm bằng **External Secrets Operator (ESO)** theo mô hình **Zero Static Secret**: mỗi namespace có riêng 1 `ServiceAccount` (`eso-vault-auth`, `automountServiceAccountToken: false`), 1 `SecretStore` (namespace-scoped), 1 Vault Policy và 1 Vault Role xác thực qua **Kubernetes Auth** (TTL `15m`). Khóa khởi tạo Vault (`-key-shares=1 -key-threshold=1`) được sao lưu ngoại tuyến ([platform-core/vault/README.md](../platform-core/vault/README.md)).
    - **Kyverno (`admissionController`)** chạy 4 CEL `ValidatingPolicy` (`Deny`) giới hạn vào namespace mang nhãn **`policy-tier: hardened`** (tự động gắn trên `app-prod` qua `managedNamespaceMetadata`), bắt buộc `runAsNonRoot: true`, `seccompProfile: RuntimeDefault`, `allowPrivilegeEscalation: false`, `capabilities.drop: [ALL]`, đủ `requests`/`limits`, cấm `:latest` và khóa registry về `ghcr.io/helios-ryuu/*` hoặc `docker.io/library/redis:*`.
 3. **Tầng NetworkPolicy eBPF (Cilium):**
    - Trong `app-prod`, `NetworkPolicy allow-web-to-redis` chỉ cho phép Pod mang nhãn `app: web` kết nối TCP `6379` tới `redis-0`; mọi Pod khác trong namespace bị chặn và hiện flow `DROPPED` trên Hubble UI.
-   - Trong `longhorn-system`, mặc định chart Longhorn bật `restrictInternalTraffic: true` sinh `NetworkPolicy/longhorn-manager` khóa cổng `9500`; do đó [platform-core/longhorn/values.yaml](./platform-core/longhorn/values.yaml) cấu hình `networkPolicies.metricsScrapeSources` để mở riêng TCP `9500` cho Pod `app.kubernetes.io/name: prometheus` ở namespace `monitoring`.
+   - Trong `longhorn-system`, mặc định chart Longhorn bật `restrictInternalTraffic: true` sinh `NetworkPolicy/longhorn-manager` khóa cổng `9500`; do đó [platform-core/longhorn/values.yaml](../platform-core/longhorn/values.yaml) cấu hình `networkPolicies.metricsScrapeSources` để mở riêng TCP `9500` cho Pod `app.kubernetes.io/name: prometheus` ở namespace `monitoring`.
    - Service `traefik-metrics` (`ClusterIP: 9100`) tách riêng khỏi LoadBalancer (`ports.metrics.expose.default: false`) để không lộ metrics Traefik ra Internet.
 
 ### 3.3. Ứng dụng & Luồng Continuous Delivery (`RollingUpdate` Zero-Downtime)
 
 - **Ứng dụng Web (`app/`):** Next.js 16 App Router (`output: standalone`, `cacheComponents: true`), dùng client Redis thuần qua `node:net` (không thêm dependency ngoài), bọc khối đọc Redis trong `<Suspense>` + `connection()` để `pnpm run build` không cần Redis lúc build ảnh, cung cấp `/healthz` và `/ready`, đóng gói multi-stage non-root `USER 10001:10001`.
-- **Pipeline `.github/workflows/` (`workflow_call`):** Orchestrator [ci.yml](./.github/workflows/ci.yml) nhận cấu hình từ GitHub Variables (`vars.*`) và gọi 2 workflow con ([security-scan.yml](./.github/workflows/security-scan.yml): `Gitleaks` $\rightarrow$ `Trivy FS` & `kubeconform`/`Trivy Config`; [build-deploy.yml](./.github/workflows/build-deploy.yml): `Buildx` + `Trivy Image Gate` $\rightarrow$ push **GHCR**) trước khi tự động cập nhật `image` và `APP_VERSION` (`<8-char-SHA>`) trong [project-nt548/k8s-manifests/deployment.yaml](./project-nt548/k8s-manifests/deployment.yaml) và commit `[skip ci]`.
+- **Pipeline `.github/workflows/` (`workflow_call`):** Orchestrator [ci.yml](../.github/workflows/ci.yml) nhận cấu hình từ GitHub Variables (`vars.*`) và gọi 2 workflow con ([security-scan.yml](../.github/workflows/security-scan.yml): `Gitleaks` $\rightarrow$ `Trivy FS` & `kubeconform`/`Trivy Config`; [build-deploy.yml](../.github/workflows/build-deploy.yml): `Buildx` + `Trivy Image Gate` $\rightarrow$ push **GHCR**) trước khi tự động cập nhật `image` và `APP_VERSION` (`<8-char-SHA>`) trong [project-nt548/k8s-manifests/deployment.yaml](../project-nt548/k8s-manifests/deployment.yaml) và commit `[skip ci]`.
 - **Chiến lược `RollingUpdate` (`maxUnavailable: 0, maxSurge: 1`):** ArgoCD đồng bộ `deployment.yaml` xuống `app-prod`; Kubernetes tạo Pod mới, chờ `readinessProbe` (`GET /ready` xác nhận Redis) chuyển `Ready` rồi mới tắt Pod cũ, đảm bảo `0%` downtime; hỗ trợ rollback tức thì bằng `git revert HEAD --no-edit && git push`.
-- **Nightly GHCR Audit ([nightly-audit.yml](./.github/workflows/nightly-audit.yml), `0 0 * * *`):** Workflow tách riêng đọc danh sách manifest cấu hình qua `vars.NIGHTLY_SCAN_MANIFESTS`, kéo image active về GitHub Runner quét Trivy định kỳ với **0 MB RAM cụm**.
+- **Nightly GHCR Audit ([nightly-audit.yml](../.github/workflows/nightly-audit.yml), `0 0 * * *`):** Workflow tách riêng đọc danh sách manifest cấu hình qua `vars.NIGHTLY_SCAN_MANIFESTS`, kéo image active về GitHub Runner quét Trivy định kỳ với **0 MB RAM cụm**.
 
 ---
 
@@ -211,8 +213,8 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
    - **`server-01` (Control Plane & Edge Ingress VIP):** Do giới hạn 1 VPS, `server-01` vừa là Control Plane đơn lẻ vừa là điểm vào duy nhất của `CiliumLoadBalancerIPPool`. Hướng nâng cấp Production: nhân bản 3 Control Plane (`etcd` quorum) kết hợp Cloud Load Balancer hoặc Cilium BGP Control Plane.
    - **`redis-0` (`StatefulSet`, `replicas: 1`):** Dùng PVC Longhorn `ReadWriteOnce (RWO)` đảm bảo **Data Durability (`RPO = 0`)** nhưng không phải Zero-Downtime khi chuyển node (gián đoạn ngắn ~30–60 giây để detach/attach PVC). Hướng nâng cấp Production: chuyển sang Redis Sentinel hoặc Redis Cluster.
 2. **Chiến lược Monorepo + `[skip ci]` & Mã hóa `etcd` (`aescbc`):**
-   - Dùng chung Monorepo kết hợp `paths` filter trong [ci.yml](./.github/workflows/ci.yml) và `[skip ci]` giúp quản lý tập trung ở quy mô đồ án, vẫn tách ranh giới GitOps (ArgoCD chỉ theo dõi `project-nt548/k8s-manifests/`). Doanh nghiệp lớn có thể tách riêng App Repo và GitOps Config Repo để phân quyền RBAC độc lập.
-   - `etcd` dùng `aescbc` nội bộ ([init-server-01.yaml](./kubeadm-config/init-server-01.yaml)) kết hợp **HashiCorp Vault** standalone (khởi tạo 1 khóa duy nhất `-key-shares=1 -key-threshold=1`, lưu trên Longhorn PVC `2Gi`) và **ESO** (Kubernetes Auth, tách `SecretStore` theo namespace); khi reboot worker, các K8s `Secret` đã đồng bộ vẫn duy trì cho ứng dụng chạy và chỉ cần 1 lệnh `vault operator unseal` để tiếp tục đồng bộ/rotate ([platform-core/vault/README.md](./platform-core/vault/README.md)). Hướng nâng cấp Production: chạy Vault HA 3 node với Raft + Cloud KMS Auto-Unseal.
+   - Dùng chung Monorepo kết hợp `paths` filter trong [ci.yml](../.github/workflows/ci.yml) và `[skip ci]` giúp quản lý tập trung ở quy mô đồ án, vẫn tách ranh giới GitOps (ArgoCD chỉ theo dõi `project-nt548/k8s-manifests/`). Doanh nghiệp lớn có thể tách riêng App Repo và GitOps Config Repo để phân quyền RBAC độc lập.
+   - `etcd` dùng `aescbc` nội bộ ([init-server-01.yaml](../kubeadm-config/init-server-01.yaml)) kết hợp **HashiCorp Vault** standalone (khởi tạo 1 khóa duy nhất `-key-shares=1 -key-threshold=1`, lưu trên Longhorn PVC `2Gi`) và **ESO** (Kubernetes Auth, tách `SecretStore` theo namespace); khi reboot worker, các K8s `Secret` đã đồng bộ vẫn duy trì cho ứng dụng chạy và chỉ cần 1 lệnh `vault operator unseal` để tiếp tục đồng bộ/rotate ([platform-core/vault/README.md](../platform-core/vault/README.md)). Hướng nâng cấp Production: chạy Vault HA 3 node với Raft + Cloud KMS Auto-Unseal.
 3. **Quan sát thực tế trên Headlamp & Hubble UI:**
    - Trong namespace `argocd`, Helm chart vẫn tạo Deployment/Service `argocd-applicationset-controller` nhưng đã đặt `applicationSet.replicas: 0` (`0` Pod chạy, `0 MB` RAM).
    - Trên Hubble UI, luồng outbound từ `grafana` tới `world:443` là hành vi mặc định kiểm tra phiên bản/analytics của Grafana.
@@ -234,10 +236,10 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 | 7 | CI/CD & Nightly GHCR Audit | Push code thử (`ci.yml`) + chạy tay `nightly-audit.yml` | Job CI pass các gate CVE/Config/Secret qua `workflow_call`; Nightly workflow pull & scan sạch image active (`0 MB` RAM cụm) |
 | 8 | NetworkPolicy & Phát hành liên tục | `deploy/web-deployment`, `curl https://nt548.helios.id.vn/ready` | `RollingUpdate` zero downtime; Pod lạ tới Redis `:6379` bị `DROPPED` trên Hubble |
 
-### 5.2. 5 Kịch bản Demo cho Hội đồng (Chi tiết lệnh tại [scripts/demo.sh](./scripts/demo.sh))
+### 5.2. 5 Kịch bản Demo cho Hội đồng (Chi tiết lệnh tại [scripts/demo.sh](../scripts/demo.sh))
 
 1. **Kịch bản 1 – DevSecOps CI Gate (Fail Fast):** Thêm tạm dependency có CVE (ví dụ `lodash@4.17.20`) hoặc cấu hình manifest sai để kích hoạt `Trivy FS` / `kubeconform` + `Trivy Config`; GitHub Actions chặn ngay và hủy bước đẩy GHCR.
 2. **Kịch bản 2 – Kyverno Admission Policy Enforce:** Chạy `kubectl run test-violation -n app-prod --image=nginx:latest`; Kyverno (`admissionController`) từ chối ngay tại Kubernetes API Server do vi phạm root user, thiếu resource limits, tag `:latest` và registry ngoài whitelist.
 3. **Kịch bản 3 – GitOps Continuous Delivery (`RollingUpdate` Zero-Downtime) & Instant Git Rollback:** Chạy vòng lặp `curl` liên tục vào `https://nt548.helios.id.vn/ready`, đẩy commit mới lên `app/` để `ci.yml` cập nhật image + `APP_VERSION` trong `project-nt548/k8s-manifests/deployment.yaml` và ArgoCD đồng bộ `RollingUpdate` (`maxUnavailable: 0, maxSurge: 1`) không rớt request nào; sau đó chạy `git revert HEAD --no-edit && git push` để rollback tức thì.
 4. **Kịch bản 4 – NetworkPolicy Cô lập Redis & Hubble Observability:** Khởi chạy Pod hợp chuẩn Kyverno trong `app-prod` nhưng không mang nhãn `app: web` thử kết nối `redis-service.app-prod.svc.cluster.local:6379` $\rightarrow$ bị chặn đứng và hiển thị flow đỏ **`DROPPED`** trên Hubble UI (`https://hubble.helios.id.vn`).
-5. **Kịch bản 5 – Nightly GHCR CVE Audit (`0 MB` RAM cụm), Traefik HA & Longhorn Failover:** Kích hoạt tay workflow **`Nightly Active GHCR & Base Image Audit`** ([nightly-audit.yml](./.github/workflows/nightly-audit.yml)) trên GitHub Actions + xem Dashboard tài nguyên trên Grafana (`https://grafana.helios.id.vn`); xóa nóng 1 Pod Traefik trong lúc `curl` liên tục để chứng minh **Zero-Downtime HA** (`0%` rớt HTTP 200); sau đó `kubectl drain` worker chứa `redis-0` để chứng minh **High Availability & Data Durability (`RPO = 0`)** — gián đoạn ngắn ~30–60 giây khi Longhorn detach/attach PVC `RWO` sang worker còn lại, tự phục hồi và giữ nguyên bộ đếm lượt truy cập.
+5. **Kịch bản 5 – Nightly GHCR CVE Audit (`0 MB` RAM cụm), Traefik HA & Longhorn Failover:** Kích hoạt tay workflow **`Nightly Active GHCR & Base Image Audit`** ([nightly-audit.yml](../.github/workflows/nightly-audit.yml)) trên GitHub Actions + xem Dashboard tài nguyên trên Grafana (`https://grafana.helios.id.vn`); xóa nóng 1 Pod Traefik trong lúc `curl` liên tục để chứng minh **Zero-Downtime HA** (`0%` rớt HTTP 200); sau đó `kubectl drain` worker chứa `redis-0` để chứng minh **High Availability & Data Durability (`RPO = 0`)** — gián đoạn ngắn ~30–60 giây khi Longhorn detach/attach PVC `RWO` sang worker còn lại, tự phục hồi và giữ nguyên bộ đếm lượt truy cập.

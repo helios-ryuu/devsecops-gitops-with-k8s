@@ -15,6 +15,7 @@
   <img src="https://img.shields.io/badge/Cilium-eBPF_CNI_&_LB-F8C517?style=for-the-badge&logo=cilium&logoColor=black" alt="Cilium" />
   <img src="https://img.shields.io/badge/Traefik-HA_Ingress-24A1C1?style=for-the-badge&logo=traefikproxy&logoColor=white" alt="Traefik HA" />
   <img src="https://img.shields.io/badge/Longhorn-Distributed_Storage-5F259F?style=for-the-badge" alt="Longhorn" />
+  <img src="https://img.shields.io/badge/HashiCorp_Vault-ESO_Secrets-FFEC6E?style=for-the-badge&logo=vault&logoColor=black" alt="HashiCorp Vault" />
   <img src="https://img.shields.io/badge/ArgoCD-GitOps-EF6B48?style=for-the-badge&logo=argo&logoColor=white" alt="ArgoCD" />
   <img src="https://img.shields.io/badge/Kyverno-Policy_as_Code-00A86B?style=for-the-badge" alt="Kyverno" />
   <img src="https://img.shields.io/badge/GitHub_Actions-CI-2088FF?style=for-the-badge&logo=github-actions&logoColor=white" alt="GitHub Actions" />
@@ -77,7 +78,7 @@ Hệ thống chia rõ **2 tầng** trong cùng repository:
 - **Tầng 1 (`platform-core/`):** Nền tảng Kubernetes cố định dài hạn (`Cilium`, `Hubble`, `Longhorn`, `HashiCorp Vault`, `External Secrets Operator`, `Traefik HA`, `Prometheus/Grafana`, `ArgoCD`, `Kyverno`).
 - **Tầng 2 (`project-nt548/`):** Tài nguyên riêng của đồ án (Manifest YAML thuần cho `web-deployment` `replicas: 2`, `redis-statefulset`, `SecretStore`/`ExternalSecret`, `NetworkPolicy`, `Ingress`) neo tại [project-nt548/app-prod.yaml](./project-nt548/app-prod.yaml).
 
-Chi tiết sơ đồ mạng WireGuard `wg0`, sơ đồ kiến trúc tổng thể ASCII, quy hoạch IP/RAM xem tại **[ARCHITECTURE.md](./ARCHITECTURE.md)** và hướng dẫn triển khai chi tiết từ đầu đến kết thúc xem tại **[RUNBOOK.md](./RUNBOOK.md)**.
+Chi tiết sơ đồ mạng WireGuard `wg0`, sơ đồ kiến trúc tổng thể (`diagrams/architecture-2x.png`, `architecture-4x.png`, `architecture.drawio`), quy hoạch IP/RAM xem tại **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** và hướng dẫn triển khai chi tiết từ đầu đến kết thúc xem tại **[docs/RUNBOOK.md](./docs/RUNBOOK.md)**.
 
 ---
 
@@ -85,11 +86,16 @@ Chi tiết sơ đồ mạng WireGuard `wg0`, sơ đồ kiến trúc tổng thể
 
 ```text
 devsecops-gitops-with-k8s/
-├── ARCHITECTURE.md                     # Kiến trúc 2 tầng, sơ đồ ASCII tổng thể, quy hoạch IP/RAM & kịch bản demo
-├── RUNBOOK.md                          # Hướng dẫn triển khai đầy đủ từng bước từ Pha 0 đến kết thúc
 ├── README.md                           # Tổng quan dự án NT548
-├── WBS.md                              # Cấu trúc phân rã công việc & timeline
-├── LOG.md                              # Nhật ký thực thi & checklist triển khai theo pha
+├── docs/                               # Tài liệu kiến trúc, vận hành & quản lý đồ án
+│   ├── ARCHITECTURE.md                 # Kiến trúc 2 tầng, sơ đồ ASCII tổng thể, quy hoạch IP/RAM & kịch bản demo
+│   ├── RUNBOOK.md                      # Hướng dẫn triển khai đầy đủ từng bước từ Pha 0 đến kết thúc
+│   ├── WBS.md                          # Cấu trúc phân rã công việc & timeline
+│   └── LOG.md                          # Nhật ký thực thi & checklist triển khai theo pha
+├── diagrams/                           # Sơ đồ kiến trúc hệ thống (Draw.io & PNG độ phân giải 2x/4x)
+│   ├── architecture.drawio
+│   ├── architecture-2x.png
+│   └── architecture-4x.png
 ├── wireguard/                          # Cấu hình mẫu wg0.conf & hướng dẫn chuẩn bị host / Cloud NSG
 ├── kubeadm-config/                     # Cấu hình kubeadm Init/Join (v1beta4) & EncryptionConfiguration
 ├── app/                                # Ứng dụng Web Next.js 16 + Redis (UID 10001 non-root, APP_ENV/APP_VERSION)
@@ -122,13 +128,14 @@ Chạy `./scripts/demo.sh` (hoặc `./scripts/demo.sh --all`) để hiển thị
 2. **Kyverno Enforce:** Chặn tức thì Pod vi phạm (`:latest`, chạy `root`, thiếu `limits`, sai registry) trong `app-prod`.
 3. **GitOps Continuous Delivery (`RollingUpdate` Zero-Downtime) & Instant Rollback:** Push commit lên `app/` kích hoạt CI build & cập nhật `project-nt548/k8s-manifests/deployment.yaml`, ArgoCD đồng bộ `RollingUpdate` (`maxUnavailable: 0, maxSurge: 1`) không rớt HTTP 200 và `git revert` rollback tức thì.
 4. **Zero-Trust Redis Isolation & Hubble UI:** Kiểm chứng NetworkPolicy chặn Pod lạ kết nối Redis `:6379` với luồng `DROPPED` trực quan trên Hubble UI.
-5. **Nightly GHCR Audit, Traefik HA & Longhorn Failover:** Kích hoạt tay `nightly-ghcr-image-scan` (`0 MB` RAM cụm), theo dõi tài nguyên trên Grafana, test xóa nóng Pod Traefik (**Zero-Downtime HA**) và drain node chứa `redis-0` (tự phục hồi sau ~30–60s chuyển PVC `RWO`, **`RPO = 0`** không mất dữ liệu bộ đếm).
+5. **Nightly GHCR Audit, Traefik HA & Longhorn Failover:** Kích hoạt tay workflow **`Nightly Active GHCR & Base Image Audit`** (`nightly-audit.yml`, `0 MB` RAM cụm), theo dõi tài nguyên trên Grafana, test xóa nóng Pod Traefik (**Zero-Downtime HA**) và drain node chứa `redis-0` (tự phục hồi sau ~30–60s chuyển PVC `RWO`, **`RPO = 0`** không mất dữ liệu bộ đếm).
 
 ---
 
 ## 6. Tài liệu chi tiết
 
-1. **[RUNBOOK.md](./RUNBOOK.md)** — Hướng dẫn triển khai từng bước từ đầu đến kết thúc (Pha 0 $\rightarrow$ Pha 6) kèm kiểm chứng & thu hồi Tầng 2.
-2. **[ARCHITECTURE.md](./ARCHITECTURE.md)** — Kiến trúc 2 tầng, sơ đồ ASCII tổng thể, phân bổ IP/RAM, bảo mật đa lớp và 5 kịch bản demo.
+1. **[docs/RUNBOOK.md](./docs/RUNBOOK.md)** — Hướng dẫn triển khai từng bước từ đầu đến kết thúc (Pha 0 $\rightarrow$ Pha 6) kèm kiểm chứng & thu hồi Tầng 2.
+2. **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — Kiến trúc 2 tầng, sơ đồ ASCII tổng thể, phân bổ IP/RAM, bảo mật đa lớp và 5 kịch bản demo.
 3. **[wireguard/README.md](./wireguard/README.md)** — Hướng dẫn cài đặt gói, `sysctl`, `open-iscsi`/`nfs-common`, tắt host firewall & khóa Cloud NSG, và kích hoạt `wg0` trên các node.
 4. **[platform-core/vault/README.md](./platform-core/vault/README.md)** — Hướng dẫn khởi tạo/unseal HashiCorp Vault (1 khóa), cấu hình KV v2 + Kubernetes Auth từng bước, mở Vault UI qua `port-forward` và quy trình xoay vòng (rotate) bí mật với ESO.
+5. **[diagrams/architecture-2x.png](./diagrams/architecture-2x.png)** *(và [architecture-4x.png](./diagrams/architecture-4x.png) / [architecture.drawio](./diagrams/architecture.drawio))* — Sơ đồ kiến trúc tổng thể chất lượng cao phục vụ báo cáo & slide thuyết trình.

@@ -2,7 +2,7 @@
 
 Tài liệu hướng dẫn thao tác từng bước để dựng hoàn chỉnh hạ tầng mạng WireGuard, cụm Kubernetes Hybrid (`kubeadm v1.37.1`), **Tầng 1 (Platform Core Infrastructure)** rồi mới đưa mã nguồn lên GitHub kích hoạt CI/CD, image GHCR, đồng bộ GitOps ArgoCD và triển khai **Tầng 2 (Project NT548 — RollingUpdate Continuous Delivery)** từ máy quản trị **Fedora (`laptop`)**.
 
-> Tài liệu tham khảo: [ARCHITECTURE.md](./ARCHITECTURE.md) • [README.md](./README.md) • [wireguard/README.md](./wireguard/README.md) • [platform-core/vault/README.md](./platform-core/vault/README.md)
+> Tài liệu tham khảo: [ARCHITECTURE.md](./ARCHITECTURE.md) • [README.md](../README.md) • [wireguard/README.md](../wireguard/README.md) • [platform-core/vault/README.md](../platform-core/vault/README.md)
 
 ---
 
@@ -133,7 +133,7 @@ export VPS_PUBLIC_IP="<IP_PUBLIC_VPS_THUC_TE>"
 
 ## Pha 1: Hạ tầng mạng WireGuard (`wg0`) & Chuẩn bị Host Longhorn
 
-Thực hiện theo chi tiết trong [wireguard/README.md](./wireguard/README.md).
+Thực hiện theo chi tiết trong [wireguard/README.md](../wireguard/README.md).
 
 ### 1.1. Cài gói phụ thuộc & cấu hình `sysctl` (`90-k8s.conf`) trên cả 3 node (`server-01`, `worker-01`, `worker-02`)
 
@@ -184,11 +184,11 @@ wg genkey | sudo tee /etc/wireguard/private.key | wg pubkey | sudo tee /etc/wire
 ```
 
 Điền khóa, `Endpoint = vps.helios.id.vn:51820` và IP LAN thực tế (`10.10.0.x`) vào `/etc/wireguard/wg0.conf`:
-- `server` (`heliosvps` / `server-01` — `.1`): [wireguard/wg0.server.conf.example](./wireguard/wg0.server.conf.example)
-- `client-01` (`worker-01` — `.2`): [wireguard/wg0.client-01.conf.example](./wireguard/wg0.client-01.conf.example) *(Peer `client-02` dùng `<WORKER_02_LAN_IP>:51820` và `AllowedIPs = 10.100.0.3/32`)*
-- `client-02` (`worker-02` — `.3`): [wireguard/wg0.client-02.conf.example](./wireguard/wg0.client-02.conf.example) *(Peer `client-01` dùng `<WORKER_01_LAN_IP>:51820` và `AllowedIPs = 10.100.0.2/32`)*
-- `client-fedora` (`laptop` — `.10`): [wireguard/wg0.client-fedora.conf.example](./wireguard/wg0.client-fedora.conf.example)
-- `client-phone` (`phone` — `.11`): [wireguard/wg0.client-phone.conf.example](./wireguard/wg0.client-phone.conf.example)
+- `server` (`heliosvps` / `server-01` — `.1`): [wireguard/wg0.server.conf.example](../wireguard/wg0.server.conf.example)
+- `client-01` (`worker-01` — `.2`): [wireguard/wg0.client-01.conf.example](../wireguard/wg0.client-01.conf.example) *(Peer `client-02` dùng `<WORKER_02_LAN_IP>:51820` và `AllowedIPs = 10.100.0.3/32`)*
+- `client-02` (`worker-02` — `.3`): [wireguard/wg0.client-02.conf.example](../wireguard/wg0.client-02.conf.example) *(Peer `client-01` dùng `<WORKER_01_LAN_IP>:51820` và `AllowedIPs = 10.100.0.2/32`)*
+- `client-fedora` (`laptop` — `.10`): [wireguard/wg0.client-fedora.conf.example](../wireguard/wg0.client-fedora.conf.example)
+- `client-phone` (`phone` — `.11`): [wireguard/wg0.client-phone.conf.example](../wireguard/wg0.client-phone.conf.example)
 
 Bật `wg0` trên `server`, `client-01`, `client-02`, `client-fedora` và bật tunnel trên `client-phone`:
 
@@ -335,7 +335,7 @@ sudo systemctl enable kubelet
 
 1. **Trên `server-01` — Sinh khóa `EncryptionConfiguration` (`aescbc`) bảo vệ `Secret` lưu trong `etcd`:**
 
-Tham khảo mẫu [kubeadm-config/encryption-config.example.yaml](./kubeadm-config/encryption-config.example.yaml), sinh khóa ngẫu nhiên 32-byte và ghi ra `/etc/kubernetes/enc/enc.yaml` (*tuyệt đối không commit khóa thật lên Git và phải sao lưu bản sao ra ngoài `laptop`*):
+Tham khảo mẫu [kubeadm-config/encryption-config.example.yaml](../kubeadm-config/encryption-config.example.yaml), sinh khóa ngẫu nhiên 32-byte và ghi ra `/etc/kubernetes/enc/enc.yaml` (*tuyệt đối không commit khóa thật lên Git và phải sao lưu bản sao ra ngoài `laptop`*):
 
 ```bash
 # Trên server-01
@@ -347,7 +347,7 @@ sudo vim /etc/kubernetes/enc/enc.yaml
 sudo chmod 600 /etc/kubernetes/enc/enc.yaml
 ```
 
-2. **Trên `laptop` — Xuất file [kubeadm-config/init-server-01.yaml](./kubeadm-config/init-server-01.yaml) đã điền `$VPS_PUBLIC_IP`:**
+2. **Trên `laptop` — Xuất file [kubeadm-config/init-server-01.yaml](../kubeadm-config/init-server-01.yaml) đã điền `$VPS_PUBLIC_IP`:**
 
 ```bash
 # Trên laptop (nếu mở terminal mới: export VPS_PUBLIC_IP="<IP_PUBLIC_VPS_THUC_TE>")
@@ -378,7 +378,7 @@ kubeadm token create --print-join-command
 
 1. **Trên `worker-01` và `worker-02` — Tạo `/etc/kubernetes/kubeadm-join.yaml` và join cụm:**
 
-Sao chép [kubeadm-config/join-worker-01.yaml](./kubeadm-config/join-worker-01.yaml) (cho `worker-01`) hoặc [kubeadm-config/join-worker-02.yaml](./kubeadm-config/join-worker-02.yaml) (cho `worker-02`), thay `<BOOTSTRAP_TOKEN>` và `<DISCOVERY_CA_CERT_HASH>` lấy từ `kubeadm token create --print-join-command`, sau đó chạy `kubeadm join`:
+Sao chép [kubeadm-config/join-worker-01.yaml](../kubeadm-config/join-worker-01.yaml) (cho `worker-01`) hoặc [kubeadm-config/join-worker-02.yaml](../kubeadm-config/join-worker-02.yaml) (cho `worker-02`), thay `<BOOTSTRAP_TOKEN>` và `<DISCOVERY_CA_CERT_HASH>` lấy từ `kubeadm token create --print-join-command`, sau đó chạy `kubeadm join`:
 
 ```bash
 # Trên worker-01 và worker-02
@@ -559,7 +559,7 @@ kubectl exec -n vault vault-0 -- env VAULT_TOKEN="$VAULT_TOKEN" \
 unset VAULT_TOKEN GRAFANA_USER GRAFANA_PASS REDIS_PASS
 ```
 
-> Vault UI không expose ra Internet; khi cần xem/sửa/rotate secret qua Web UI, dùng `kubectl port-forward -n vault svc/vault 8200:8200` (chi tiết xem tại [platform-core/vault/README.md](./platform-core/vault/README.md)).
+> Vault UI không expose ra Internet; khi cần xem/sửa/rotate secret qua Web UI, dùng `kubectl port-forward -n vault svc/vault 8200:8200` (chi tiết xem tại [platform-core/vault/README.md](../platform-core/vault/README.md)).
 
 2. **Cài External Secrets Operator (ESO) qua OCI Registry (`ghcr.io`) & Đồng bộ 2 Secret Tầng 1 (`traefik`, `monitoring`):**
 

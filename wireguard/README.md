@@ -49,7 +49,7 @@ Cả **`worker-01`** và **`worker-02`** đều dùng trực tiếp đường d�
 
 ## 3. Chính sách Host Firewall, Cloud NSG & Bảo mật LAN
 
-> Xem quy trình thực thi an toàn SSH tại [RUNBOOK.md](../RUNBOOK.md) (Bước `0.3` tắt host firewall trên OS, Bước `0.5` khóa VPS Cloud NSG và Bước `1.4` kiểm chứng lại trước khi cài `kubeadm`).
+> Xem quy trình thực thi an toàn SSH tại [docs/RUNBOOK.md](../docs/RUNBOOK.md) (Bước `0.3` tắt host firewall trên OS, Bước `0.5` khóa VPS Cloud NSG và Bước `1.4` kiểm chứng lại trước khi cài `kubeadm`).
 
 ### Tắt `ufw` / `firewalld` trên cả 3 Node (`server-01`, `worker-01`, `worker-02`)
 
@@ -104,4 +104,4 @@ done
 ```
 
 > [!NOTE]
-> Sau khi mạng `wg0` và SSH tới `10.100.0.1..3` đã thông suốt, thực hiện **Bước `1.4`** trong [RUNBOOK.md](../RUNBOOK.md) để kiểm chứng firewall/`sysctl`, khởi động lại các node Linux & `laptop` và kiểm tra cổng Cloud NSG trước khi cài `kubeadm`.
+> Sau khi mạng `wg0` và SSH tới `10.100.0.1..3` đã thông suốt, thực hiện **Bước `1.4`** trong [docs/RUNBOOK.md](../docs/RUNBOOK.md) để kiểm chứng firewall/`sysctl`, khởi động lại các node Linux & `laptop` và kiểm tra cổng Cloud NSG trước khi cài `kubeadm`.
