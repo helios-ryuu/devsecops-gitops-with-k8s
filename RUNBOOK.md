@@ -719,7 +719,7 @@ git commit -m "feat(platform): complete phase 0-4 hybrid k8s core & devsecops pi
 git push -u origin main
 ```
 
-4. Kiểm tra tab **Actions -> `CI, DevSecOps Gate & Nightly Image Audit`** chạy thành công *(nếu commit vừa push không sửa file thuộc `paths` kích hoạt của `ci.yml`, bấm **Run workflow** với `run_nightly_scan=false`)*:
+4. Kiểm tra tab **Actions -> `CI & DevSecOps Gate`** chạy thành công *(nếu commit vừa push không sửa file thuộc `paths` kích hoạt của `ci.yml`, bấm **Run workflow** trên workflow này)*:
    - Pipeline tự kiểm tra Gitleaks, Trivy FS, `kubeconform` + Trivy Config, build & push image `ghcr.io/helios-ryuu/devsecops-gitops-with-k8s:<NEW_SHA>` lên GHCR, quét Trivy Image Gate (`HIGH,CRITICAL`) và tự động cập nhật `image:` + `APP_VERSION` vào `project-nt548/k8s-manifests/deployment.yaml`.
    - Kiểm tra tab **Packages -> `devsecops-gitops-with-k8s` -> Package settings -> Change visibility -> Public** (bắt buộc nếu package mới tạo ở chế độ Private, vì `deployment.yaml` không dùng `imagePullSecrets`).
    - Kéo commit tag mới về máy quản trị:
@@ -765,7 +765,7 @@ Trong **Cloudflare Zero Trust -> Access -> Applications**:
      curl -i https://nt548.helios.id.vn/ready
      ```
    - **Rollback tức thì:** Chạy `git pull --rebase origin main && git revert HEAD --no-edit && git push` để ArgoCD đưa `web-deployment` quay về phiên bản ổn định trước đó.
-2. **Nightly GHCR Image Audit (`0 0 * * *`, `0 MB` RAM cụm):** Hằng đêm lúc `00:00 UTC` (hoặc chạy tay từ **Actions -> `CI, DevSecOps Gate & Nightly Image Audit` -> Run workflow -> tick `run_nightly_scan=true`**), job `nightly-ghcr-image-scan` tự pull các image đang chạy trong `deployment.yaml` & `redis-statefulset.yaml` về runner và quét Trivy CVE `HIGH,CRITICAL`.
+2. **Nightly GHCR Image Audit (`nightly-audit.yml`, `0 0 * * *`, `0 MB` RAM cụm):** Hằng đêm lúc `00:00 UTC` (hoặc chạy tay từ **Actions -> `Nightly Active GHCR & Base Image Audit` -> Run workflow**), workflow tách riêng tự pull các image đang chạy trong `deployment.yaml` & `redis-statefulset.yaml` về runner và quét Trivy CVE `HIGH,CRITICAL`.
 
 ---
 

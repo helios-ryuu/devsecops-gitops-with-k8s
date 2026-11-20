@@ -48,7 +48,7 @@
 
 
 ## Pha 5: Tầng Đồ án (`project-nt548`), CI/CD & Cloudflare Zero Trust
-- [ ] Kiểm chứng luồng CD `ci.yml` (`RollingUpdate` khi cập nhật `app/`, rollback `git revert`) & Nightly Audit (`cron 0 0 * * *` / `run_nightly_scan`)
+- [ ] Kiểm chứng luồng CD `ci.yml` (`workflow_call` + `RollingUpdate` khi cập nhật `app/`, rollback `git revert`) & Nightly Audit (`nightly-audit.yml`, `cron 0 0 * * *`)
 - [ ] Apply `project-nt548/app-prod.yaml`, xác nhận ESO đồng bộ `redis-auth-secret` từ Vault (`SecretSynced`) và kiểm tra `app-prod` (`web-deployment` `replicas: 2`, `redis-0`, `nt548.helios.id.vn`)
 - [ ] Trỏ DNS Cloudflare (`vps.helios.id.vn`, `nt548.helios.id.vn`, `argocd.helios.id.vn`, `grafana.helios.id.vn`, `hubble.helios.id.vn`) & Cloudflare Zero Trust `K8s Admin`
 

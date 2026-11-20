@@ -124,8 +124,8 @@ ${BLUE}Mục tiêu:${NC} Chứng minh quét CVE định kỳ image đang chạy 
           khả năng chịu lỗi Traefik HA và bảo toàn dữ liệu Redis trên Longhorn khi bảo trì Worker.
 
 ${GREEN}[Bước 1] Kiểm tra quét CVE hàng đêm cho các image đang deploy (0 MB RAM cụm):${NC}
-  - Vào GitHub Actions -> Workflow 'CI, DevSecOps Gate & Nightly Image Audit' -> xem lịch cron '0 0 * * *'
-    hoặc bấm Run workflow (tick 'run_nightly_scan=true') để trình diễn trực tiếp:
+  - Vào GitHub Actions -> Workflow 'Nightly Active GHCR & Base Image Audit' (.github/workflows/nightly-audit.yml)
+    -> xem lịch cron '0 0 * * *' hoặc bấm Run workflow để trình diễn trực tiếp:
   - Runner tự đọc các image tag đang chạy trong deployment.yaml & redis-statefulset.yaml, pull về và chạy Trivy.
   - Mở Grafana (https://grafana.helios.id.vn) để xem dashboard tài nguyên Node, Cilium eBPF và Traefik RPS.
 

@@ -1,0 +1,137 @@
+name: Build, Trivy Image Gate & GitOps Deploy
+
+on:
+  workflow_call:
+    inputs:
+      registry:
+        description: "Container registry đích"
+        type: string
+        default: "ghcr.io"
+      image_name:
+        description: "Tên image (ví dụ: owner/repo)"
+        type: string
+        required: true
+      image_tag:
+        description: "Tag immutable cho image (ví dụ: git SHA)"
+        type: string
+        required: true
+      context:
+        description: "Docker build context"
+        type: string
+        default: "./app"
+      dockerfile:
+        description: "Đường dẫn Dockerfile"
+        type: string
+        default: "./app/Dockerfile"
+      severity:
+        description: "Ngưỡng mức độ CVE để chặn đẩy image"
+        type: string
+        default: "HIGH,CRITICAL"
+      ignore_unfixed:
+        description: "Bỏ qua CVE chưa có bản vá"
+        type: boolean
+        default: true
+      push_and_deploy:
+        description: "Có đẩy image lên registry và cập nhật GitOps manifest không"
+        type: boolean
+        default: false
+      deployment_file:
+        description: "File Deployment YAML cần cập nhật tag & APP_VERSION"
+        type: string
+        default: "project-nt548/k8s-manifests/deployment.yaml"
+      target_branch:
+        description: "Nhánh GitOps đích để push commit cập nhật tag"
+        type: string
+        default: "main"
+      git_user_name:
+        description: "Tên tác giả commit GitOps"
+        type: string
+        default: "GitHub Actions"
+      git_user_email:
+        description: "Email tác giả commit GitOps"
+        type: string
+        default: "action@github.com"
+    secrets:
+      GITOPS_TOKEN:
+        description: "Fine-grained PAT (Contents: write) để push commit [skip ci]"
+        required: false
+
+jobs:
+  build-and-deploy:
+    name: 4. Build, Trivy Image Gate & Deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    env:
+      FULL_IMAGE: ${{ inputs.registry }}/${{ inputs.image_name }}:${{ inputs.image_tag }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+        with:
+          token: ${{ inputs.push_and_deploy && secrets.GITOPS_TOKEN || github.token }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Container Registry
+        if: ${{ inputs.push_and_deploy }}
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ inputs.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker Image (Local scan)
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ inputs.context }}
+          file: ${{ inputs.dockerfile }}
+          load: true
+          tags: ${{ env.FULL_IMAGE }}
+
+      - name: Trivy Image Scan (Security Gate)
+        uses: aquasecurity/trivy-action@v0.35.0
+        with:
+          image-ref: ${{ env.FULL_IMAGE }}
+          severity: ${{ inputs.severity }}
+          exit-code: "1"
+          ignore-unfixed: ${{ inputs.ignore_unfixed }}
+
+      - name: Push Docker Image to Registry
+        if: ${{ inputs.push_and_deploy }}
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ inputs.context }}
+          file: ${{ inputs.dockerfile }}
+          push: true
+          tags: ${{ env.FULL_IMAGE }}
+
+      - name: Update GitOps Deployment Tag
+        if: ${{ inputs.push_and_deploy }}
+        env:
+          DEPLOYMENT_FILE: ${{ inputs.deployment_file }}
+          IMAGE_REGISTRY: ${{ inputs.registry }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          TARGET_BRANCH: ${{ inputs.target_branch }}
+          GIT_USER_NAME: ${{ inputs.git_user_name }}
+          GIT_USER_EMAIL: ${{ inputs.git_user_email }}
+        run: |
+          git config --local user.email "$GIT_USER_EMAIL"
+          git config --local user.name "$GIT_USER_NAME"
+          git pull --rebase origin "$TARGET_BRANCH"
+          python3 -c '
+          import os, re
+          path = os.environ["DEPLOYMENT_FILE"]
+          reg = re.escape(os.environ["IMAGE_REGISTRY"])
+          tag = os.environ["IMAGE_TAG"]
+          content = open(path).read()
+          content = re.sub(rf"(image:\s+{reg}/\S+:)\S+", rf"\g<1>{tag}", content, count=1)
+          content = re.sub(r"(- name: APP_VERSION\s+value:\s+)\"[^\"]*\"", rf"\g<1>{chr(34)}{tag[:8]}{chr(34)}", content, count=1)
+          open(path, "w").write(content)
+          '
+          git add "$DEPLOYMENT_FILE"
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(prod): update app-prod image tag to ${IMAGE_TAG} [skip ci]"
+            git push origin "HEAD:${TARGET_BRANCH}"
+          fi

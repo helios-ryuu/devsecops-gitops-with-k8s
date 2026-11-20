@@ -42,7 +42,10 @@ devsecops-gitops-with-k8s/
 │   └── argocd/                               # ArgoCD values (GitOps chuyên biệt cho Tầng 2 app-prod)
 ├── app/                                      # TẦNG 2: Next.js 16 Standalone (UID 10001, APP_ENV/APP_VERSION, Pure-TCP Redis)
 ├── .github/workflows/
-│   └── ci.yml                                # CI DevSecOps Gate, push GHCR, deploy app-prod & Nightly GHCR Audit (cron 00:00 UTC)
+│   ├── ci.yml                                # Orchestrator CI/CD (gọi workflow_call, tham số hóa qua vars.*)
+│   ├── security-scan.yml                     # workflow_call: Gitleaks, Trivy FS, kubeconform & Trivy Config
+│   ├── build-deploy.yml                      # workflow_call: Buildx, Trivy Image Gate, push GHCR & update GitOps tag
+│   └── nightly-audit.yml                     # Audit CVE định kỳ 00:00 UTC cho các image active (0 MB RAM cụm)
 ├── project-nt548/                            # TẦNG 2: GitOps Application & Manifests đồ án NT548
 │   ├── app-prod.yaml                         # ArgoCD Application Tầng 2 (namespace app-prod, nhãn policy-tier=hardened)
 │   └── k8s-manifests/                        # Manifest YAML thuần: web-deployment (RollingUpdate), Service, Ingress, ConfigMap, Redis, SecretStore/ExternalSecret, NetworkPolicy
@@ -125,7 +128,7 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 | **Storage & Secrets** | Thiếu lưu trữ phân tán & quản lý Secret tập trung | **Longhorn (`replicas: 2` qua LAN 1Gbps)** + **HashiCorp Vault (Longhorn PVC) & External Secrets Operator (Kubernetes Auth)** |
 | **Admission Policy** | Không có | **Kyverno (`admissionController`)** + **4 CEL `ValidatingPolicy` (`Deny`)** trên `policy-tier=hardened` |
 | **Phạm vi ArgoCD** | Quản lý cả `monitoring` lẫn app; chạy `ApplicationSet` thừa | Chỉ quản lý Tầng 2 (`app-prod`); `applicationSet.replicas: 0`; tắt `dex`/`notifications`; `monitoring` cài ở Tầng 1 |
-| **Manifests & CI/CD** | 3 job trong `ci-pipe.yml` + Kustomize `kustomization.yaml` | 5 job trong `ci.yml` (thêm **`kubeconform` + `Trivy Config`** và **`nightly-ghcr-image-scan`** `0 MB` RAM) + **YAML thuần** (`project-nt548/k8s-manifests/`) |
+| **Manifests & CI/CD** | 3 job trong `ci-pipe.yml` + Kustomize `kustomization.yaml` | Kiến trúc **Modular Workflows (`workflow_call`)** tách 4 file (`ci.yml`, `security-scan.yml`, `build-deploy.yml`, `nightly-audit.yml`), tham số hóa qua `vars.*`/`inputs`, pin tag `trivy-action@v0.35.0` + **YAML thuần** (`project-nt548/k8s-manifests/`) |
 
 ---
 
@@ -161,9 +164,9 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 ### 3.3. Ứng dụng & Luồng Continuous Delivery (`RollingUpdate` Zero-Downtime)
 
 - **Ứng dụng Web (`app/`):** Next.js 16 App Router (`output: standalone`, `cacheComponents: true`), dùng client Redis thuần qua `node:net` (không thêm dependency ngoài), bọc khối đọc Redis trong `<Suspense>` + `connection()` để `pnpm run build` không cần Redis lúc build ảnh, cung cấp `/healthz` và `/ready`, đóng gói multi-stage non-root `USER 10001:10001`.
-- **Pipeline `.github/workflows/ci.yml`:** Chạy tuần tự/song song các cổng kiểm tra (`Gitleaks` $\rightarrow$ `Trivy FS` & `kubeconform`/`Trivy Config` $\rightarrow$ `Buildx` + `Trivy Image Gate` $\rightarrow$ push **GHCR**) trước khi tự động cập nhật `image` và `APP_VERSION` (`<8-char-SHA>`) trong [project-nt548/k8s-manifests/deployment.yaml](./project-nt548/k8s-manifests/deployment.yaml) và commit `[skip ci]`.
+- **Pipeline `.github/workflows/` (`workflow_call`):** Orchestrator [ci.yml](./.github/workflows/ci.yml) nhận cấu hình từ GitHub Variables (`vars.*`) và gọi 2 workflow con ([security-scan.yml](./.github/workflows/security-scan.yml): `Gitleaks` $\rightarrow$ `Trivy FS` & `kubeconform`/`Trivy Config`; [build-deploy.yml](./.github/workflows/build-deploy.yml): `Buildx` + `Trivy Image Gate` $\rightarrow$ push **GHCR**) trước khi tự động cập nhật `image` và `APP_VERSION` (`<8-char-SHA>`) trong [project-nt548/k8s-manifests/deployment.yaml](./project-nt548/k8s-manifests/deployment.yaml) và commit `[skip ci]`.
 - **Chiến lược `RollingUpdate` (`maxUnavailable: 0, maxSurge: 1`):** ArgoCD đồng bộ `deployment.yaml` xuống `app-prod`; Kubernetes tạo Pod mới, chờ `readinessProbe` (`GET /ready` xác nhận Redis) chuyển `Ready` rồi mới tắt Pod cũ, đảm bảo `0%` downtime; hỗ trợ rollback tức thì bằng `git revert HEAD --no-edit && git push`.
-- **Nightly GHCR Audit (`0 0 * * *`):** Đọc trực tiếp image đang chạy từ `deployment.yaml` và `redis-statefulset.yaml`, kéo về GitHub Runner quét Trivy định kỳ với **0 MB RAM cụm**.
+- **Nightly GHCR Audit ([nightly-audit.yml](./.github/workflows/nightly-audit.yml), `0 0 * * *`):** Workflow tách riêng đọc danh sách manifest cấu hình qua `vars.NIGHTLY_SCAN_MANIFESTS`, kéo image active về GitHub Runner quét Trivy định kỳ với **0 MB RAM cụm**.
 
 ---
 
@@ -228,7 +231,7 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 | 4 | Traefik HA, Vault/ESO & Longhorn | `kubectl get svc,pods -n traefik`, `kubectl get externalsecret -A` & Longhorn UI | Service LB mang IP `<VPS_PUBLIC_IP>`; 3 `ExternalSecret` đạt `SecretSynced`; Longhorn nhận diện đúng `10.100.0.2`, `.3` |
 | 5 | ArgoCD GitOps & Monitoring | `kubectl get applications -n argocd`, `hubble observe` & Grafana | Applications `Synced / Healthy`; Grafana có đủ CPU/RAM/Traefik/Cilium/Longhorn `:9500` |
 | 6 | Kyverno Enforcement | `kubectl run test -n app-prod --image=nginx:latest` | API Server chặn ngay lập tức bởi Admission Policy |
-| 7 | CI/CD & Nightly GHCR Audit | Push code thử + chạy `ci.yml` (`run_nightly_scan=true`) | Job CI pass các gate CVE/Config/Secret; Nightly Job pull & scan sạch image active (`0 MB` RAM cụm) |
+| 7 | CI/CD & Nightly GHCR Audit | Push code thử (`ci.yml`) + chạy tay `nightly-audit.yml` | Job CI pass các gate CVE/Config/Secret qua `workflow_call`; Nightly workflow pull & scan sạch image active (`0 MB` RAM cụm) |
 | 8 | NetworkPolicy & Phát hành liên tục | `deploy/web-deployment`, `curl https://nt548.helios.id.vn/ready` | `RollingUpdate` zero downtime; Pod lạ tới Redis `:6379` bị `DROPPED` trên Hubble |
 
 ### 5.2. 5 Kịch bản Demo cho Hội đồng (Chi tiết lệnh tại [scripts/demo.sh](./scripts/demo.sh))
@@ -237,4 +240,4 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 2. **Kịch bản 2 – Kyverno Admission Policy Enforce:** Chạy `kubectl run test-violation -n app-prod --image=nginx:latest`; Kyverno (`admissionController`) từ chối ngay tại Kubernetes API Server do vi phạm root user, thiếu resource limits, tag `:latest` và registry ngoài whitelist.
 3. **Kịch bản 3 – GitOps Continuous Delivery (`RollingUpdate` Zero-Downtime) & Instant Git Rollback:** Chạy vòng lặp `curl` liên tục vào `https://nt548.helios.id.vn/ready`, đẩy commit mới lên `app/` để `ci.yml` cập nhật image + `APP_VERSION` trong `project-nt548/k8s-manifests/deployment.yaml` và ArgoCD đồng bộ `RollingUpdate` (`maxUnavailable: 0, maxSurge: 1`) không rớt request nào; sau đó chạy `git revert HEAD --no-edit && git push` để rollback tức thì.
 4. **Kịch bản 4 – NetworkPolicy Cô lập Redis & Hubble Observability:** Khởi chạy Pod hợp chuẩn Kyverno trong `app-prod` nhưng không mang nhãn `app: web` thử kết nối `redis-service.app-prod.svc.cluster.local:6379` $\rightarrow$ bị chặn đứng và hiển thị flow đỏ **`DROPPED`** trên Hubble UI (`https://hubble.helios.id.vn`).
-5. **Kịch bản 5 – Nightly GHCR CVE Audit (`0 MB` RAM cụm), Traefik HA & Longhorn Failover:** Kích hoạt tay job quét hàng đêm `nightly-ghcr-image-scan` (`run_nightly_scan=true`) trên GitHub Actions + xem Dashboard tài nguyên trên Grafana (`https://grafana.helios.id.vn`); xóa nóng 1 Pod Traefik trong lúc `curl` liên tục để chứng minh **Zero-Downtime HA** (`0%` rớt HTTP 200); sau đó `kubectl drain` worker chứa `redis-0` để chứng minh **High Availability & Data Durability (`RPO = 0`)** — gián đoạn ngắn ~30–60 giây khi Longhorn detach/attach PVC `RWO` sang worker còn lại, tự phục hồi và giữ nguyên bộ đếm lượt truy cập.
+5. **Kịch bản 5 – Nightly GHCR CVE Audit (`0 MB` RAM cụm), Traefik HA & Longhorn Failover:** Kích hoạt tay workflow **`Nightly Active GHCR & Base Image Audit`** ([nightly-audit.yml](./.github/workflows/nightly-audit.yml)) trên GitHub Actions + xem Dashboard tài nguyên trên Grafana (`https://grafana.helios.id.vn`); xóa nóng 1 Pod Traefik trong lúc `curl` liên tục để chứng minh **Zero-Downtime HA** (`0%` rớt HTTP 200); sau đó `kubectl drain` worker chứa `redis-0` để chứng minh **High Availability & Data Durability (`RPO = 0`)** — gián đoạn ngắn ~30–60 giây khi Longhorn detach/attach PVC `RWO` sang worker còn lại, tự phục hồi và giữ nguyên bộ đếm lượt truy cập.

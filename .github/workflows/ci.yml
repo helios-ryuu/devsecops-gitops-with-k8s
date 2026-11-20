@@ -1,4 +1,4 @@
-name: CI, DevSecOps Gate & Nightly Image Audit
+name: CI & DevSecOps Gate
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
       - "app/**"
       - "project-nt548/**"
       - "platform-core/kyverno/policies/**"
-      - ".github/workflows/ci.yml"
+      - ".github/workflows/**"
   pull_request:
     branches:
       - main
@@ -16,190 +16,44 @@ on:
       - "app/**"
       - "project-nt548/**"
       - "platform-core/kyverno/policies/**"
-  schedule:
-    - cron: "0 0 * * *"
+      - ".github/workflows/**"
   workflow_dispatch:
-    inputs:
-      run_nightly_scan:
-        description: "Chạy ngay tác vụ quét CVE các image đang deploy trên GHCR"
-        required: false
-        default: false
-        type: boolean
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  secret-scan:
-    name: 1. Secret Scanning (Gitleaks)
-    if: github.event_name != 'schedule' && !inputs.run_nightly_scan
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  vulnerability-scan:
-    name: 2. Source CVE Scanning (Trivy FS)
-    if: github.event_name != 'schedule' && !inputs.run_nightly_scan
-    needs: secret-scan
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-
-      - name: Trivy FS Scan (Dependencies)
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: "fs"
-          scan-ref: "app"
-          severity: "HIGH,CRITICAL"
-          exit-code: "1"
-          ignore-unfixed: true
-
-  manifest-security-gate:
-    name: 3. Kubernetes Manifest & Config Gate
-    if: github.event_name != 'schedule' && !inputs.run_nightly_scan
-    needs: secret-scan
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-
-      - name: Install kubeconform
-        run: |
-          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz | tar -xz -C /tmp kubeconform
-          sudo mv /tmp/kubeconform /usr/local/bin/kubeconform
-
-      - name: Validate Kubernetes Manifests (kubeconform)
-        run: |
-          kubeconform -strict -ignore-missing-schemas -summary \
-            project-nt548/k8s-manifests \
-            platform-core/kyverno/policies \
-            platform-core/monitoring/servicemonitors
-
-      - name: Trivy Config Scan (Kubernetes Manifests)
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: "config"
-          scan-ref: "project-nt548/k8s-manifests"
-          severity: "HIGH,CRITICAL"
-          exit-code: "1"
+  security-gates:
+    name: DevSecOps Security Gates
+    permissions:
+      contents: read
+    uses: ./.github/workflows/security-scan.yml
+    with:
+      app_dir: ${{ vars.APP_DIR || 'app' }}
+      kubeconform_paths: ${{ vars.KUBECONFORM_PATHS || 'project-nt548/k8s-manifests platform-core/kyverno/policies platform-core/monitoring/servicemonitors' }}
+      trivy_config_path: ${{ vars.TRIVY_CONFIG_PATH || 'project-nt548/k8s-manifests' }}
+      severity: ${{ vars.TRIVY_SEVERITY || 'HIGH,CRITICAL' }}
+      kubeconform_version: ${{ vars.KUBECONFORM_VERSION || '0.6.7' }}
 
   build-and-deploy-prod:
-    name: 4. Build, Trivy Image Gate & Deploy app-prod
-    if: github.event_name != 'schedule' && !inputs.run_nightly_scan
-    needs: [vulnerability-scan, manifest-security-gate]
-    runs-on: ubuntu-latest
+    name: Build, Scan & GitOps Deploy (app-prod)
+    needs: security-gates
     permissions:
       contents: write
       packages: write
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-        with:
-          token: ${{ github.event_name != 'pull_request' && secrets.GITOPS_TOKEN || github.token }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Log in to GitHub Container Registry
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v4
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build Docker Image (Local test)
-        uses: docker/build-push-action@v7
-        with:
-          context: ./app
-          file: ./app/Dockerfile
-          load: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-
-      - name: Trivy Image Scan (Security Gate)
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          severity: "HIGH,CRITICAL"
-          exit-code: "1"
-          ignore-unfixed: true
-
-      - name: Push Docker Image to GHCR
-        if: github.event_name != 'pull_request'
-        uses: docker/build-push-action@v7
-        with:
-          context: ./app
-          file: ./app/Dockerfile
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-
-      - name: Update GitOps Tag for app-prod (deployment.yaml)
-        if: github.event_name != 'pull_request'
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Actions"
-          git pull --rebase origin main
-          python3 -c '
-          import os, re
-          p = "project-nt548/k8s-manifests/deployment.yaml"
-          sha = os.environ["GITHUB_SHA"]
-          s = open(p).read()
-          s = re.sub(r"(image:\s+ghcr\.io/\S+:)\S+", rf"\g<1>{sha}", s, count=1)
-          s = re.sub(r"(- name: APP_VERSION\s+value:\s+)\"[^\"]*\"", rf"\g<1>{chr(34)}{sha[:8]}{chr(34)}", s, count=1)
-          open(p, "w").write(s)
-          '
-          git add project-nt548/k8s-manifests/deployment.yaml
-          if ! git diff --cached --quiet; then
-            git commit -m "chore(prod): update app-prod image tag to ${{ github.sha }} [skip ci]"
-            git push origin HEAD:main
-          fi
-
-  nightly-ghcr-image-scan:
-    name: Nightly Active GHCR & Base Image Audit
-    if: github.event_name == 'schedule' || inputs.run_nightly_scan == true
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: read
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v4
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Trivy
-        uses: aquasecurity/setup-trivy@v0.3.1
-
-      - name: Pull Active Deployed Images & Run Trivy Scan
-        run: |
-          IMAGES=$(python3 -c 'import re; txt = open("project-nt548/k8s-manifests/deployment.yaml").read() + "\n" + open("project-nt548/k8s-manifests/redis-statefulset.yaml").read(); imgs = re.findall(r"image:\s+(\S+)", txt); print("\n".join(dict.fromkeys(imgs)))')
-          if [ -z "$IMAGES" ]; then
-            echo "Error: No active images extracted for Trivy scan"
-            exit 1
-          fi
-          echo "Active deployed images to scan:"
-          echo "$IMAGES"
-          for IMG in $IMAGES; do
-            echo "=== Pulling & Scanning $IMG ==="
-            docker pull "$IMG"
-            trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 "$IMG"
-          done
+    uses: ./.github/workflows/build-deploy.yml
+    with:
+      registry: ${{ vars.CONTAINER_REGISTRY || 'ghcr.io' }}
+      image_name: ${{ github.repository }}
+      image_tag: ${{ github.sha }}
+      context: ${{ vars.DOCKER_CONTEXT || './app' }}
+      dockerfile: ${{ vars.DOCKERFILE_PATH || './app/Dockerfile' }}
+      severity: ${{ vars.TRIVY_SEVERITY || 'HIGH,CRITICAL' }}
+      push_and_deploy: ${{ github.event_name != 'pull_request' }}
+      deployment_file: ${{ vars.GITOPS_DEPLOYMENT_FILE || 'project-nt548/k8s-manifests/deployment.yaml' }}
+      target_branch: ${{ vars.GITOPS_TARGET_BRANCH || 'main' }}
+      git_user_name: ${{ vars.GITOPS_BOT_NAME || 'GitHub Actions' }}
+      git_user_email: ${{ vars.GITOPS_BOT_EMAIL || 'action@github.com' }}
+    secrets:
+      GITOPS_TOKEN: ${{ secrets.GITOPS_TOKEN }}
