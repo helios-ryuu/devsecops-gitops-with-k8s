@@ -25,7 +25,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: web
-        image: ghcr.io/helios-ryuu/devsecops-gitops-with-k8s:b01116d21f9825fb6bdd47012345748675167f0b
+        image: ghcr.io/helios-ryuu/devsecops-gitops-with-k8s:05aa0ec46c8d2a9be68c302a682762b711a3c9e5
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3000
@@ -34,7 +34,7 @@ spec:
             name: web-config
         env:
         - name: APP_VERSION
-          value: "b01116d2"
+          value: "05aa0ec4"
         - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
