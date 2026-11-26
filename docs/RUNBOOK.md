@@ -431,6 +431,21 @@ cilium status
 # server-01 có taint node-role.kubernetes.io/control-plane:NoSchedule và kubeProxyReplacement active
 ```
 
+### 2.5. Phân bổ CoreDNS về 2 Worker LAN (HA & Tối ưu độ trễ DNS)
+
+Mặc định sau `kubeadm init`, cả 2 Pod `coredns` chạy dồn trên `server-01` (VPS), khiến mọi truy vấn DNS nội bộ từ 2 Worker ở nhà phải đi vòng qua Internet (`wg0`, ~30–45ms) và chưa có HA theo node. Sau khi Cilium CNI đạt `3/3 Ready`, chạy lệnh sau từ `laptop` để phân bổ 2 Pod `coredns` về `worker-01` và `worker-02` (1 Pod/Worker nhờ `podAntiAffinity`):
+
+```bash
+kubectl patch deployment coredns -n kube-system --type=strategic -p '{"spec":{"template":{"spec":{"affinity":{"nodeAffinity":{"requiredDuringSchedulingIgnoredDuringExecution":{"nodeSelectorTerms":[{"matchExpressions":[{"key":"node-role.kubernetes.io/control-plane","operator":"DoesNotExist"}]}]}},"podAntiAffinity":{"preferredDuringSchedulingIgnoredDuringExecution":[{"weight":100,"podAffinityTerm":{"labelSelector":{"matchLabels":{"k8s-app":"kube-dns"}},"topologyKey":"kubernetes.io/hostname"}}]}}}}}}'
+
+kubectl rollout status deployment/coredns -n kube-system --timeout=120s
+kubectl get pods -n kube-system -l k8s-app=kube-dns -o wide
+# Xác nhận 1 Pod coredns trên worker-01 và 1 Pod trên worker-02 (đều 1/1 Running)
+```
+
+> [!NOTE]
+> `deploy/coredns` thuộc `kube-system` do `kubeadm` quản lý. Sau này nếu chạy `kubeadm upgrade`, `kubeadm` có thể ghi đè lại template mặc định — kiểm tra `kubectl get pods -n kube-system -l k8s-app=kube-dns -o wide` và áp lại lệnh `kubectl patch` trên nếu thấy `coredns` quay về `server-01`.
+
 ---
 
 ## Pha 3: Distributed Storage (Longhorn), HashiCorp Vault + ESO & Edge Gateway (Traefik HA)
