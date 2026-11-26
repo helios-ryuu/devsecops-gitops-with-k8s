@@ -1,6 +1,6 @@
 # NT548 Web Service (Next.js 16 Standalone + Redis)
 
-Ứng dụng web 2 tầng chạy trên `node:26.13.0-alpine3.23` (non-root `UID:GID 10001:10001`), kết nối Redis qua TCP client thuần (`node:net`) tại [src/lib/redis.ts](./src/lib/redis.ts).
+Ứng dụng web 2 tầng chạy trên `node:26.13.1-alpine3.24` (non-root `UID:GID 10001:10001`), kết nối Redis qua TCP client thuần (`node:net`) tại [src/lib/redis.ts](./src/lib/redis.ts).
 
 ## Endpoints & Biến môi trường
 

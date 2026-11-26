@@ -16,7 +16,7 @@ defaults:
 
 jobs:
   nightly-ghcr-image-scan:
-    name: Nightly Active Image CVE Audit (0 MB Cluster RAM)
+    name: Nightly Active Image CVE Audit
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -41,8 +41,17 @@ jobs:
           read -r -a FILES <<< "$MANIFEST_FILES"
           mapfile -t IMAGES < <(yq eval-all --no-doc '.. | .image? | select(. != null and . != "")' "${FILES[@]}" | sort -u)
           [[ "${#IMAGES[@]}" -gt 0 ]] || { echo "No active images found" >&2; exit 1; }
+          FAILED=0
           for IMG in "${IMAGES[@]}"; do
             echo "=== Pulling & Scanning $IMG ==="
-            docker pull "$IMG"
-            trivy image --severity "$SEVERITY" --ignore-unfixed --exit-code 1 "$IMG"
+            if ! docker pull "$IMG"; then
+              echo "::error::Failed to pull $IMG"
+              FAILED=1
+              continue
+            fi
+            if ! trivy image --severity "$SEVERITY" --ignore-unfixed --exit-code 1 "$IMG"; then
+              echo "::error::Vulnerabilities detected in $IMG"
+              FAILED=1
+            fi
           done
+          exit "$FAILED"

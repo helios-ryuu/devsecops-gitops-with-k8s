@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   security-gates:
-    name: DevSecOps Security Gates
+    name: Security Gates
     permissions:
       contents: read
     uses: ./.github/workflows/security-scan.yml

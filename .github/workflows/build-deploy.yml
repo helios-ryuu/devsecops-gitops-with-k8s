@@ -48,12 +48,33 @@ jobs:
           load: true
           tags: ${{ env.FULL_IMAGE }}
 
+      - name: Render GitOps Manifest (yq)
+        env:
+          DEPLOYMENT_FILE: ${{ inputs.deployment_file }}
+          SHORT_SHA: ${{ github.sha }}
+        run: |
+          export SHORT_SHA="${SHORT_SHA:0:8}"
+          yq -i '(.spec.template.spec.containers[0].image) = strenv(FULL_IMAGE) | (.spec.template.spec.containers[0].env[] | select(.name == "APP_VERSION").value) = strenv(SHORT_SHA)' "$DEPLOYMENT_FILE"
+
       - uses: aquasecurity/setup-trivy@v0.3.1
 
       - name: Trivy Image Scan (Security Gate)
         env:
+          DEPLOYMENT_FILE: ${{ inputs.deployment_file }}
           SEVERITY: ${{ inputs.severity }}
-        run: trivy image --severity "$SEVERITY" --ignore-unfixed --exit-code 1 "$FULL_IMAGE"
+        run: |
+          MANIFEST_DIR="$(dirname "$DEPLOYMENT_FILE")"
+          mapfile -t IMAGES < <(yq eval-all --no-doc '.. | .image? | select(. != null and . != "")' "$MANIFEST_DIR"/*.yaml | sort -u)
+          [[ "${#IMAGES[@]}" -gt 0 ]] || { echo "No images found in $MANIFEST_DIR" >&2; exit 1; }
+          FAILED=0
+          for IMG in "${IMAGES[@]}"; do
+            echo "=== Scanning $IMG ==="
+            if ! trivy image --severity "$SEVERITY" --ignore-unfixed --exit-code 1 "$IMG"; then
+              echo "::error::Vulnerabilities detected in $IMG"
+              FAILED=1
+            fi
+          done
+          exit "$FAILED"
 
       - name: Push Docker Image
         if: ${{ inputs.push_and_deploy }}
@@ -64,17 +85,13 @@ jobs:
           push: true
           tags: ${{ env.FULL_IMAGE }}
 
-      - name: Update GitOps Manifest (yq)
+      - name: Commit & Push GitOps Manifest
         if: ${{ inputs.push_and_deploy }}
         env:
           DEPLOYMENT_FILE: ${{ inputs.deployment_file }}
           TARGET_BRANCH: ${{ inputs.target_branch }}
-          SHORT_SHA: ${{ github.sha }}
         run: |
           git config --local user.name "GitHub Actions"
           git config --local user.email "action@github.com"
-          git pull --rebase origin "$TARGET_BRANCH"
-          export SHORT_SHA="${SHORT_SHA:0:8}"
-          yq -i '(.spec.template.spec.containers[0].image) = strenv(FULL_IMAGE) | (.spec.template.spec.containers[0].env[] | select(.name == "APP_VERSION").value) = strenv(SHORT_SHA)' "$DEPLOYMENT_FILE"
           git add "$DEPLOYMENT_FILE"
-          git diff --cached --quiet || { git commit -m "chore(prod): update image tag to ${GITHUB_SHA} [skip ci]" && git push origin "HEAD:${TARGET_BRANCH}"; }
+          git diff --cached --quiet || { git commit -m "chore(prod): update image tag to ${GITHUB_SHA} [skip ci]" && git pull --rebase origin "$TARGET_BRANCH" && git push origin "HEAD:${TARGET_BRANCH}"; }

@@ -4,22 +4,22 @@
 # ==============================================================================
 
 # --- Stage 1: Install Dependencies ---
-FROM node:26.13.0-alpine3.23 AS deps
+FROM node:26.13.1-alpine3.24 AS deps
 # Cần thiết cho một số thư viện C++ bindings trên Alpine (libc6-compat)
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Cài đặt pnpm theo đúng version trong package.json
-RUN npm install -g pnpm@12.16.1
+RUN npm install -g pnpm@12.23.0
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml* ./
 RUN pnpm i --frozen-lockfile
 
 # --- Stage 2: Build Application ---
-FROM node:26.13.0-alpine3.23 AS builder
+FROM node:26.13.1-alpine3.24 AS builder
 WORKDIR /app
 
-RUN npm install -g pnpm@12.16.1
+RUN npm install -g pnpm@12.23.0
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -30,7 +30,7 @@ ENV NODE_ENV=production
 RUN pnpm run build
 
 # --- Stage 3: Production Runtime ---
-FROM node:26.13.0-alpine3.23 AS runner
+FROM node:26.13.1-alpine3.24 AS runner
 WORKDIR /app
 
 # Hardening: Gỡ bỏ npm, npx, corepack để thu gọn runtime image

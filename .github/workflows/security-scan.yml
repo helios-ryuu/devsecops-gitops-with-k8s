@@ -1,11 +1,16 @@
-name: DevSecOps Security Gates
+name: Security Gates
 
 on:
   workflow_call:
     inputs:
       app_dir: { type: string, default: "app" }
-      manifest_paths: { type: string, default: "project-nt548/k8s-manifests platform-core/kyverno/policies platform-core/monitoring/servicemonitors" }
-      trivy_config_path: { type: string, default: "project-nt548/k8s-manifests" }
+      manifest_paths:
+        {
+          type: string,
+          default: "project-nt548/k8s-manifests platform-core/kyverno/policies platform-core/monitoring/servicemonitors",
+        }
+      trivy_config_path:
+        { type: string, default: "project-nt548/k8s-manifests" }
       severity: { type: string, default: "HIGH,CRITICAL" }
 
 defaults:
