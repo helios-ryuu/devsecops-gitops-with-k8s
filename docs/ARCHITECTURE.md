@@ -207,7 +207,27 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 | Tên miền Public | Cloudflare Proxy | `nt548.helios.id.vn` | `CNAME` tới `vps.helios.id.vn` (Proxied), SSL Mode `Full (Strict)` |
 | Tên miền Quản trị | Cloudflare Zero Trust | `argocd.helios.id.vn`, `grafana.helios.id.vn`, `hubble.helios.id.vn` | `CNAME` tới `vps.helios.id.vn` (Proxied) + Access Policy `K8s Admin` (Email OTP) |
 
-### 4.3. Ghi chú Vận hành Thực tế & Giới hạn Thiết kế (Trade-offs & SPOF)
+### 4.3. Danh mục Truy cập Ứng dụng & Giao diện Quản trị
+
+1. **Ứng dụng & Admin UI mở ra Internet (qua Traefik HA & Cloudflare SSL `Full (Strict)`):**
+
+| Thành phần | Namespace | Đường dẫn truy cập | Cơ chế bảo vệ |
+|---|---|---|---|
+| **Web App (Next.js + Redis)** | `app-prod` | https://nt548.helios.id.vn (`/healthz`, `/ready`) | Public (Cloudflare Proxy + TLS Origin) |
+| **ArgoCD UI** | `argocd` | https://argocd.helios.id.vn | Cloudflare Zero Trust (`K8s Admin`, Email OTP) |
+| **Grafana UI** | `monitoring` | https://grafana.helios.id.vn | Cloudflare Zero Trust (`K8s Admin`, Email OTP) |
+| **Hubble UI** | `kube-system` | https://hubble.helios.id.vn | Cloudflare Zero Trust (`K8s Admin`, Email OTP) |
+
+2. **Giao diện quản trị nội bộ (không expose ra Internet, truy cập qua `kubectl port-forward` từ máy quản trị trên `wg0`):**
+
+| Thành phần | Namespace | Lệnh `kubectl port-forward` | Địa chỉ cục bộ |
+|---|---|---|---|
+| **HashiCorp Vault UI** | `vault` | `kubectl port-forward -n vault svc/vault 8200:8200` | `http://localhost:8200` |
+| **Longhorn UI** | `longhorn-system` | `kubectl port-forward -n longhorn-system svc/longhorn-frontend 8080:80` | `http://localhost:8080` |
+| **Prometheus UI** | `monitoring` | `kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-prometheus 9090:9090` | `http://localhost:9090` |
+| **Traefik Dashboard** | `traefik` | `kubectl port-forward -n traefik deploy/traefik 9000:9000` | `http://localhost:9000/dashboard/` |
+
+### 4.4. Ghi chú Vận hành Thực tế & Giới hạn Thiết kế (Trade-offs & SPOF)
 
 1. **Điểm lỗi đơn (SPOF) có chủ đích theo ngân sách đồ án & hướng mở rộng Production:**
    - **`server-01` (Control Plane & Edge Ingress VIP):** Do giới hạn 1 VPS, `server-01` vừa là Control Plane đơn lẻ vừa là điểm vào duy nhất của `CiliumLoadBalancerIPPool`. Hướng nâng cấp Production: nhân bản 3 Control Plane (`etcd` quorum) kết hợp Cloud Load Balancer hoặc Cilium BGP Control Plane.
