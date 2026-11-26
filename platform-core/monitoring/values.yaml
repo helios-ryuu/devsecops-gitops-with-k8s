@@ -65,13 +65,16 @@ prometheus:
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
     retention: 7d
+    additionalArgs:
+      - name: query.timeout
+        value: "45s"
     resources:
       requests:
         cpu: "150m"
         memory: "256Mi"
       limits:
-        cpu: "500m"
-        memory: "1024Mi"
+        cpu: "1500m"
+        memory: "1536Mi"
     affinity:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
@@ -101,6 +104,8 @@ grafana:
     server:
       root_url: "https://grafana.helios.id.vn"
       enforce_domain: false
+    dataproxy:
+      timeout: 60
   resources:
     requests:
       cpu: "100m"
