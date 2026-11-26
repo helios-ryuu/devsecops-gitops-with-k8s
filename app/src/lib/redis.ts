@@ -79,7 +79,7 @@ async function executeRedisCommands(
   const payload = Buffer.concat(pipeline.map(encodeCommand));
 
   return new Promise((resolve, reject) => {
-    const socket = net.createConnection({ host, port });
+    const socket = net.createConnection({ host, port, family: 4 });
     let buffer = Buffer.alloc(0);
     const replies: RespValue[] = [];
     let settled = false;
