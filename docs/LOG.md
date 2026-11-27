@@ -29,7 +29,7 @@
 
 
 ## Pha 3: Longhorn Storage, HashiCorp Vault + ESO & Traefik HA (`LoadBalancer`)
-- [x] Cài đặt Longhorn (`replicas: 2`) và kiểm tra Node IP trong Longhorn UI (`10.100.0.2 <-> 10.100.0.3`)
+- [x] Cài đặt Longhorn (`replicas: 2`) và kiểm tra Node trên Longhorn UI (`Schedulable / Ready`, `158 Gi` khả dụng trên `worker-01` và `347 Gi` khả dụng trên `worker-02` sau 30% Reserved)
 - [x] Cài đặt HashiCorp Vault (Longhorn PVC `2Gi`), khởi tạo 1 khóa (`-key-shares=1 -key-threshold=1`), sao lưu `~/vault-init-keys.txt` ngoại tuyến, `unseal`, nạp 3 bí mật KV v2 & cấu hình Kubernetes Auth (3 Least-Privilege Policies/Roles)
 - [x] Cài đặt External Secrets Operator (ESO) & apply `ServiceAccount`/`SecretStore`/`ExternalSecret` Tầng 1 (`cloudflare-origin-tls`, `grafana-admin-secret`) đạt `SecretSynced`
 - [x] Cài đặt Traefik HA (`replicas: 2`), `traefik-metrics` (`ClusterIP: 9100`), `TLSStore`
@@ -53,3 +53,9 @@
 - [x] Trỏ DNS Cloudflare (`vps.helios.id.vn`, `nt548.helios.id.vn`, `argocd.helios.id.vn`, `grafana.helios.id.vn`, `hubble.helios.id.vn`) & Cloudflare Zero Trust `K8s Admin`
 
 <!-- Ghi chú của bạn cho Pha 5 -->
+
+
+## Pha 6: Kiểm thử Hệ thống & Hoàn thiện Báo cáo
+- [x] Hoàn thiện khung báo cáo `docs/REPORT.md`, cập nhật sơ đồ `diagrams/architecture.drawio` và đưa Chương 1 đến hết mục `4.3` kèm ảnh minh chứng (`diagrams/`) vào `docs/NT548-R12_Nhom-6_BaoCaoDoAn.docx`
+- [ ] Chạy 5 kịch bản kiểm thử hệ thống qua `scripts/test.sh` và thu thập ảnh minh chứng mục `4.4`, `4.5` (Grafana, Hubble UI, `nmap`)
+- [ ] Hoàn thiện mục `4.4`, `4.5`, Chương 5 trong file Word, thiết kế slide thuyết trình và nghiệm thu trước `05/12/2026`

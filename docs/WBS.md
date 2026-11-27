@@ -6,8 +6,8 @@
 - **Phân công trách nhiệm:**
   1. **Ngô Tiến Sỹ** (23521367) - **Platform & DevOps Lead**: Quản trị Kubernetes Hybrid (`kubeadm v1.37.1`) trên WireGuard `wg0`, Cilium eBPF LB + Hubble UI, Traefik HA, Longhorn Storage, ArgoCD GitOps, HashiCorp Vault & External Secrets Operator (ESO), Kyverno Policy, CI/CD DevSecOps & Nightly GHCR Trivy Audit, và `kube-prometheus-stack`.
   2. **Trần Hồng Phúc** (23521222) - **Web Fullstack Dev**: Viết code ứng dụng Web 2 tầng (Next.js 16 App Router + Tailwind CSS + Redis đếm lượt truy cập + `APP_ENV`/`APP_VERSION`), tích hợp endpoint `/healthz`, `/ready`, đóng gói Dockerfile non-root (`UID 10001`).
-  3. **Điền Quốc Huy** (23520600) - **QA & Observability Report**: Viết testcases, chạy kiểm thử tải (Autocannon / Postman), khai thác Grafana Web UI & Hubble UI chụp màn hình dashboard CPU/RAM/traffic/flow và soạn thảo *Báo cáo quan sát & Hiệu năng hệ thống*.
-  4. **Đặng Thế Long** (22520804) - **Documentation & Demo Support**: Hỗ trợ Sỹ chạy & lấy log 5 kịch bản Demo, chủ trì soạn thảo *Báo cáo đồ án môn học NT548*, thiết kế bộ *Slide thuyết trình* và sơ đồ kiến trúc Draw.io.
+  3. **Điền Quốc Huy** (23520600) - **Observability & Kiểm thử quan sát**: Khai thác Grafana Web UI & Hubble UI, chụp ảnh minh chứng biểu đồ CPU/RAM, lưu lượng Traefik và luồng mạng bị chặn phục vụ dán vào báo cáo, đồng thời phối hợp hoàn thiện tài liệu và slide.
+  4. **Đặng Thế Long** (22520804) - **Documentation & Kiểm thử hệ thống**: Phối hợp với Sỹ chạy kiểm thử hệ thống và thu thập log/ảnh minh chứng 5 kịch bản theo `scripts/test.sh`, chủ trì soạn thảo *Báo cáo đồ án môn học NT548*, thiết kế bộ *Slide thuyết trình* và sơ đồ kiến trúc Draw.io.
 
 ---
 
@@ -18,7 +18,7 @@
 | **Phase 1: Khởi động dự án** | | | | | | **Đã hoàn thành** |
 | 1.1 | Chọn ý tưởng & Chốt đề tài | Lựa chọn đề tài Xây dựng hệ thống DevSecOps và GitOps trên hạ tầng K8s Hybrid. | Cả nhóm | 25/10/2026 | 26/10/2026 | Đã hoàn thành |
 | 1.2 | Thống nhất công nghệ sử dụng | Chốt stack: WireGuard `wg0`, Kubernetes `v1.37.1` (`kubeadm` + `containerd.io 2.3.6`), Cilium eBPF & Hubble UI, Traefik HA, Longhorn, Cloudflare DNS & Zero Trust, GitHub Actions (Gitleaks/Trivy + Cron GHCR), ArgoCD, HashiCorp Vault & ESO (Kubernetes Auth), Kyverno, Prometheus/Grafana, Next.js + Redis. | Cả nhóm | 27/10/2026 | 28/10/2026 | Đã hoàn thành |
-| 1.3 | Phân định trách nhiệm & Vai trò | Phân công nhiệm vụ: Sỹ (Platform/DevOps), Phúc (Web App), Huy (QA/Observability), Long (Báo cáo/Slide/Demo). | Ngô Tiến Sỹ | 29/10/2026 | 31/10/2026 | Đã hoàn thành |
+| 1.3 | Phân định trách nhiệm & Vai trò | Phân công nhiệm vụ: Sỹ (Platform/DevOps), Phúc (Web App), Huy (Observability/Báo cáo), Long (Báo cáo/Slide/Kiểm thử). | Ngô Tiến Sỹ | 29/10/2026 | 31/10/2026 | Đã hoàn thành |
 | **Phase 2: Phân tích & Thiết kế** | | | | | | **Đã hoàn thành** |
 | 2.1 | Tạo cấu trúc phân rã công việc (WBS) | Lập kế hoạch chi tiết, thiết lập mốc hoàn thành trước 05/12/2026. | Ngô Tiến Sỹ | 01/11/2026 | 02/11/2026 | Đã hoàn thành |
 | 2.2 | Thiết kế kiến trúc Kubernetes Hybrid & GitOps | Thiết kế kiến trúc 2 tầng (`platform-core/` & `project-nt548/`), mạng `wg0` + Cilium eBPF LB, RollingUpdate Zero-Downtime & GitOps ArgoCD. | Ngô Tiến Sỹ | 03/11/2026 | 03/11/2026 | Đã hoàn thành |
@@ -34,10 +34,9 @@
 | 3.7 | Khởi tạo & Cấu hình ArgoCD GitOps | Cấu hình ArgoCD (`platform-core/argocd/values.yaml`) và GitOps Application Tầng 2 (`project-nt548/app-prod.yaml` với nhãn `policy-tier=hardened`). | Ngô Tiến Sỹ | 19/11/2026 | 20/11/2026 | Đã hoàn thành |
 | **Phase 4: Đo kiểm, Bảo mật & Giám sát** | | | | | | **Đang thực hiện** |
 | 4.1 | Triển khai Hệ thống Giám sát `kube-prometheus-stack` | Đồng bộ Prometheus (Longhorn 10Gi) + Grafana (Longhorn 5Gi) + ServiceMonitors (Cilium/Hubble, Traefik, Longhorn, ArgoCD). | Ngô Tiến Sỹ | 21/11/2026 | 22/11/2026 | Đã hoàn thành |
-| 4.2 | Đo kiểm chức năng & Kiểm thử tải Web | Viết testcases và chạy kiểm thử tải cơ bản bằng Autocannon / Postman, kiểm thử RollingUpdate Zero-Downtime. | Điền Quốc Huy | 23/11/2026 | 24/11/2026 | Chưa bắt đầu |
-| 4.3 | Khai thác Grafana & Hubble UI để soạn Báo cáo Quan sát | Chụp biểu đồ CPU, RAM, RPS Traefik, luồng NetworkPolicy `DROPPED` trên Hubble UI và viết *Báo cáo Quan sát*. | Điền Quốc Huy | 25/11/2026 | 26/11/2026 | Chưa bắt đầu |
-| 4.4 | Thực nghiệm & Thu thập log 5 kịch bản Demo | Chạy thử theo `scripts/demo.sh` (non-destructive guide) và lưu log/ảnh minh chứng 5 kịch bản. | Đặng Thế Long, Ngô Tiến Sỹ | 27/11/2026 | 28/11/2026 | Đang thực hiện |
-| **Phase 5: Báo cáo & Nghiệm thu** | | | | | | **Chưa bắt đầu** |
-| 5.1 | Soạn thảo Báo cáo đồ án môn học hoàn chỉnh | Viết tài liệu báo cáo NT548 hoàn chỉnh theo kiến trúc đã nghiệm thu. | Đặng Thế Long, Cả nhóm | 29/11/2026 | 01/12/2026 | Chưa bắt đầu |
-| 5.2 | Thiết kế Slide thuyết trình & Sơ đồ Draw.io | Hoàn thiện sơ đồ Draw.io, slide báo cáo tổng kết và diễn tập flow demo live. | Đặng Thế Long, Điền Quốc Huy | 02/12/2026 | 03/12/2026 | Chưa bắt đầu |
+| 4.2 | Khai thác Grafana & Hubble UI chụp ảnh quan sát cho báo cáo | Chụp các biểu đồ CPU, RAM, lưu lượng Traefik và luồng NetworkPolicy `DROPPED` trên Hubble UI bổ sung cho mục 4.4 và 4.5 của báo cáo. | Điền Quốc Huy | 25/11/2026 | 29/11/2026 | Đang thực hiện |
+| 4.3 | Kiểm thử hệ thống 5 kịch bản & Thu thập log/ảnh minh chứng | Chạy kiểm thử theo `scripts/test.sh` (hướng dẫn an toàn) và lưu log, ảnh minh chứng 5 kịch bản hoàn thiện mục 4.4 báo cáo. | Đặng Thế Long, Ngô Tiến Sỹ | 27/11/2026 | 29/11/2026 | Đang thực hiện |
+| **Phase 5: Báo cáo & Nghiệm thu** | | | | | | **Đang thực hiện** |
+| 5.1 | Soạn thảo Báo cáo đồ án môn học hoàn chỉnh | Đã hoàn thiện `docs/REPORT.md` và đưa nội dung kèm ảnh minh chứng từ Chương 1 đến hết mục 4.3 vào `docs/NT548-R12_Nhom-6_BaoCaoDoAn.docx`; còn lại mục 4.4, 4.5 và Chương 5 sau khi chạy kiểm thử. | Đặng Thế Long, Cả nhóm | 26/11/2026 | 01/12/2026 | Đang thực hiện |
+| 5.2 | Thiết kế Slide thuyết trình & Sơ đồ Draw.io | Đã hoàn thiện sơ đồ kiến trúc `diagrams/architecture.drawio` (xuất 2x/4x PNG); tiếp tục thiết kế bộ slide thuyết trình và diễn tập flow kiểm thử live. | Đặng Thế Long, Điền Quốc Huy | 28/11/2026 | 03/12/2026 | Đang thực hiện |
 | 5.3 | Nghiệm thu nội bộ & Đóng gói sản phẩm trước 05/12 | Diễn tập thuyết trình thử, rà soát repo, kiểm tra tính sẵn sàng của cụm Kubernetes trước 05/12/2026. | Cả nhóm | 04/12/2026 | 05/12/2026 | Chưa bắt đầu |

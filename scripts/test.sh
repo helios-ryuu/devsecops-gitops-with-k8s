@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# SCRIPT IN HƯỚNG DẪN DEMO: PLATFORM ENGINEERING & DEVSECOPS (ĐỒ ÁN NT548)
-# Chức năng: CHỈ IN RA CÁC BƯỚC VÀ CÂU LỆNH MẪU ĐỂ TRÌNH BÀY DEMO.
+# SCRIPT IN HƯỚNG DẪN KIỂM THỬ HỆ THỐNG: PLATFORM ENGINEERING & DEVSECOPS (ĐỒ ÁN NT548)
+# Chức năng: CHỈ IN RA CÁC BƯỚC VÀ CÂU LỆNH MẪU ĐỂ THỰC HIỆN KIỂM THỬ HỆ THỐNG.
 # Không thực thi bất kỳ câu lệnh nào lên Git hay cụm Kubernetes.
 # ==============================================================================
 
@@ -55,7 +55,7 @@ ${GREEN}[Bước 1] Kiểm tra 4 ValidatingPolicy đang bật Enforce (Deny):${N
 ${GREEN}[Bước 2] Thử tạo Pod vi phạm (image :latest, không securityContext, không limits):${NC}
   $ kubectl run test-violation -n app-prod --image=nginx:latest --restart=Never
 
-${GREEN}[Bước 3] Kết quả trình bày cho Hội đồng:${NC}
+${GREEN}[Bước 3] Kết quả kiểm chứng kỳ vọng:${NC}
   - Admission Webhook của Kyverno trả lỗi từ chối ngay lập tức, Pod không thể được lên lịch.
 
 ${GREEN}[Bước 4] Thử chạy lại một image không nằm trong whitelist (ví dụ alpine:3.20):${NC}
@@ -68,7 +68,7 @@ print_scenario_3() {
   cat <<EOF
 
 ${YELLOW}=== KỊCH BẢN 3: GITOPS CONTINUOUS DELIVERY (ROLLINGUPDATE ZERO-DOWNTIME) & GIT ROLLBACK ===${NC}
-${BLUE}Mục tiêu:${NC} Trình diễn nâng cấp ứng dụng không gián đoạn với Deployment web-deployment
+${BLUE}Mục tiêu:${NC} Kiểm chứng nâng cấp ứng dụng không gián đoạn với Deployment web-deployment
           (replicas: 2, RollingUpdate maxUnavailable=0, maxSurge=1) và rollback tức thì bằng Git.
 
 ${GREEN}[Bước 1] Kiểm tra trạng thái Production hiện tại trong app-prod:${NC}
@@ -84,7 +84,7 @@ ${GREEN}[Bước 3] Đẩy cập nhật nhỏ trong app/ lên main để kích h
   $ kubectl -n app-prod rollout status deploy/web-deployment
   $ kubectl -n app-prod get pods -o wide
 
-${GREEN}[Bước 4] Demo GitOps Rollback tức thì (Zero-Downtime):${NC}
+${GREEN}[Bước 4] Kiểm thử GitOps Rollback tức thì (Zero-Downtime):${NC}
   $ git revert HEAD --no-edit && git push origin main
   $ kubectl -n app-prod rollout status deploy/web-deployment
   $ curl -s https://nt548.helios.id.vn/ready
@@ -125,7 +125,7 @@ ${BLUE}Mục tiêu:${NC} Chứng minh quét CVE định kỳ image đang chạy 
 
 ${GREEN}[Bước 1] Kiểm tra quét CVE hàng đêm cho các image đang deploy (0 MB RAM cụm):${NC}
   - Vào GitHub Actions -> Workflow 'Nightly Active GHCR & Base Image Audit' (.github/workflows/nightly-audit.yml)
-    -> xem lịch cron '0 0 * * *' hoặc bấm Run workflow để trình diễn trực tiếp:
+    -> xem lịch cron '0 0 * * *' hoặc bấm Run workflow để kiểm chứng trực tiếp:
   - Runner tự đọc các image tag đang chạy trong deployment.yaml & redis-statefulset.yaml, pull về và chạy Trivy.
   - Mở Grafana (https://grafana.helios.id.vn) để xem dashboard tài nguyên Node, Cilium eBPF và Traefik RPS.
 
@@ -145,7 +145,7 @@ ${GREEN}[Bước 3] Kiểm chứng Longhorn Storage Failover (RPO = 0, không m�
   - Chờ redis-0 khởi chạy lại trên worker còn lại (~30-60s để Longhorn detach/attach PVC RWO), sau đó tải lại web và mở node lại:
     $ kubectl get pods -n app-prod -o wide -w
     $ kubectl uncordon <NODE_NAME>
-  -> Lưu ý trình bày: Traefik đạt Zero-Downtime HA; còn Redis StatefulSet (1 replica, PVC RWO) gián đoạn ngắn lúc chuyển volume và đạt Data Durability (RPO = 0).
+  -> Lưu ý đánh giá: Traefik đạt Zero-Downtime HA; còn Redis StatefulSet (1 replica, PVC RWO) gián đoạn ngắn lúc chuyển volume và đạt Data Durability (RPO = 0).
 
 EOF
 }
@@ -168,10 +168,10 @@ fi
 
 clear 2>/dev/null || true
 echo -e "${CYAN}========================================================================${NC}"
-echo -e "${CYAN}   HƯỚNG DẪN CÁC BƯỚC DEMO: PLATFORM ENGINEERING & DEVSECOPS (NT548)    ${NC}"
+echo -e "${CYAN}   HƯỚNG DẪN CÁC BƯỚC KIỂM THỬ HỆ THỐNG (ĐỒ ÁN NT548)                  ${NC}"
 echo -e "${CYAN}   (Script chỉ in câu lệnh hướng dẫn — không thực thi lên hệ thống)     ${NC}"
 echo -e "${CYAN}========================================================================${NC}"
-echo -e "Chọn kịch bản bạn muốn xem hướng dẫn:"
+echo -e "Chọn kịch bản kiểm thử bạn muốn xem hướng dẫn:"
 echo -e "  ${GREEN}1)${NC} Kịch bản 1: CI DevSecOps Gate (Gitleaks, Trivy, Kubeconform, Trivy Config)"
 echo -e "  ${GREEN}2)${NC} Kịch bản 2: Kyverno Admission Policy Enforce (policy-tier=hardened)"
 echo -e "  ${GREEN}3)${NC} Kịch bản 3: GitOps Continuous Delivery (RollingUpdate Zero-Downtime) & Rollback"

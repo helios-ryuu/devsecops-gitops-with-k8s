@@ -11,8 +11,8 @@ Tài liệu hướng dẫn thao tác từng bước để dựng hoàn chỉnh h
 | Thành phần | Node / Giá trị | Thông số & Ghi chú |
 |---|---|---|
 | Control Plane (VPS Ubuntu) | `server-01` (`heliosvps`) | User `helios` • SSH **`61022/tcp`** • **6GB RAM** (~5.3–5.5GB khả dụng) • Public IP `<VPS_PUBLIC_IP>` • `A`: `vps.helios.id.vn` (DNS Only) • `wg0`: `10.100.0.1/24` |
-| Worker 1 (On-Prem Ubuntu) | `worker-01` | User `helios` • SSH **`61122/tcp`** (LAN `10.10.0.0/24` & `wg0`) • **8GB RAM** (~7.3–7.5GB khả dụng) • `wg0`: `10.100.0.2/24` • Longhorn `/var/lib/longhorn` (`199GB`) |
-| Worker 2 (On-Prem Ubuntu) | `worker-02` | User `helios` • SSH **`61222/tcp`** (LAN `10.10.0.0/24` & `wg0`) • **8GB RAM** (~7.3–7.5GB khả dụng) • `wg0`: `10.100.0.3/24` • Longhorn `/` (`461GB` trống) |
+| Worker 1 (On-Prem Ubuntu) | `worker-01` | User `helios` • SSH **`61122/tcp`** (LAN `10.10.0.0/24` & `wg0`) • **8GB RAM** (~7.3–7.5GB khả dụng) • `wg0`: `10.100.0.2/24` • Longhorn `158 Gi` khả dụng (tổng `226 Gi`, 30% Reserved tại `/var/lib/longhorn`) |
+| Worker 2 (On-Prem Ubuntu) | `worker-02` | User `helios` • SSH **`61222/tcp`** (LAN `10.10.0.0/24` & `wg0`) • **8GB RAM** (~7.3–7.5GB khả dụng) • `wg0`: `10.100.0.3/24` • Longhorn `347 Gi` khả dụng (tổng `496 Gi`, 30% Reserved tại `/var/lib/longhorn`) |
 | Máy quản trị (Fedora) | `laptop` | `wg0`: `10.100.0.10/32` • Chạy `kubectl`, `helm`, `cilium`, `jq`, `ssh` |
 | Pod CIDR / Service CIDR | `10.42.0.0/16` / `10.43.0.0/16` | Cilium VXLAN `MTU 1340` • CoreDNS `10.43.0.10` |
 | Tên miền Public | `nt548.helios.id.vn` | `CNAME -> vps.helios.id.vn` (Cloudflare Proxied, SSL `Full (Strict)`) |
@@ -169,7 +169,7 @@ echo "iscsi_tcp" | sudo tee /etc/modules-load.d/longhorn-iscsi.conf
 sudo systemctl enable --now iscsid
 ```
 
-> Cả `worker-01` (`199GB`) và `worker-02` (`461GB` trống trên `/`) đều dùng trực tiếp thư mục mặc định `/var/lib/longhorn` trên phân vùng `/`.
+> Cả `worker-01` (`158 Gi` khả dụng trên tổng `226 Gi`) và `worker-02` (`347 Gi` khả dụng trên tổng `496 Gi`, sau khi Longhorn giữ mặc định 30% Reserved) đều dùng trực tiếp thư mục mặc định `/var/lib/longhorn` trên phân vùng `/`.
 
 ### 1.3. Sinh khóa, kích hoạt `wg0` & Kiểm chứng SSH qua `wg0`
 
@@ -478,7 +478,7 @@ Mở tạm Longhorn UI để kiểm tra nhận diện IP Node & Ổ đĩa:
 kubectl port-forward svc/longhorn-frontend 8080:80 -n longhorn-system
 ```
 
-Truy cập `http://127.0.0.1:8080` -> mục **Node**: xác nhận `worker-01` có IP `10.100.0.2` (`199GB`), `worker-02` có IP `10.100.0.3` (`461GB` trên `/var/lib/longhorn`), trạng thái **Schedulable / Ready**.
+Truy cập `http://127.0.0.1:8080` -> mục **Nodes**: xác nhận `worker-01` (`158 Gi` khả dụng, tổng `226.03 Gi`) và `worker-02` (`347 Gi` khả dụng, tổng `496.24 Gi`) đạt trạng thái **Schedulable / Ready** (địa chỉ `10.42.x.x` bên dưới tên node là Pod IP của `longhorn-manager`).
 
 ### 3.2. Cài đặt HashiCorp Vault, Bootstrap Kubernetes Auth & External Secrets Operator (ESO)
 
@@ -809,11 +809,11 @@ curl -i https://nt548.helios.id.vn/healthz
 curl -i https://nt548.helios.id.vn/ready
 ```
 
-### 6.2. Trình diễn 5 kịch bản Demo cho Hội đồng
+### 6.2. Thực hiện 5 kịch bản Kiểm thử hệ thống
 
 ```bash
-./scripts/demo.sh        # Menu chọn từng kịch bản 1..5 hoặc 'a'
-./scripts/demo.sh --all  # In toàn bộ 5 kịch bản
+./scripts/test.sh        # Menu chọn từng kịch bản 1..5 hoặc 'a'
+./scripts/test.sh --all  # In toàn bộ 5 kịch bản
 ```
 
 ### 6.3. Thu hồi sạch Tầng 2 sau khi bảo vệ đồ án (giữ nguyên Tầng 1 Platform Core)

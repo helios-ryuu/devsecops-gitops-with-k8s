@@ -2,7 +2,7 @@
 
 Tài liệu mô tả kiến trúc hoàn chỉnh đã chuyển đổi và triển khai của hệ thống Kubernetes Hybrid-Cloud trên nền tảng **Kubernetes v1.37.1 (`kubeadm` + `containerd.io 2.3.6`) + WireGuard (`wg0`) + Cilium eBPF + Traefik HA + Longhorn + HashiCorp Vault & External Secrets Operator (ESO) + ArgoCD GitOps + Kyverno + `kube-prometheus-stack` + GitHub Actions CI/CD (DevSecOps Gates & Nightly GHCR Image Audit)**.
 
-> Các tài liệu liên quan: [README.md](../README.md) • [RUNBOOK.md](./RUNBOOK.md) • [WBS.md](./WBS.md) • [LOG.md](./LOG.md) • [wireguard/README.md](../wireguard/README.md) • [platform-core/vault/README.md](../platform-core/vault/README.md)
+> Các tài liệu liên quan: [README.md](../README.md) • [REPORT.md](./REPORT.md) • [RUNBOOK.md](./RUNBOOK.md) • [WBS.md](./WBS.md) • [LOG.md](./LOG.md) • [wireguard/README.md](../wireguard/README.md) • [platform-core/vault/README.md](../platform-core/vault/README.md)
 
 ---
 
@@ -25,10 +25,12 @@ devsecops-gitops-with-k8s/
 ├── README.md                                 # Tổng quan đồ án, phân công thành viên & kịch bản demo
 ├── docs/                                     # Tài liệu kiến trúc, vận hành & quản lý đồ án
 │   ├── ARCHITECTURE.md                       # Kiến trúc 2 tầng, sơ đồ ASCII tổng thể, quy hoạch IP/RAM & kiểm chứng
+│   ├── NT548-R12_Nhom-6_BaoCaoDoAn.docx      # File báo cáo Word chính thức của Nhóm 6
+│   ├── REPORT.md                             # Nội dung báo cáo đồ án môn học NT548 đầy đủ
 │   ├── RUNBOOK.md                            # Hướng dẫn thao tác từng bước (Pha 0 -> Pha 6)
 │   ├── WBS.md                                # Cấu trúc phân chia công việc (WBS) & mốc thời gian
 │   └── LOG.md                                # Nhật ký thực thi & checklist triển khai theo pha
-├── diagrams/                                 # Sơ đồ kiến trúc tổng thể (architecture.drawio, 2x/4x PNG)
+├── diagrams/                                 # Sơ đồ kiến trúc tổng thể (architecture.drawio, 2x/4x PNG) & ảnh minh chứng triển khai
 ├── wireguard/                                # Hub-and-Spoke wg0 + hướng dẫn chuẩn bị host & khóa biên
 │   ├── README.md
 │   └── wg0.*.conf.example                    # server, client-01, client-02, client-fedora, client-phone
@@ -52,7 +54,7 @@ devsecops-gitops-with-k8s/
 │   ├── app-prod.yaml                         # ArgoCD Application Tầng 2 (namespace app-prod, nhãn policy-tier=hardened)
 │   └── k8s-manifests/                        # Manifest YAML thuần: web-deployment (RollingUpdate), Service, Ingress, ConfigMap, Redis, SecretStore/ExternalSecret, NetworkPolicy
 └── scripts/
-    └── demo.sh                               # Script in hướng dẫn 5 kịch bản Demo (chỉ đọc, an toàn)
+    └── test.sh                               # Script in hướng dẫn 5 kịch bản Kiểm thử hệ thống (chỉ đọc, an toàn)
 ```
 
 ---
@@ -91,7 +93,7 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 #  |  | | WORKER-01 (wg0: 10.100.0.2 | SSH :61122)        |  Direct LAN    | WORKER-02 (wg0: 10.100.0.3 | SSH :61222)        | |  |  # |        |  | | + Trivy Config Scan (k8s-manifests/, HIGH/CRITICAL)   | |   |           |
 #  |  | |  * kubelet + containerd 2.3.6 + node-exporter   | /32 Bypass VPS |  * kubelet + containerd 2.3.6 + node-exporter   | |  |  # |        |  | +-------------------------------------------------------+ |   |           |
 #  |  | |  * Cilium Agent (eBPF, VXLAN) + Hubble          |<-------------->|  * Cilium Agent (eBPF, VXLAN) + Hubble          | |  |  # |        |  |                             | (Gates Passed)              |   |           |
-#  |  | |  * Longhorn 199GB (/var/lib/longhorn, Repl 1)   | 1Gbps (~0.3ms) |  * Longhorn 461GB (/var/lib/longhorn, Repl 2)   | |  |  # |        |  |                             v                             |   |           |
+#  |  | |  * Longhorn 158Gi/226Gi (/var/lib/longhorn)     | 1Gbps (~0.3ms) |  * Longhorn 347Gi/496Gi (/var/lib/longhorn)     | |  |  # |        |  |                             v                             |   |           |
 #  |  | +------------------------+------------------------+                +------------------------+------------------------+ |  |  # |        |  | +--- [Job 4: build-and-deploy-prod] --------------------+ |   |           |
 #  |  |                          v                                                                  v                          |  |  # |        |  | | 1. Buildx local image:sha & yq render deployment.yaml | |   |           |
 #  |  | +--- TẦNG 1: PLATFORM CORE (Platform Infrastructure & DevSecOps Services trên zone: onprem-lan) ---------------------+ |  |  # |        |  | | 2. Trivy Image Gate (all manifests, --ignore-unfixed) | |   |           |
@@ -200,8 +202,8 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 |---|---|---|---|
 | `server-01` (`heliosvps`, 6GB) | `eth0` / `wg0` | `<VPS_PUBLIC_IP>` / `10.100.0.1/24` | SSH **`61022/tcp`**, API `10.100.0.1:6443`, `CiliumLoadBalancerIPPool` `<VPS_PUBLIC_IP>/32` |
 | Bản ghi `A` Public VPS | Cloudflare (DNS Only) | `vps.helios.id.vn` $\rightarrow$ `<VPS_PUBLIC_IP>` | Tắt Proxy (đám mây xám) cho WireGuard UDP `:51820` & SSH `:61022` |
-| `worker-01` (8GB) | `wg0` / LAN | `10.100.0.2/24` / `<WORKER_01_LAN_IP>` | SSH **`61122/tcp`**, Static IP `10.10.0.0/24` (ngoài DHCP `.50–.254`), Longhorn `199GB` (`/var/lib/longhorn`) |
-| `worker-02` (8GB) | `wg0` / LAN | `10.100.0.3/24` / `<WORKER_02_LAN_IP>` | SSH **`61222/tcp`**, Static IP `10.10.0.0/24` (ngoài DHCP `.50–.254`), Longhorn `461GB` trên `/` (`/var/lib/longhorn`) |
+| `worker-01` (8GB) | `wg0` / LAN | `10.100.0.2/24` / `<WORKER_01_LAN_IP>` | SSH **`61122/tcp`**, Static IP `10.10.0.0/24` (ngoài DHCP `.50–.254`), Longhorn `158 Gi` khả dụng (tổng `226 Gi`, 30% Reserved tại `/var/lib/longhorn`) |
+| `worker-02` (8GB) | `wg0` / LAN | `10.100.0.3/24` / `<WORKER_02_LAN_IP>` | SSH **`61222/tcp`**, Static IP `10.10.0.0/24` (ngoài DHCP `.50–.254`), Longhorn `347 Gi` khả dụng (tổng `496 Gi`, 30% Reserved tại `/var/lib/longhorn`) |
 | `client-fedora` / `client-phone` | `wg0` | `10.100.0.10/32` / `10.100.0.11/32` | Quản trị cụm (`kubectl`, `helm`, SSH) qua Hub `vps.helios.id.vn:51820` |
 | Pod CIDR / Service CIDR | Overlay | `10.42.0.0/16` (`MTU 1340`) / `10.43.0.0/16` | Cilium VXLAN & CoreDNS `10.43.0.10` |
 | Tên miền Public | Cloudflare Proxy | `nt548.helios.id.vn` | `CNAME` tới `vps.helios.id.vn` (Proxied), SSL Mode `Full (Strict)` |
@@ -241,7 +243,7 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 
 ---
 
-## 5. Kiểm tra Xác nhận Hệ thống & Kịch bản Demo
+## 5. Kiểm tra Xác nhận & Kiểm thử Hệ thống
 
 ### 5.1. Danh mục kiểm chứng vận hành
 
@@ -256,7 +258,7 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 | 7 | CI/CD & Nightly GHCR Audit | Push code thử (`ci.yml`) + chạy tay `nightly-audit.yml` | Job CI pass các gate CVE/Config/Secret qua `workflow_call`; Nightly workflow pull & scan sạch image active (`0 MB` RAM cụm) |
 | 8 | NetworkPolicy & Phát hành liên tục | `deploy/web-deployment`, `curl https://nt548.helios.id.vn/ready` | `RollingUpdate` zero downtime; Pod lạ tới Redis `:6379` bị `DROPPED` trên Hubble |
 
-### 5.2. 5 Kịch bản Demo cho Hội đồng (Chi tiết lệnh tại [scripts/demo.sh](../scripts/demo.sh))
+### 5.2. 5 Kịch bản Kiểm thử Hệ thống (Chi tiết lệnh tại [scripts/test.sh](../scripts/test.sh))
 
 1. **Kịch bản 1 – DevSecOps CI Gate (Fail Fast):** Thêm tạm dependency có CVE (ví dụ `lodash@4.17.20`) hoặc cấu hình manifest sai để kích hoạt `Trivy FS` / `kubeconform` + `Trivy Config`; GitHub Actions chặn ngay và hủy bước đẩy GHCR.
 2. **Kịch bản 2 – Kyverno Admission Policy Enforce:** Chạy `kubectl run test-violation -n app-prod --image=nginx:latest`; Kyverno (`admissionController`) từ chối ngay tại Kubernetes API Server do vi phạm root user, thiếu resource limits, tag `:latest` và registry ngoài whitelist.
