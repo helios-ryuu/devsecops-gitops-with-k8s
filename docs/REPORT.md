@@ -17,7 +17,7 @@ KHOA MẠNG MÁY TÍNH VÀ TRUYỀN THÔNG
 **ĐỀ TÀI:**
 **XÂY DỰNG HỆ THỐNG DEVSECOPS VÀ GITOPS TỰ ĐỘNG HÓA TRIỂN KHAI, BẢO MẬT VÀ GIÁM SÁT ỨNG DỤNG TRÊN HẠ TẦNG KUBERNETES HYBRID**
 
-- **Giảng viên hướng dẫn:** ThS. Lê Tuấn Anh *(Lưu ý: kiểm tra và điều chỉnh lại học vị của Thầy nếu cần)*
+- **Giảng viên hướng dẫn:** ThS. Lê Anh Tuấn *(Lưu ý: kiểm tra và điều chỉnh lại học vị của Thầy nếu cần)*
 - **Lớp:** NT548.R12 (Học kỳ 1, năm học 2026-2027)
 - **Nhóm thực hiện:** Nhóm 6
   - Ngô Tiến Sỹ (MSSV: 23521367)
@@ -51,7 +51,7 @@ TP.HCM, ngày ... tháng ... năm 2026
 
 ## LỜI CẢM ƠN
 
-Lời đầu tiên, nhóm em xin gửi lời cảm ơn chân thành và sâu sắc đến Thầy Lê Tuấn Anh, giảng viên phụ trách môn Công nghệ DevOps và Ứng dụng, người đã trực tiếp giảng dạy và tận tình đồng hành cùng nhóm trong suốt học kỳ vừa qua. Nhờ sự tâm huyết trong từng bài giảng cùng cách truyền đạt gần gũi, dễ hiểu của Thầy, nhóm em đã có được nền tảng vững chắc để tự tin bắt tay vào nghiên cứu và thực hiện đồ án môn học này.
+Lời đầu tiên, nhóm em xin gửi lời cảm ơn chân thành và sâu sắc đến Thầy Lê Anh Tuấn, giảng viên phụ trách môn Công nghệ DevOps và Ứng dụng, người đã trực tiếp giảng dạy và tận tình đồng hành cùng nhóm trong suốt học kỳ vừa qua. Nhờ sự tâm huyết trong từng bài giảng cùng cách truyền đạt gần gũi, dễ hiểu của Thầy, nhóm em đã có được nền tảng vững chắc để tự tin bắt tay vào nghiên cứu và thực hiện đồ án môn học này.
 
 Trong suốt quá trình lên ý tưởng, triển khai và hoàn thiện đồ án, nhóm em đã gặp không ít khó khăn và vướng mắc. Tuy nhiên, nhờ những định hướng kịp thời, sự giải đáp tận tình cùng những lời khuyên và góp ý chân thành từ Thầy, nhóm em đã dần tháo gỡ được các vấn đề, khắc phục những hạn chế và từng bước hoàn thành đồ án cũng như báo cáo một cách suôn sẻ.
 
@@ -93,12 +93,13 @@ Nhóm em xin kính chúc Thầy luôn dồi dào sức khỏe, hạnh phúc và 
   - 4.1. Dựng nền tảng mạng WireGuard và cụm Kubernetes Hybrid
   - 4.2. Triển khai các dịch vụ nền tảng cốt lõi (Tầng 1)
   - 4.3. Đóng gói ứng dụng mẫu, kích hoạt CI/CD và triển khai Tầng 2
-  - 4.4. Kiểm thử hệ thống qua 5 kịch bản thực nghiệm
+  - 4.4. Kiểm thử hệ thống qua 6 kịch bản thực nghiệm
     - 4.4.1. Kịch bản 1: Kiểm chứng cổng bảo mật CI DevSecOps
     - 4.4.2. Kịch bản 2: Kiểm chứng lớp chặn Kyverno tại tầng tiếp nhận Kubernetes
     - 4.4.3. Kịch bản 3: Kiểm chứng phát hành liên tục RollingUpdate không gián đoạn và hoàn tác qua Git
     - 4.4.4. Kịch bản 4: Kiểm chứng cô lập mạng Redis và quan sát luồng bị chặn trên Hubble UI
     - 4.4.5. Kịch bản 5: Kiểm chứng quét CVE ban đêm, chịu lỗi Traefik HA và chuyển đổi dự phòng Longhorn
+    - 4.4.6. Kịch bản 6: Kiểm chứng phục hồi HashiCorp Vault sau eviction và đồng bộ ESO
   - 4.5. Kết quả quan sát và đánh giá vận hành hệ thống
 - **CHƯƠNG 5: TỔNG KẾT**
   - 5.1. Kết quả đạt được
@@ -144,8 +145,9 @@ Nhóm em xin kính chúc Thầy luôn dồi dào sức khỏe, hạnh phúc và 
 - Hình 4.14: Kịch bản 4, kết nối trái phép từ Pod lạ tới Redis bị chặn ở tầng mạng
 - Hình 4.15: Kịch bản 4, luồng gói tin bị chặn (DROPPED) hiển thị trực quan trên giao diện Hubble UI
 - Hình 4.16: Kịch bản 5, kết quả chạy quy trình quét CVE ban đêm, xóa nóng Pod Traefik và chuyển đổi dự phòng Redis trên Longhorn
-- Hình 4.17: Bảng điều khiển Grafana theo dõi mức sử dụng CPU, RAM và lưu lượng của ba nodes trong cụm
-- Hình 4.18: Kết quả quét cổng mạng biên bằng nmap xác nhận chỉ mở các cổng dịch vụ cần thiết
+- Hình 4.17: Kịch bản 6, mở khóa HashiCorp Vault sau khi chuyển node và xác nhận ESO đồng bộ thành công
+- Hình 4.18: Bảng điều khiển Grafana theo dõi mức sử dụng CPU, RAM và lưu lượng của ba nodes trong cụm
+- Hình 4.19: Kết quả quét cổng mạng biên bằng nmap xác nhận chỉ mở các cổng dịch vụ cần thiết
 
 ---
 
@@ -202,7 +204,7 @@ Mục tiêu tổng thể của đồ án là thiết kế, triển khai và ki�
 - **Xây dựng hạ tầng lai ổn định:** Kết nối VPS và hai máy tại chỗ qua mạng riêng ảo mã hóa, tối ưu luồng dữ liệu nội bộ đi thẳng qua mạng LAN thay vì đi vòng qua Internet.
 - **Tự động hóa kiểm tra và đóng gói an toàn:** Thiết lập quy trình CI quét rò rỉ bí mật, kiểm tra lỗ hổng mã nguồn, rà soát chuẩn tệp cấu hình và quét ảnh container trước khi lưu trữ.
 - **Triển khai GitOps không gián đoạn và phòng thủ đa lớp:** Tách riêng hạ tầng nền tảng cố định với ứng dụng đồ án, cập nhật ứng dụng không rớt kết nối và bảo vệ từ lớp biên Internet đến từng tiến trình container.
-- **Quan sát trực quan và kiểm chứng thực tế:** Theo dõi tài nguyên, lưu lượng mạng theo thời gian thực và kiểm thử toàn bộ cơ chế bảo vệ, chịu lỗi qua năm kịch bản cụ thể.
+- **Quan sát trực quan và kiểm chứng thực tế:** Theo dõi tài nguyên, lưu lượng mạng theo thời gian thực và kiểm thử toàn bộ cơ chế bảo vệ, chịu lỗi qua sáu kịch bản cụ thể.
 
 Về phạm vi, đồ án tập trung vào mảng kỹ thuật nền tảng (Platform Engineering), bảo mật và tự động hóa triển khai trên phần cứng gồm một VPS 6 GB RAM và hai máy tại chỗ 8 GB RAM mỗi máy. Nhóm sử dụng một ứng dụng web hai tầng gọn nhẹ (Next.js và Redis) làm đối tượng kiểm chứng xuyên suốt thay cho một phần mềm nghiệp vụ phức tạp. Các cấu hình mở rộng tốn nhiều tài nguyên như cụm Control Plane nhiều nodes hay cụm Redis phân mảnh nhiều bản sao nằm ngoài phạm vi triển khai phần cứng nhưng được phân tích rõ ở phần đánh đổi thiết kế.
 
@@ -217,14 +219,14 @@ Nhóm 6 gồm bốn thành viên, phân công rõ ràng giữa mảng hạ tần
 | 1 | 23521367 | Ngô Tiến Sỹ | Trưởng nhóm, phụ trách hạ tầng và DevOps: thiết kế và vận hành mạng WireGuard, cụm Kubernetes Hybrid (`kubeadm`), Cilium eBPF và Hubble UI, Traefik HA, lưu trữ phân tán Longhorn, Vault và ESO, chính sách Kyverno, đồng bộ ArgoCD, hệ thống giám sát Prometheus/Grafana và đường ống GitHub Actions CI/CD. |
 | 2 | 23521222 | Trần Hồng Phúc | Phát triển ứng dụng mẫu: xây dựng ứng dụng Web Next.js 16 kết nối Redis đếm lượt truy cập, hiển thị biến môi trường phiên bản, hoàn thiện các điểm kiểm tra sức khỏe (`/healthz`, `/ready`) và đóng gói container chạy quyền không đặc quyền (`UID 10001`). |
 | 3 | 23520600 | Điền Quốc Huy | Quan sát hệ thống: khai thác giao diện Grafana và Hubble UI để theo dõi tài nguyên CPU, RAM, lưu lượng Traefik và luồng mạng bị chặn, thu thập ảnh minh chứng trực quan phục vụ báo cáo và bài trình bày. |
-| 4 | 22520804 | Đặng Thế Long | Tài liệu và kiểm thử hệ thống: phối hợp chạy bộ năm kịch bản kiểm thử (`scripts/test.sh`), thu thập nhật ký và ảnh minh chứng, chủ trì biên soạn báo cáo đồ án, vẽ sơ đồ kiến trúc và hoàn thiện slide thuyết trình. |
+| 4 | 22520804 | Đặng Thế Long | Tài liệu và kiểm thử hệ thống: phối hợp chạy bộ sáu kịch bản kiểm thử (`scripts/test.sh`), thu thập nhật ký và ảnh minh chứng, chủ trì biên soạn báo cáo đồ án, vẽ sơ đồ kiến trúc và hoàn thiện slide thuyết trình. |
 
 Đồ án được thực hiện trong sáu tuần (từ 25/10/2026 đến 05/12/2026) qua năm giai đoạn nối tiếp:
 
 - **Giai đoạn 1 (25/10/2026 đến 31/10/2026): Khởi động dự án.** Chốt đề tài, thống nhất bộ công nghệ phù hợp với cấu hình RAM thực tế và phân chia nhiệm vụ cho bốn thành viên.
 - **Giai đoạn 2 (01/11/2026 đến 05/11/2026): Phân tích và thiết kế.** Lập bảng phân rã công việc (WBS), thiết kế kiến trúc hai tầng, tổ chức kho mã nguồn Monorepo và quy hoạch địa chỉ mạng.
 - **Giai đoạn 3 (06/11/2026 đến 20/11/2026): Triển khai hạ tầng và tích hợp CI/CD.** Dựng mạng WireGuard, cụm Kubernetes `v1.37.1`, cài đặt toàn bộ dịch vụ nền tảng Tầng 1, đóng gói ứng dụng mẫu, xây dựng quy trình GitHub Actions, viết luật Kyverno và kích hoạt ArgoCD.
-- **Giai đoạn 4 (21/11/2026 đến 28/11/2026): Giám sát và kiểm thử hệ thống.** Cài đặt bộ giám sát Prometheus/Grafana, chụp ảnh quan sát trên Grafana và Hubble UI, đồng thời thực nghiệm năm kịch bản kiểm thử qua `scripts/test.sh`.
+- **Giai đoạn 4 (21/11/2026 đến 28/11/2026): Giám sát và kiểm thử hệ thống.** Cài đặt bộ giám sát Prometheus/Grafana, chụp ảnh quan sát trên Grafana và Hubble UI, đồng thời thực nghiệm sáu kịch bản kiểm thử qua `scripts/test.sh`.
 - **Giai đoạn 5 (26/11/2026 đến 05/12/2026): Hoàn thiện báo cáo và nghiệm thu.** Biên soạn báo cáo hoàn chỉnh, hoàn thiện sơ đồ Draw.io, slide thuyết trình và rà soát tính sẵn sàng của cụm trước ngày 05/12/2026.
 
 ---
@@ -333,7 +335,7 @@ Cách phân tách này giúp ArgoCD không bị quá tải bởi hạ tầng lõ
 Thách thức lớn nhất khi kết hợp một VPS đám mây (`server-01`, 6 GB RAM) với hai máy trạm nội bộ đặt tại mạng gia đình (`worker-01` và `worker-02`, mỗi máy 8 GB RAM, kết nối mạng LAN `10.10.0.0/24` 1 Gbps phía sau Router NAT) là làm sao giữ thông mạng an toàn mà không làm lưu lượng giữa hai Worker phải đi vòng qua VPS ngoài Internet.
 
 > **[Vị trí chèn Hình 3.1]**
-> *Hướng dẫn lấy/chụp ảnh:* Chèn trực tiếp tệp sơ đồ kiến trúc có sẵn tại `diagrams/architecture-4x.png`.
+> *Hướng dẫn lấy/chụp ảnh:* Chèn trực tiếp tệp sơ đồ kiến trúc có sẵn tại `images/diagrams/architecture-4x.png`.
 > *Gợi ý nội dung cần thấy rõ trong ảnh:* Hai ranh giới mạng WireGuard `wg0` và Cilium VXLAN, tuyến truyền LAN `/32` giữa hai Worker, luồng từ người dùng qua Cloudflare tới VPS và luồng GitHub Actions/ArgoCD.
 
 *Hình 3.1: Sơ đồ kiến trúc tổng thể hệ thống DevSecOps và GitOps trên Kubernetes Hybrid*
@@ -360,7 +362,7 @@ Hệ thống triển khai năm lớp phòng thủ nối tiếp từ ngoài Inter
 Ứng dụng mẫu trong `app/` xây dựng trên Next.js `16.4.6` App Router (`output: standalone`), kết nối Redis bằng trình khách viết thuần trên mô đun `node:net` (tự xử lý giao thức RESP) nhằm loại bỏ các thư viện ngoài dễ dính lỗ hổng CVE. Ứng dụng dùng `<Suspense>` và `connection()` để đóng gói ảnh không cần Redis chạy sẵn, đồng thời tách hai đường dẫn kiểm tra sức khỏe: `/healthz` (Liveness) và `/ready` (Readiness kiểm tra thực tế `PING` tới Redis). Trong `app/Dockerfile`, quá trình đóng gói ba giai đoạn chạy trên nền `node:26.13.1-alpine3.24`, xóa bỏ `npm`/`npx`/`corepack` ở ảnh cuối và ép chạy dưới người dùng số `USER 10001:10001`, kết hợp `readOnlyRootFilesystem: true` cùng hai vùng nhớ tạm `emptyDir` giới hạn dung lượng (`/tmp` 32 MiB, `/app/.next/cache` 64 MiB).
 
 > **[Vị trí chèn Hình 3.2]**
-> *Hướng dẫn lấy/chụp ảnh:* Dùng Draw.io (có thể trích từ nhánh CI/CD của `diagrams/architecture.drawio`) vẽ sơ đồ luồng gồm: Developer push Git -> `ci.yml` gọi `security-scan.yml` (Gitleaks, Trivy FS, kubeconform & Trivy Config) -> `build-deploy.yml` (Buildx, `yq` cập nhật manifest, Trivy Image Gate, Push GHCR, Commit `[skip ci]`) -> ArgoCD `RollingUpdate` xuống `app-prod`, cùng nhánh `nightly-audit.yml` chạy hằng đêm.
+> *Hướng dẫn lấy/chụp ảnh:* Dùng Draw.io (trích từ nhánh CI/CD của `images/diagrams/architecture.drawio`, tệp xuất sẵn `images/diagrams/github-action-workflow.png`) vẽ sơ đồ luồng gồm: Developer push Git -> `ci.yml` gọi `security-scan.yml` (Gitleaks, Trivy FS, kubeconform & Trivy Config) -> `build-deploy.yml` (Buildx, `yq` cập nhật manifest, Trivy Image Gate, Push GHCR, Commit `[skip ci]`) -> ArgoCD `RollingUpdate` xuống `app-prod`, cùng nhánh `nightly-audit.yml` chạy hằng đêm.
 > *Gợi ý nội dung cần thấy rõ trong ảnh:* Các cổng kiểm tra nối tiếp, cơ chế chặn khi có lỗi và hướng đồng bộ từ Git vào cụm.
 
 *Hình 3.2: Sơ đồ luồng đường ống CI/CD DevSecOps, GitOps ArgoCD và quét CVE định kỳ ban đêm*
@@ -400,7 +402,7 @@ Về **đánh đổi thiết kế (Trade-offs)** trong giới hạn đồ án: n
 
 # CHƯƠNG 4: TRIỂN KHAI VÀ KIỂM THỬ HỆ THỐNG
 
-Quá trình triển khai được thực hiện theo trình tự từ hạ tầng mạng và nhân cụm Kubernetes, tới các dịch vụ nền Tầng 1, rồi mới kích hoạt CI/CD, đưa ứng dụng Tầng 2 lên chạy thật và kiểm thử bằng năm kịch bản thực nghiệm.
+Quá trình triển khai được thực hiện theo trình tự từ hạ tầng mạng và nhân cụm Kubernetes, tới các dịch vụ nền Tầng 1, rồi mới kích hoạt CI/CD, đưa ứng dụng Tầng 2 lên chạy thật và kiểm thử bằng sáu kịch bản thực nghiệm.
 
 ## 4.1. Dựng nền tảng mạng WireGuard và cụm Kubernetes Hybrid
 
@@ -484,21 +486,21 @@ Cuối cùng, nhóm gán chính sách Cloudflare Zero Trust `Kubernetes Cluster 
 
 *Hình 4.9: Giao diện ứng dụng mẫu Web Next.js tích hợp bộ đếm Redis và lớp xác thực Cloudflare Zero Trust*
 
-## 4.4. Kiểm thử hệ thống qua 5 kịch bản thực nghiệm
+## 4.4. Kiểm thử hệ thống qua 6 kịch bản thực nghiệm
 
 Nhằm bảo đảm quá trình kiểm thử lặp lại an toàn và nhất quán, nhóm xây dựng công cụ hướng dẫn `scripts/test.sh` chỉ in câu lệnh mẫu và các bước kiểm chứng ra màn hình mà không tự ý sửa đổi Git hay cụm Kubernetes.
 
 > **[Vị trí chèn Hình 4.10]**
-> *Hướng dẫn lấy/chụp ảnh:* Chạy `./scripts/test.sh` trên terminal và chụp giao diện menu 5 kịch bản kiểm thử.
-> *Gợi ý nội dung cần thấy rõ trong ảnh:* Danh sách 5 kịch bản và dòng thông báo script chỉ in hướng dẫn an toàn.
+> *Hướng dẫn lấy/chụp ảnh:* Chạy `./scripts/test.sh` trên terminal và chụp giao diện menu 6 kịch bản kiểm thử.
+> *Gợi ý nội dung cần thấy rõ trong ảnh:* Danh sách 6 kịch bản và dòng thông báo script chỉ in hướng dẫn an toàn.
 
 *Hình 4.10: Giao diện hướng dẫn kiểm thử hệ thống từ script scripts/test.sh*
 
 ### 4.4.1. Kịch bản 1: Kiểm chứng cổng bảo mật CI DevSecOps
 
-- **Mục tiêu:** Chứng minh GitHub Actions chặn tức thì commit dính lỗ hổng CVE hoặc sai chuẩn cấu hình YAML trước khi đóng gói và đẩy ảnh lên GHCR.
-- **Quy trình thực hiện:** Nhóm thêm tạm thư viện cũ dính CVE là `lodash@4.17.20` vào `app/` rồi đẩy lên `main`, đồng thời kiểm tra `kubeconform -strict` và `trivy config` trên thư mục manifest, sau đó hoàn tác bằng `git revert HEAD --no-edit && git push origin main`.
-- **Kết quả và phân tích:** Job `2. Source CVE Scanning (Trivy FS)` dừng với mã thoát `1` và liệt kê rõ các CVE phát hiện được; Job đóng gói và triển khai phía sau bị bỏ qua hoàn toàn, giữ nguyên trạng thái an toàn cho cụm đang chạy.
+- **Mục tiêu:** Chứng minh đường ống GitHub Actions chặn tức thì commit rò rỉ thông tin bí mật, chứa thư viện dính lỗ hổng CVE hoặc tệp cấu hình Kubernetes không hợp chuẩn trước khi đóng gói và đẩy ảnh lên GHCR.
+- **Quy trình thực hiện:** Nhóm mô phỏng vi phạm CVE bằng cách cài tạm thư viện cũ `lodash@4.17.20` vào `app/`, chỉ commit riêng hai tệp cấu hình gói bằng lệnh `git commit --only app/package.json app/pnpm-lock.yaml` rồi đẩy lên `main` để không ảnh hưởng tới các thay đổi tài liệu cục bộ. Song song đó, nhóm kiểm tra cục bộ các tệp cấu hình YAML bằng `kubeconform -strict` và `trivy config --severity HIGH,CRITICAL --exit-code 1`. Sau khi kiểm chứng xong trên GitHub Actions, nhóm khôi phục sạch hai tệp về phiên bản trước bằng `git checkout HEAD~1 -- app/package.json app/pnpm-lock.yaml` kèm commit gắn thẻ `[skip ci]`.
+- **Kết quả và phân tích:** Trên tab GitHub Actions, job `2. Source CVE Scanning (Trivy FS)` phát hiện ngay lỗ hổng nghiêm trọng của `lodash@4.17.20` và dừng với mã thoát `1`; toàn bộ bước sau đó là `4. Build, Trivy Image Gate & Deploy app-prod` bị bỏ qua hoàn toàn, bảo đảm môi trường `app-prod` đang chạy không bị tác động.
 
 > **[Vị trí chèn Hình 4.11]**
 > *Hướng dẫn lấy/chụp ảnh:* Chụp nhật ký GitHub Actions khi chèn `lodash@4.17.20`.
@@ -524,13 +526,13 @@ Nhằm bảo đảm quá trình kiểm thử lặp lại an toàn và nhất qu�
 
 ### 4.4.3. Kịch bản 3: Kiểm chứng phát hành liên tục RollingUpdate không gián đoạn và hoàn tác qua Git
 
-- **Mục tiêu:** Kiểm chứng quy trình cập nhật ứng dụng qua CI và ArgoCD đạt 0% rớt kết nối với `RollingUpdate` (`maxUnavailable: 0, maxSurge: 1`) và hoàn tác tức thì bằng `git revert`.
-- **Quy trình thực hiện:** Mở một terminal chạy vòng lặp `curl -s -o /dev/null -w "%{http_code}\n" https://nt548.*/ready` mỗi 0.3 giây; đẩy một chỉnh sửa nhỏ trong `app/` lên `main`, theo dõi `kubectl -n app-prod rollout status deploy/web-deployment`, sau đó chạy `git revert HEAD --no-edit && git push origin main`.
-- **Kết quả và phân tích:** Trong suốt thời gian thay thế Pod cũ bằng Pod mới, vòng lặp `curl` trả về mã `200` liên tục không đứt quãng. Phiên bản `APP_VERSION` cập nhật theo mã SHA mới và quay về bản cũ mượt mà sau lệnh `git revert`.
+- **Mục tiêu:** Kiểm chứng quy trình cập nhật ứng dụng qua CI và ArgoCD đạt 0% rớt kết nối với `RollingUpdate` (`maxUnavailable: 0, maxSurge: 1`, `minReadySeconds: 5` kết hợp `lifecycle.preStop` chờ 5 giây để đồng bộ gỡ EndpointSlice với Traefik) và hoàn tác tức thì qua Git.
+- **Quy trình thực hiện:** Mở một terminal chạy vòng lặp kiểm tra liên tục endpoint `https://nt548.*/ready` (mỗi 0.5 giây, ghi nhận mốc thời gian, mã HTTP, độ trễ, bộ đếm `ok/fail` cùng phản hồi JSON chứa `version` và `pod`); đẩy riêng một chỉnh sửa nhỏ trong `app/` lên `main` bằng `git commit --only`, dùng `git pull --ff-only origin main` lấy thẻ ảnh mới do CI cập nhật và theo dõi `kubectl -n app-prod rollout status deploy/web-deployment`. Cuối cùng, nhóm hoàn tác tệp `deployment.yaml` về phiên bản trước bằng `git checkout HEAD~1 -- project-nt548/k8s-manifests/deployment.yaml` kèm `git commit --only ... [skip ci]` và đẩy lên `main`.
+- **Kết quả và phân tích:** Trong suốt thời gian thay thế Pod cũ bằng Pod mới, vòng lặp kiểm tra ghi nhận `HTTP=200` liên tục với `fail=0`, đồng thời thể hiện rõ thời điểm trường `version` và `pod` trong JSON phản hồi chuyển tiếp mượt mà sang mã SHA mới. Khi hoàn tác trên Git, ArgoCD tiếp tục điều phối một đợt `RollingUpdate` tương tự để đưa hệ thống về phiên bản cũ mà không làm gián đoạn truy cập.
 
 > **[Vị trí chèn Hình 4.13]**
-> *Hướng dẫn lấy/chụp ảnh:* Ghép ảnh vòng lặp `curl` toàn mã `200`, trạng thái `rollout status` thành công và giao diện web hiển thị `APP_VERSION` mới.
-> *Gợi ý nội dung cần thấy rõ trong ảnh:* Chuỗi HTTP `200` liên tục và thông báo rollout hoàn tất.
+> *Hướng dẫn lấy/chụp ảnh:* Ghép ảnh vòng lặp kiểm tra `/ready` giữ nguyên `HTTP=200` (`fail=0`, thấy rõ `version` và `pod` chuyển từ bản cũ sang bản mới), trạng thái `rollout status` thành công và giao diện web hiển thị `APP_VERSION` mới.
+> *Gợi ý nội dung cần thấy rõ trong ảnh:* Dòng log `HTTP=200`, `fail=0`, trường `version` đổi sang mã SHA mới và thông báo rollout hoàn tất.
 
 *Hình 4.13: Kịch bản 3, quá trình cập nhật RollingUpdate không gián đoạn và hoàn tác nhanh bằng Git*
 
@@ -564,25 +566,41 @@ Nhằm bảo đảm quá trình kiểm thử lặp lại an toàn và nhất qu�
 
 *Hình 4.16: Kịch bản 5, kết quả chạy quy trình quét CVE ban đêm, xóa nóng Pod Traefik và chuyển đổi dự phòng Redis trên Longhorn*
 
+### 4.4.6. Kịch bản 6: Kiểm chứng phục hồi HashiCorp Vault sau eviction và đồng bộ ESO
+
+- **Mục tiêu:** Tận dụng trạng thái `vault-0` bị chuyển khỏi node bảo trì sau lệnh `kubectl drain` ở Kịch bản 5 để chứng minh hai tính chất: ứng dụng và Traefik vẫn vận hành bình thường khi Vault đang bị khóa (`Sealed: true`) nhờ các Kubernetes `Secret` đã đồng bộ sẵn; đồng thời dữ liệu mật khẩu lưu trên ổ đĩa Longhorn `2Gi` vẫn nguyên vẹn, chỉ cần một lệnh mở khóa là Vault hoạt động lại và ESO duy trì trạng thái đồng bộ.
+- **Quy trình thực hiện:** Ngay sau khi `vault-0` được lập lịch sang node Worker còn lại ở trạng thái `0/1 Running`, nhóm chạy `kubectl exec -n vault vault-0 -- vault status` để xác nhận `Sealed: true`, kiểm tra trang `/ready` và `kubectl get externalsecret -A` để chứng minh dịch vụ không bị ảnh hưởng. Tiếp theo, nhóm thực hiện mở khóa bằng khóa đơn đã sao lưu ngoại tuyến:
+  ```bash
+  kubectl exec -n vault vault-0 -- vault operator unseal "<UNSEAL_KEY>"
+  ```
+  Sau cùng, nhóm kiểm tra lại `kubectl get pods -n vault -o wide` và `kubectl get externalsecret -A`.
+- **Kết quả và phân tích:** Trong lúc Vault tạm thời ở trạng thái `Sealed: true`, ứng dụng web và chứng chỉ TLS của Traefik vẫn hoạt động ổn định nhờ các `Secret` đã được đồng bộ trước đó trên cụm. Ngay sau lệnh `vault operator unseal`, trạng thái `Sealed` chuyển về `false` (`Initialized: true`, `HA Enabled: false`), Pod `vault-0` đạt `1/1 Running` và toàn bộ các `ExternalSecret` của `app-prod`, `monitoring` và `traefik` giữ vững trạng thái `SecretSynced` (`READY: True`). Kết quả chứng minh mô hình Vault kết hợp Longhorn PVC và ESO bảo toàn dữ liệu bí mật qua biến cố chuyển node và có quy trình phục hồi đơn giản, đúng như đánh đổi thiết kế ở Chương 3.
+
+> **[Vị trí chèn Hình 4.17]**
+> *Hướng dẫn lấy/chụp ảnh:* Chụp terminal hiển thị `vault-0` sau khi chạy `kubectl exec -n vault vault-0 -- vault operator unseal` chuyển từ `Sealed: true` sang `Sealed: false`, kèm kết quả `kubectl get pods -n vault` (`1/1 Running`) và `kubectl get externalsecret -A` (`SecretSynced`).
+> *Gợi ý nội dung cần thấy rõ trong ảnh:* Thông báo `Sealed: false` của Vault và trạng thái `SecretSynced` của cả ba `ExternalSecret`.
+
+*Hình 4.17: Kịch bản 6, mở khóa HashiCorp Vault sau khi chuyển node và xác nhận ESO đồng bộ thành công*
+
 ## 4.5. Kết quả quan sát và đánh giá vận hành hệ thống
 
 Qua theo dõi vận hành trên Grafana, Hubble UI và kiểm tra biên mạng:
 
 - **Tài nguyên thực tế trên Grafana (`https://grafana.*`):** Node `server-01` tiêu thụ ổn định ~1.9 đến 2.0 GiB trên 5.78 GiB RAM khả dụng; hai nodes Worker dùng trung bình ~2.85 đến 3.95 GB mỗi máy (trên 8 GB), dư hơn 50% bộ nhớ dự phòng. Toàn bộ số liệu từ `node-exporter`, Cilium/Hubble, Traefik, Longhorn (`:9500`) và ArgoCD đều hiển thị đầy đủ.
 
-> **[Vị trí chèn Hình 4.17]**
+> **[Vị trí chèn Hình 4.18]**
 > *Hướng dẫn lấy/chụp ảnh:* Chụp Dashboard tổng quan tài nguyên Node trên Grafana (`https://grafana.*`).
 > *Gợi ý nội dung cần thấy rõ trong ảnh:* Biểu đồ CPU và RAM của ba nodes `server-01`, `worker-01`, `worker-02` ổn định dưới ngưỡng quy hoạch.
 
-*Hình 4.17: Bảng điều khiển Grafana theo dõi mức sử dụng CPU, RAM và lưu lượng của ba nodes trong cụm*
+*Hình 4.18: Bảng điều khiển Grafana theo dõi mức sử dụng CPU, RAM và lưu lượng của ba nodes trong cụm*
 
 - **Kiểm tra cổng biên và quan sát thực tế:** Quét từ bên ngoài Internet bằng `nmap -Pn -p 61022,80,443,6443,9100,10250 vps.*` xác nhận chỉ các cổng công khai (`61022`, `80`, `443`) ở trạng thái `open`, còn `6443`, `9100` và `10250` bị chặn (`filtered`). Trên Hubble UI, luồng outbound tới `world:443` từ Grafana là tác vụ mặc định kiểm tra phiên bản, còn `argocd-applicationset-controller` được xác nhận duy trì ở `0` bản sao (`0 MB` RAM). Cuối cùng, nhóm chạy thử lệnh thu hồi Tầng 2 (`kubectl delete -f project-nt548/app-prod.yaml && kubectl delete namespace app-prod`) và xác nhận dọn sạch tài nguyên ứng dụng mà vẫn giữ nguyên vẹn 100% hạ tầng Tầng 1.
 
-> **[Vị trí chèn Hình 4.18]**
+> **[Vị trí chèn Hình 4.19]**
 > *Hướng dẫn lấy/chụp ảnh:* Chụp kết quả lệnh `nmap -Pn -p 61022,80,443,6443,9100,10250 vps.*` chạy từ máy ngoài mạng VPN.
 > *Gợi ý nội dung cần thấy rõ trong ảnh:* Cổng `61022`, `80`, `443` ghi `open`; cổng `6443`, `9100`, `10250` ghi `filtered`.
 
-*Hình 4.18: Kết quả quét cổng mạng biên bằng nmap xác nhận chỉ mở các cổng dịch vụ cần thiết*
+*Hình 4.19: Kết quả quét cổng mạng biên bằng nmap xác nhận chỉ mở các cổng dịch vụ cần thiết*
 
 ---
 
@@ -595,7 +613,7 @@ Sau hơn năm tuần triển khai và kiểm thử, Nhóm 6 đã hoàn thành đ
 - **Vận hành thành công hạ tầng Kubernetes Hybrid tối ưu chi phí:** Nối thông 1 VPS 6 GB RAM với 2 máy nội bộ 8 GB RAM qua WireGuard `wg0` và Cilium eBPF, định tuyến trực tiếp `/32` qua LAN 1 Gbps (độ trễ dưới 1 ms) và chuyển CoreDNS về Worker để tăng tốc phân giải DNS nội bộ.
 - **Triển khai trọn vẹn kiến trúc hai tầng tiết kiệm tài nguyên:** Tách biệt nền tảng Tầng 1 cố định và ứng dụng Tầng 2 thu hồi sạch, tối ưu toàn bộ hệ sinh thái để tiêu thụ dưới 50% RAM khả dụng trên mỗi Worker.
 - **Xây dựng phòng thủ đa lớp khép kín:** Kết hợp cổng CI sớm (`Gitleaks`, `Trivy`, `kubeconform`), Cloudflare Zero Trust, tường lửa Cloud NSG, mã hóa `etcd` (`aescbc`), quản lý bí mật không khóa tĩnh qua Vault và ESO, 4 luật Kyverno CEL và NetworkPolicy cô lập Redis.
-- **Kiểm chứng thực nghiệm thành công năm kịch bản:** Khẳng định khả năng chặn lỗi tự động, cập nhật `RollingUpdate` và `git revert` đạt 0% downtime, chịu lỗi Traefik HA, bảo toàn dữ liệu Redis trên Longhorn (`RPO = 0`) và quét CVE ban đêm không tốn RAM cụm.
+- **Kiểm chứng thực nghiệm thành công sáu kịch bản:** Khẳng định khả năng chặn lỗi tự động, cập nhật `RollingUpdate` và hoàn tác qua Git đạt 0% downtime, chịu lỗi Traefik HA, bảo toàn dữ liệu Redis trên Longhorn (`RPO = 0`), mở khóa phục hồi Vault sau eviction kèm đồng bộ ESO và quét CVE ban đêm không tốn RAM cụm.
 
 ## 5.2. Hạn chế của đồ án
 

@@ -26,11 +26,14 @@ devsecops-gitops-with-k8s/
 ├── docs/                                     # Tài liệu kiến trúc, vận hành & quản lý đồ án
 │   ├── ARCHITECTURE.md                       # Kiến trúc 2 tầng, sơ đồ ASCII tổng thể, quy hoạch IP/RAM & kiểm chứng
 │   ├── NT548-R12_Nhom-6_BaoCaoDoAn.docx      # File báo cáo Word chính thức của Nhóm 6
+│   ├── NT548-R12_Nhom-6_BaoCaoDoAn.pdf       # Bản xuất PDF hoàn chỉnh của báo cáo đồ án
 │   ├── REPORT.md                             # Nội dung báo cáo đồ án môn học NT548 đầy đủ
 │   ├── RUNBOOK.md                            # Hướng dẫn thao tác từng bước (Pha 0 -> Pha 6)
 │   ├── WBS.md                                # Cấu trúc phân chia công việc (WBS) & mốc thời gian
 │   └── LOG.md                                # Nhật ký thực thi & checklist triển khai theo pha
-├── diagrams/                                 # Sơ đồ kiến trúc tổng thể (architecture.drawio, 2x/4x PNG) & ảnh minh chứng triển khai
+├── images/                                   # Kho hình ảnh phục vụ báo cáo & thuyết trình
+│   ├── diagrams/                             # File nguồn Draw.io & các sơ đồ xuất từ Draw.io (2x/4x PNG, CI/CD)
+│   └── evidence/                             # Ảnh chụp minh chứng triển khai & 6 kịch bản kiểm thử
 ├── wireguard/                                # Hub-and-Spoke wg0 + hướng dẫn chuẩn bị host & khóa biên
 │   ├── README.md
 │   └── wg0.*.conf.example                    # server, client-01, client-02, client-fedora, client-phone
@@ -54,7 +57,7 @@ devsecops-gitops-with-k8s/
 │   ├── app-prod.yaml                         # ArgoCD Application Tầng 2 (namespace app-prod, nhãn policy-tier=hardened)
 │   └── k8s-manifests/                        # Manifest YAML thuần: web-deployment (RollingUpdate), Service, Ingress, ConfigMap, Redis, SecretStore/ExternalSecret, NetworkPolicy
 └── scripts/
-    └── test.sh                               # Script in hướng dẫn 5 kịch bản Kiểm thử hệ thống (chỉ đọc, an toàn)
+    └── test.sh                               # Script in hướng dẫn 6 kịch bản Kiểm thử hệ thống (chỉ đọc, an toàn)
 ```
 
 ---
@@ -258,10 +261,11 @@ Sơ đồ dưới đây mô tả trực tiếp trạng thái hệ thống mới 
 | 7 | CI/CD & Nightly GHCR Audit | Push code thử (`ci.yml`) + chạy tay `nightly-audit.yml` | Job CI pass các gate CVE/Config/Secret qua `workflow_call`; Nightly workflow pull & scan sạch image active (`0 MB` RAM cụm) |
 | 8 | NetworkPolicy & Phát hành liên tục | `deploy/web-deployment`, `curl https://nt548.helios.id.vn/ready` | `RollingUpdate` zero downtime; Pod lạ tới Redis `:6379` bị `DROPPED` trên Hubble |
 
-### 5.2. 5 Kịch bản Kiểm thử Hệ thống (Chi tiết lệnh tại [scripts/test.sh](../scripts/test.sh))
+### 5.2. 6 Kịch bản Kiểm thử Hệ thống (Chi tiết lệnh tại [scripts/test.sh](../scripts/test.sh))
 
 1. **Kịch bản 1 – DevSecOps CI Gate (Fail Fast):** Thêm tạm dependency có CVE (ví dụ `lodash@4.17.20`) hoặc cấu hình manifest sai để kích hoạt `Trivy FS` / `kubeconform` + `Trivy Config`; GitHub Actions chặn ngay và hủy bước đẩy GHCR.
 2. **Kịch bản 2 – Kyverno Admission Policy Enforce:** Chạy `kubectl run test-violation -n app-prod --image=nginx:latest`; Kyverno (`admissionController`) từ chối ngay tại Kubernetes API Server do vi phạm root user, thiếu resource limits, tag `:latest` và registry ngoài whitelist.
-3. **Kịch bản 3 – GitOps Continuous Delivery (`RollingUpdate` Zero-Downtime) & Instant Git Rollback:** Chạy vòng lặp `curl` liên tục vào `https://nt548.helios.id.vn/ready`, đẩy commit mới lên `app/` để `ci.yml` cập nhật image + `APP_VERSION` trong `project-nt548/k8s-manifests/deployment.yaml` và ArgoCD đồng bộ `RollingUpdate` (`maxUnavailable: 0, maxSurge: 1`) không rớt request nào; sau đó chạy `git revert HEAD --no-edit && git push` để rollback tức thì.
+3. **Kịch bản 3 – GitOps Continuous Delivery (`RollingUpdate` Zero-Downtime) & Instant Git Rollback:** Chạy vòng lặp kiểm tra liên tục `https://nt548.helios.id.vn/ready`, đẩy commit mới lên `app/` để `ci.yml` cập nhật image + `APP_VERSION` trong `project-nt548/k8s-manifests/deployment.yaml` và ArgoCD đồng bộ `RollingUpdate` (`maxUnavailable: 0, maxSurge: 1`) không rớt request nào; sau đó hoàn tác `deployment.yaml` qua Git để rollback tức thì.
 4. **Kịch bản 4 – NetworkPolicy Cô lập Redis & Hubble Observability:** Khởi chạy Pod hợp chuẩn Kyverno trong `app-prod` nhưng không mang nhãn `app: web` thử kết nối `redis-service.app-prod.svc.cluster.local:6379` $\rightarrow$ bị chặn đứng và hiển thị flow đỏ **`DROPPED`** trên Hubble UI (`https://hubble.helios.id.vn`).
-5. **Kịch bản 5 – Nightly GHCR CVE Audit (`0 MB` RAM cụm), Traefik HA & Longhorn Failover:** Kích hoạt tay workflow **`Nightly Active GHCR & Base Image Audit`** ([nightly-audit.yml](../.github/workflows/nightly-audit.yml)) trên GitHub Actions + xem Dashboard tài nguyên trên Grafana (`https://grafana.helios.id.vn`); xóa nóng 1 Pod Traefik trong lúc `curl` liên tục để chứng minh **Zero-Downtime HA** (`0%` rớt HTTP 200); sau đó `kubectl drain` worker chứa `redis-0` để chứng minh **High Availability & Data Durability (`RPO = 0`)** — gián đoạn ngắn ~30–60 giây khi Longhorn detach/attach PVC `RWO` sang worker còn lại, tự phục hồi và giữ nguyên bộ đếm lượt truy cập.
+5. **Kịch bản 5 – Nightly GHCR CVE Audit (`0 MB` RAM cụm), Traefik HA & Longhorn Failover:** Kích hoạt tay workflow **`Nightly Active GHCR & Base Image Audit`** ([nightly-audit.yml](../.github/workflows/nightly-audit.yml)) trên GitHub Actions + xem Dashboard tài nguyên trên Grafana (`https://grafana.helios.id.vn`); xóa nóng 1 Pod Traefik trong lúc kiểm tra liên tục để chứng minh **Zero-Downtime HA** (`0%` rớt HTTP 200); sau đó `kubectl drain` worker chứa `redis-0` để chứng minh **High Availability & Data Durability (`RPO = 0`)** — gián đoạn ngắn ~30–60 giây khi Longhorn detach/attach PVC `RWO` sang worker còn lại, tự phục hồi và giữ nguyên bộ đếm lượt truy cập.
+6. **Kịch bản 6 – Phục hồi HashiCorp Vault sau Eviction (Unseal) & Đồng bộ ESO:** Tận dụng trạng thái `vault-0` bị evict sang Worker khác sau Kịch bản 5 (`0/1 Running`, `Sealed: true`), xác nhận các K8s `Secret` đã đồng bộ vẫn giữ web và Traefik chạy bình thường, chạy 1 lệnh `kubectl exec -n vault vault-0 -- vault operator unseal` để mở khóa và xác nhận `vault-0` trở lại `1/1 Running` cùng toàn bộ `ExternalSecret` giữ trạng thái `SecretSynced`.

@@ -52,7 +52,7 @@
 | 1 | 23521367 | **Ngô Tiến Sỹ** | **Platform & DevOps Lead** | • Thiết kế & vận hành mạng WireGuard `wg0`, Kubernetes Hybrid (`kubeadm v1.37.1`), Cilium eBPF LB + Hubble UI.<br>• Triển khai Traefik HA, Longhorn Storage, HashiCorp Vault & ESO (Kubernetes Auth), Kyverno Policy.<br>• Vận hành ArgoCD (`app-prod`), `kube-prometheus-stack` & Nightly GHCR Audit.<br>• Xây dựng GitHub Actions CI/DevSecOps (`ci.yml`). | Server VPS & Workers, GitHub Actions, GitOps |
 | 2 | 23521222 | **Trần Hồng Phúc** | **Web Fullstack Dev** | • Phát triển Web 2 tầng (Next.js 16 App Router + Redis đếm lượt truy cập + `APP_ENV`/`APP_VERSION`).<br>• Xây dựng endpoints `/healthz`, `/ready` kiểm tra Redis phục vụ Kubernetes Probes.<br>• Đóng gói `Dockerfile` (`node:26.13.1-alpine3.24`, `USER 10001:10001` non-root). | Localhost & Git (`app/`) |
 | 3 | 23520600 | **Điền Quốc Huy** | **Observability & Kiểm thử quan sát** | • Khai thác Grafana Web UI & Hubble UI theo dõi CPU, RAM, Cilium eBPF, Traefik và luồng NetworkPolicy.<br>• Chụp ảnh minh chứng dashboard quan sát phục vụ dán vào báo cáo và slide.<br>• Phối hợp rà soát phần đánh giá quan sát hệ thống. | Grafana / Hubble Web UI & Báo cáo |
-| 4 | 22520804 | **Đặng Thế Long** | **Documentation & Kiểm thử hệ thống** | • Phối hợp thực nghiệm kiểm thử hệ thống và thu thập log/ảnh minh chứng 5 kịch bản (`scripts/test.sh`).<br>• Chủ trì soạn thảo tài liệu Báo cáo đồ án môn học NT548 hoàn chỉnh (`docs/REPORT.md`).<br>• Thiết kế bộ Slide thuyết trình và sơ đồ kiến trúc Draw.io. | Tài liệu Báo cáo / Slide / Draw.io & Git |
+| 4 | 22520804 | **Đặng Thế Long** | **Documentation & Kiểm thử hệ thống** | • Phối hợp thực nghiệm kiểm thử hệ thống và thu thập log/ảnh minh chứng 6 kịch bản (`scripts/test.sh`).<br>• Chủ trì soạn thảo tài liệu Báo cáo đồ án môn học NT548 hoàn chỉnh (`docs/REPORT.md`).<br>• Thiết kế bộ Slide thuyết trình và sơ đồ kiến trúc Draw.io. | Tài liệu Báo cáo / Slide / Draw.io & Git |
 
 ---
 
@@ -78,7 +78,7 @@ Hệ thống chia rõ **2 tầng** trong cùng repository:
 - **Tầng 1 (`platform-core/`):** Nền tảng Kubernetes cố định dài hạn (`Cilium`, `Hubble`, `Longhorn`, `HashiCorp Vault`, `External Secrets Operator`, `Traefik HA`, `Prometheus/Grafana`, `ArgoCD`, `Kyverno`).
 - **Tầng 2 (`project-nt548/`):** Tài nguyên riêng của đồ án (Manifest YAML thuần cho `web-deployment` `replicas: 2`, `redis-statefulset`, `SecretStore`/`ExternalSecret`, `NetworkPolicy`, `Ingress`) neo tại [project-nt548/app-prod.yaml](./project-nt548/app-prod.yaml).
 
-Chi tiết sơ đồ mạng WireGuard `wg0`, sơ đồ kiến trúc tổng thể (`diagrams/architecture-2x.png`, `architecture-4x.png`, `architecture.drawio`), quy hoạch IP/RAM xem tại **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** và hướng dẫn triển khai chi tiết từ đầu đến kết thúc xem tại **[docs/RUNBOOK.md](./docs/RUNBOOK.md)**.
+Chi tiết sơ đồ mạng WireGuard `wg0`, sơ đồ kiến trúc tổng thể (`images/diagrams/architecture-2x.png`, `architecture-4x.png`, `architecture.drawio`, `github-action-workflow.png`), quy hoạch IP/RAM xem tại **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** và hướng dẫn triển khai chi tiết từ đầu đến kết thúc xem tại **[docs/RUNBOOK.md](./docs/RUNBOOK.md)**.
 
 ---
 
@@ -92,12 +92,12 @@ devsecops-gitops-with-k8s/
 │   ├── RUNBOOK.md                      # Hướng dẫn triển khai đầy đủ từng bước từ Pha 0 đến kết thúc
 │   ├── REPORT.md                       # Nội dung báo cáo đồ án môn học NT548 đầy đủ (kèm vị trí hình & bảng)
 │   ├── NT548-R12_Nhom-6_BaoCaoDoAn.docx # File báo cáo Word chính thức của Nhóm 6
+│   ├── NT548-R12_Nhom-6_BaoCaoDoAn.pdf  # Bản xuất PDF hoàn chỉnh của báo cáo đồ án
 │   ├── WBS.md                          # Cấu trúc phân rã công việc & timeline
 │   └── LOG.md                          # Nhật ký thực thi & checklist triển khai theo pha
-├── diagrams/                           # Sơ đồ kiến trúc (Draw.io, PNG 2x/4x) & ảnh minh chứng triển khai, kiểm thử
-│   ├── architecture.drawio
-│   ├── architecture-2x.png
-│   └── architecture-4x.png
+├── images/                             # Thư mục hình ảnh & sơ đồ phục vụ báo cáo
+│   ├── diagrams/                       # File nguồn Draw.io & các sơ đồ kiến trúc/CI-CD xuất từ Draw.io
+│   └── evidence/                       # Ảnh chụp minh chứng triển khai & 6 kịch bản kiểm thử dùng trong báo cáo
 ├── wireguard/                          # Cấu hình mẫu wg0.conf & hướng dẫn chuẩn bị host / Cloud NSG
 ├── kubeadm-config/                     # Cấu hình kubeadm Init/Join (v1beta4) & EncryptionConfiguration
 ├── app/                                # Ứng dụng Web Next.js 16 + Redis (UID 10001 non-root, APP_ENV/APP_VERSION)
@@ -118,27 +118,28 @@ devsecops-gitops-with-k8s/
 │   ├── security-scan.yml               # workflow_call: Gitleaks, Trivy FS, kubeconform & Trivy Config
 │   ├── build-deploy.yml                # workflow_call: Buildx, Trivy Image Gate, Push GHCR & update YAML (yq)
 │   └── nightly-audit.yml               # Nightly GHCR Image Audit tách riêng (cron 0 0 * * *, 0 MB RAM cụm)
-└── scripts/test.sh                     # Script in hướng dẫn từng bước thực hiện 5 kịch bản kiểm thử hệ thống
+└── scripts/test.sh                     # Script in hướng dẫn từng bước thực hiện 6 kịch bản kiểm thử hệ thống
 ```
 
 ---
 
 ## 5. Kịch bản Kiểm thử hệ thống
 
-Chạy `./scripts/test.sh` (hoặc `./scripts/test.sh --all`) để hiển thị hướng dẫn và câu lệnh kiểm thử 5 kịch bản:
+Chạy `./scripts/test.sh` (hoặc `./scripts/test.sh --all`) để hiển thị hướng dẫn và câu lệnh kiểm thử 6 kịch bản:
 1. **CI DevSecOps Gate:** Chặn commit rò rỉ secret, dính CVE (`Trivy FS`) hoặc manifest lỗi (`kubeconform` + `trivy config`).
 2. **Kyverno Enforce:** Chặn tức thì Pod vi phạm (`:latest`, chạy `root`, thiếu `limits`, sai registry) trong `app-prod`.
-3. **GitOps Continuous Delivery (`RollingUpdate` Zero-Downtime) & Instant Rollback:** Push commit lên `app/` kích hoạt CI build & cập nhật `project-nt548/k8s-manifests/deployment.yaml`, ArgoCD đồng bộ `RollingUpdate` (`maxUnavailable: 0, maxSurge: 1`) không rớt HTTP 200 và `git revert` rollback tức thì.
+3. **GitOps Continuous Delivery (`RollingUpdate` Zero-Downtime) & Instant Rollback:** Push commit lên `app/` kích hoạt CI build & cập nhật `project-nt548/k8s-manifests/deployment.yaml`, ArgoCD đồng bộ `RollingUpdate` (`maxUnavailable: 0, maxSurge: 1`) không rớt HTTP 200 và rollback tức thì qua Git.
 4. **Zero-Trust Redis Isolation & Hubble UI:** Kiểm chứng NetworkPolicy chặn Pod lạ kết nối Redis `:6379` với luồng `DROPPED` trực quan trên Hubble UI.
 5. **Nightly GHCR Audit, Traefik HA & Longhorn Failover:** Kích hoạt tay workflow **`Nightly Active GHCR & Base Image Audit`** (`nightly-audit.yml`, `0 MB` RAM cụm), theo dõi tài nguyên trên Grafana, test xóa nóng Pod Traefik (**Zero-Downtime HA**) và drain node chứa `redis-0` (tự phục hồi sau ~30–60s chuyển PVC `RWO`, **`RPO = 0`** không mất dữ liệu bộ đếm).
+6. **Phục hồi HashiCorp Vault sau Eviction (Unseal) & Đồng bộ ESO:** Tận dụng trạng thái `vault-0` bị evict sang Worker khác sau Kịch bản 5 để kiểm chứng các `Secret` đã đồng bộ vẫn giữ dịch vụ hoạt động khi Vault `Sealed`, mở khóa bằng 1 lệnh `vault operator unseal` và xác nhận ESO giữ trạng thái `SecretSynced`.
 
 ---
 
 ## 6. Tài liệu chi tiết
 
-1. **[docs/REPORT.md](./docs/REPORT.md)** — Nội dung báo cáo đồ án môn học NT548 hoàn chỉnh kèm vị trí hình ảnh và bảng.
+1. **[docs/NT548-R12_Nhom-6_BaoCaoDoAn.pdf](./docs/NT548-R12_Nhom-6_BaoCaoDoAn.pdf)** *(và bản Word [NT548-R12_Nhom-6_BaoCaoDoAn.docx](./docs/NT548-R12_Nhom-6_BaoCaoDoAn.docx) / [REPORT.md](./docs/REPORT.md))* — Báo cáo đồ án môn học NT548 hoàn chỉnh.
 2. **[docs/RUNBOOK.md](./docs/RUNBOOK.md)** — Hướng dẫn triển khai từng bước từ đầu đến kết thúc (Pha 0 $\rightarrow$ Pha 6) kèm kiểm chứng & thu hồi Tầng 2.
-3. **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — Kiến trúc 2 tầng, sơ đồ ASCII tổng thể, phân bổ IP/RAM, bảo mật đa lớp và 5 kịch bản kiểm thử.
+3. **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — Kiến trúc 2 tầng, sơ đồ ASCII tổng thể, phân bổ IP/RAM, bảo mật đa lớp và 6 kịch bản kiểm thử.
 4. **[wireguard/README.md](./wireguard/README.md)** — Hướng dẫn cài đặt gói, `sysctl`, `open-iscsi`/`nfs-common`, tắt host firewall & khóa Cloud NSG, và kích hoạt `wg0` trên các node.
 5. **[platform-core/vault/README.md](./platform-core/vault/README.md)** — Hướng dẫn khởi tạo/unseal HashiCorp Vault (1 khóa), cấu hình KV v2 + Kubernetes Auth từng bước, mở Vault UI qua `port-forward` và quy trình xoay vòng (rotate) bí mật với ESO.
-6. **[diagrams/architecture-2x.png](./diagrams/architecture-2x.png)** *(và [architecture-4x.png](./diagrams/architecture-4x.png) / [architecture.drawio](./diagrams/architecture.drawio))* — Sơ đồ kiến trúc tổng thể chất lượng cao phục vụ báo cáo & slide thuyết trình.
+6. **[images/diagrams/architecture-2x.png](./images/diagrams/architecture-2x.png)** *(và [architecture-4x.png](./images/diagrams/architecture-4x.png), [github-action-workflow.png](./images/diagrams/github-action-workflow.png), [architecture.drawio](./images/diagrams/architecture.drawio))* — Sơ đồ kiến trúc & luồng CI/CD phục vụ báo cáo, slide thuyết trình cùng kho ảnh minh chứng tại **[images/evidence/](./images/evidence/)**.

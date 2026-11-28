@@ -159,18 +159,45 @@ ${GREEN}[Bước 3] Kiểm chứng Longhorn Storage Failover (RPO = 0, không m�
 EOF
 }
 
+print_scenario_6() {
+  cat <<EOF
+
+${YELLOW}=== KỊCH BẢN 6: PHỤC HỒI HASHICORP VAULT SAU EVICTION (UNSEAL) & ĐỒNG BỘ ESO ===${NC}
+${BLUE}Mục tiêu:${NC} Tận dụng trạng thái vault-0 bị evict sang Worker khác sau lệnh kubectl drain ở Kịch bản 5
+          để chứng minh: (1) K8s Secret đã đồng bộ giúp app & Traefik tiếp tục chạy ổn định khi Vault Sealed;
+          (2) dữ liệu Vault trên Longhorn PVC 2Gi nguyên vẹn, chỉ cần 1 lệnh unseal để mở khóa và duy trì đồng bộ ESO.
+
+${GREEN}[Bước 1] Kiểm tra vault-0 ở trạng thái 0/1 Running (Sealed: true) sau khi chuyển node:${NC}
+  $ kubectl get pods -n vault -o wide
+  $ kubectl exec -n vault vault-0 -- vault status || true
+
+${GREEN}[Bước 2] Xác nhận ứng dụng và các Secret đã đồng bộ vẫn hoạt động bình thường khi Vault đang Sealed:${NC}
+  $ curl -sS https://nt548.helios.id.vn/ready
+  $ kubectl get externalsecret -A
+
+${GREEN}[Bước 3] Mở khóa Vault bằng 1 khóa duy nhất (lưu ngoại tuyến):${NC}
+  $ kubectl exec -n vault vault-0 -- vault operator unseal "<UNSEAL_KEY>"
+
+${GREEN}[Bước 4] Xác nhận vault-0 trở lại 1/1 Running (Sealed: false) và ESO duy trì SecretSynced:${NC}
+  $ kubectl get pods -n vault -o wide
+  $ kubectl get externalsecret -A
+
+EOF
+}
+
 print_all() {
   print_scenario_1
   print_scenario_2
   print_scenario_3
   print_scenario_4
   print_scenario_5
+  print_scenario_6
 }
 
 if [[ "${1:-}" == "--all" ]]; then
   print_all
   exit 0
-elif [[ "${1:-}" =~ ^[1-5]$ ]]; then
+elif [[ "${1:-}" =~ ^[1-6]$ ]]; then
   "print_scenario_${1}"
   exit 0
 fi
@@ -186,10 +213,11 @@ echo -e "  ${GREEN}2)${NC} Kịch bản 2: Kyverno Admission Policy Enforce (pol
 echo -e "  ${GREEN}3)${NC} Kịch bản 3: GitOps Continuous Delivery (RollingUpdate Zero-Downtime) & Rollback"
 echo -e "  ${GREEN}4)${NC} Kịch bản 4: NetworkPolicy Cô lập Redis & Hubble Observability (DROPPED)"
 echo -e "  ${GREEN}5)${NC} Kịch bản 5: Nightly GHCR CVE Audit (0 MB RAM), Traefik HA & Longhorn Failover"
-echo -e "  ${GREEN}a)${NC} In toàn bộ 5 kịch bản"
+echo -e "  ${GREEN}6)${NC} Kịch bản 6: Phục hồi HashiCorp Vault sau Eviction (Unseal) & Đồng bộ ESO"
+echo -e "  ${GREEN}a)${NC} In toàn bộ 6 kịch bản"
 echo -e "  ${RED}0)${NC} Thoát"
 echo -e "${CYAN}------------------------------------------------------------------------${NC}"
-read -rp "Nhập lựa chọn của bạn (0-5 hoặc a): " choice
+read -rp "Nhập lựa chọn của bạn (0-6 hoặc a): " choice
 
 case "$choice" in
   1) print_scenario_1 ;;
@@ -197,6 +225,7 @@ case "$choice" in
   3) print_scenario_3 ;;
   4) print_scenario_4 ;;
   5) print_scenario_5 ;;
+  6) print_scenario_6 ;;
   a|A) print_all ;;
   0) echo -e "\nThoát."; exit 0 ;;
   *) echo -e "\n${RED}Lựa chọn không hợp lệ.${NC}"; exit 1 ;;

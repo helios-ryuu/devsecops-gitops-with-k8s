@@ -56,6 +56,6 @@
 
 
 ## Pha 6: Kiểm thử Hệ thống & Hoàn thiện Báo cáo
-- [x] Hoàn thiện khung báo cáo `docs/REPORT.md`, cập nhật sơ đồ `diagrams/architecture.drawio` và đưa Chương 1 đến hết mục `4.3` kèm ảnh minh chứng (`diagrams/`) vào `docs/NT548-R12_Nhom-6_BaoCaoDoAn.docx`
-- [ ] Chạy 5 kịch bản kiểm thử hệ thống qua `scripts/test.sh` và thu thập ảnh minh chứng mục `4.4`, `4.5` (Grafana, Hubble UI, `nmap`)
-- [ ] Hoàn thiện mục `4.4`, `4.5`, Chương 5 trong file Word, thiết kế slide thuyết trình và nghiệm thu trước `05/12/2026`
+- [x] Hoàn thiện khung báo cáo `docs/REPORT.md`, cập nhật sơ đồ `images/diagrams/architecture.drawio` và đưa toàn bộ nội dung kèm ảnh minh chứng (`images/evidence/`) vào `docs/NT548-R12_Nhom-6_BaoCaoDoAn.docx` / `.pdf`
+- [x] Chạy 6 kịch bản kiểm thử hệ thống qua `scripts/test.sh` (`4.4.1`–`4.4.6`), cân bằng lại cụm sau `kubectl drain` và thu thập đầy đủ ảnh minh chứng vào `images/evidence/`
+- [ ] Rà soát chỉnh sửa cuối cùng file Word/PDF, thiết kế slide thuyết trình và nghiệm thu nội bộ trước `05/12/2026`

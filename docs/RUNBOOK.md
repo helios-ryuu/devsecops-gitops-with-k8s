@@ -809,11 +809,11 @@ curl -i https://nt548.helios.id.vn/healthz
 curl -i https://nt548.helios.id.vn/ready
 ```
 
-### 6.2. Thực hiện 5 kịch bản Kiểm thử hệ thống
+### 6.2. Thực hiện 6 kịch bản Kiểm thử hệ thống
 
 ```bash
-./scripts/test.sh        # Menu chọn từng kịch bản 1..5 hoặc 'a'
-./scripts/test.sh --all  # In toàn bộ 5 kịch bản
+./scripts/test.sh        # Menu chọn từng kịch bản 1..6 hoặc 'a'
+./scripts/test.sh --all  # In toàn bộ 6 kịch bản
 ```
 
 ### 6.3. Thu hồi sạch Tầng 2 sau khi bảo vệ đồ án (giữ nguyên Tầng 1 Platform Core)
