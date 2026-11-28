@@ -1,10 +1,11 @@
+import os from "node:os";
 import { connection } from "next/server";
 import { pingRedis } from "@/lib/redis";
 
 export async function GET() {
   await connection();
   const version = process.env.APP_VERSION || "local";
-  const pod = process.env.HOSTNAME || "localhost";
+  const pod = process.env.POD_NAME || os.hostname();
   const redis = await pingRedis();
 
   if (!redis.ok) {

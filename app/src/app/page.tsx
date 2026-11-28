@@ -1,3 +1,4 @@
+import os from "node:os";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { incrementVisitCounter } from "@/lib/redis";
@@ -7,7 +8,7 @@ async function LiveClusterPanel() {
 
   const appEnv = (process.env.APP_ENV || "production").toUpperCase();
   const appVersion = process.env.APP_VERSION || "local";
-  const podName = process.env.HOSTNAME || "localhost";
+  const podName = process.env.POD_NAME || os.hostname();
   const nodeName = process.env.NODE_NAME || "local-node";
   const namespace = process.env.POD_NAMESPACE || "local";
   const renderedAt = new Date().toISOString();
