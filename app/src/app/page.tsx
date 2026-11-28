@@ -21,7 +21,7 @@ async function LiveClusterPanel() {
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-6">
         <div>
           <p className="font-mono text-xs uppercase tracking-widest text-slate-400">
-            NT548.R12 — Platform Engineering & DevSecOps
+            NT548.R12 - Platform Engineering & DevSecOps
           </p>
           <h1 className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-white">
             Kubernetes Hybrid Web + Redis Service
