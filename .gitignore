@@ -5,3 +5,5 @@ wireguard/*.conf
 wireguard/*.key
 vault-init-keys*
 *unseal-key*
+.~*
+~$*

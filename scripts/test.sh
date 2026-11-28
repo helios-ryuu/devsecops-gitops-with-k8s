@@ -23,8 +23,7 @@ ${BLUE}Mục tiêu:${NC} Chứng minh pipeline GitHub Actions chặn mọi commi
 
 ${GREEN}[Bước 1] Mô phỏng vi phạm CVE trên app (ví dụ thêm lodash 4.17.20):${NC}
   $ cd app && pnpm add lodash@4.17.20 && cd ..
-  $ git add app/package.json app/pnpm-lock.yaml
-  $ git commit -m "test(security): inject vulnerable dependency lodash@4.17.20"
+  $ git commit --only app/package.json app/pnpm-lock.yaml -m "test(security): inject vulnerable dependency lodash@4.17.20"
   $ git push origin main
 
 ${GREEN}[Bước 2] Hoặc mô phỏng kiểm tra manifest YAML thuần cục bộ (kubeconform & trivy config):${NC}
@@ -35,8 +34,11 @@ ${GREEN}[Bước 3] Quan sát trên tab GitHub Actions:${NC}
   - Job '2. Source CVE Scanning (Trivy FS)' hoặc '3. Kubernetes Manifest & Config Gate' dừng với Exit Code 1.
   - Job '4. Build, Trivy Image Gate & Deploy app-prod' bị bỏ qua -> app-prod trên cụm an toàn tuyệt đối.
 
-${GREEN}[Bước 4] Dọn trạng thái test (nếu đã push commit thử nghiệm):${NC}
-  $ git revert HEAD --no-edit && git push origin main
+${GREEN}[Bước 4] Dọn trạng thái test an toàn (chỉ khôi phục 2 file app/, không đụng local changes khác):${NC}
+  $ git checkout HEAD~1 -- app/package.json app/pnpm-lock.yaml
+  $ git commit --only app/package.json app/pnpm-lock.yaml -m "revert(security): remove vulnerable dependency lodash [skip ci]"
+  $ git push origin main
+  - (Tùy chọn) Đồng bộ lại node_modules cục bộ: cd app && pnpm install --frozen-lockfile && cd ..
 
 EOF
 }
@@ -75,19 +77,26 @@ ${GREEN}[Bước 1] Kiểm tra trạng thái Production hiện tại trong app-p
   $ kubectl get deployments,pods,svc,ingress -n app-prod -o wide
   $ curl -s https://nt548.helios.id.vn | grep -oE 'PRODUCTION \([a-f0-9]+\)'
 
-${GREEN}[Bước 2] Mở terminal theo dõi truy cập liên tục (chứng minh 0% downtime):${NC}
-  $ while true; do curl -s -o /dev/null -w "%{http_code}\n" https://nt548.helios.id.vn/ready; sleep 0.3; done
+${GREEN}[Bước 2] Mở terminal theo dõi truy cập liên tục (chứng minh 0% downtime & chuyển đổi version/pod):${NC}
+  $ ok=0; fail=0; i=0; while true; do i=\$((i+1)); out=\$(curl -sS --max-time 3 -w "\n%{http_code} %{time_total}" https://nt548.helios.id.vn/ready 2>/dev/null || printf "\n000 0"); body=\$(printf "%s" "\$out" | head -n1); meta=\$(printf "%s" "\$out" | tail -n1); code=\${meta%% *}; ms=\${meta#* }; if [ "\$code" = "200" ]; then ok=\$((ok+1)); else fail=\$((fail+1)); fi; printf "[%s] #%03d HTTP=%s time=%ss ok=%d fail=%d %s\n" "\$(date +%H:%M:%S)" "\$i" "\$code" "\$ms" "\$ok" "\$fail" "\$body"; sleep 0.5; done
 
 ${GREEN}[Bước 3] Đẩy cập nhật nhỏ trong app/ lên main để kích hoạt CI -> GitOps RollingUpdate:${NC}
+  - Chỉ commit riêng file đã sửa trong app/ để không lẫn local changes khác:
+    $ git commit --only <file-trong-app> -m "test(cd): verify rolling update" && git push origin main
   - CI pipeline chạy Gitleaks -> Trivy FS -> Kubeconform & Trivy Config -> Build & Trivy Image -> Commit tag mới vào project-nt548/k8s-manifests/deployment.yaml.
-  $ git pull --rebase origin main
+  - Kéo commit từ CI về bằng fast-forward:
+    $ git pull --ff-only origin main
   $ kubectl -n app-prod rollout status deploy/web-deployment
   $ kubectl -n app-prod get pods -o wide
 
-${GREEN}[Bước 4] Kiểm thử GitOps Rollback tức thì (Zero-Downtime):${NC}
-  $ git revert HEAD --no-edit && git push origin main
+${GREEN}[Bước 4] Kiểm thử GitOps Rollback tức thì (Zero-Downtime, không đụng local changes khác):${NC}
+  $ git checkout HEAD~1 -- project-nt548/k8s-manifests/deployment.yaml
+  $ git commit --only project-nt548/k8s-manifests/deployment.yaml -m "revert(prod): rollback web-deployment to previous version [skip ci]"
+  $ git push origin main
   $ kubectl -n app-prod rollout status deploy/web-deployment
   $ curl -s https://nt548.helios.id.vn/ready
+  - (Sau khi kiểm chứng xong, khôi phục lại file test trong app/):
+    $ git checkout HEAD~2 -- <file-trong-app> && git commit --only <file-trong-app> -m "chore(app): revert test change [skip ci]" && git push origin main
 
 EOF
 }
@@ -132,7 +141,7 @@ ${GREEN}[Bước 1] Kiểm tra quét CVE hàng đêm cho các image đang deploy
 ${GREEN}[Bước 2] Kiểm chứng Traefik HA Zero-Downtime trên 2 Worker (worker-01 & worker-02):${NC}
   $ kubectl get pods -n traefik -o wide
   - Chạy vòng lặp tải nhẹ trong 1 terminal khác:
-    $ while true; do curl -s -o /dev/null -w "%{http_code}\n" https://nt548.helios.id.vn/healthz; sleep 0.3; done
+    $ ok=0; fail=0; i=0; while true; do i=\$((i+1)); out=\$(curl -sS --max-time 3 -w "\n%{http_code} %{time_total}" https://nt548.helios.id.vn/healthz 2>/dev/null || printf "\n000 0"); body=\$(printf "%s" "\$out" | head -n1); meta=\$(printf "%s" "\$out" | tail -n1); code=\${meta%% *}; ms=\${meta#* }; if [ "\$code" = "200" ]; then ok=\$((ok+1)); else fail=\$((fail+1)); fi; printf "[%s] #%03d HTTP=%s time=%ss ok=%d fail=%d %s\n" "\$(date +%H:%M:%S)" "\$i" "\$code" "\$ms" "\$ok" "\$fail" "\$body"; sleep 0.5; done
   - Xóa 1 Pod Traefik bất kỳ:
     $ kubectl delete pod -n traefik \$(kubectl get pod -n traefik -l app.kubernetes.io/name=traefik -o jsonpath='{.items[0].metadata.name}')
   -> Quan sát kết quả HTTP 200 liên tục, không rớt kết nối nào.

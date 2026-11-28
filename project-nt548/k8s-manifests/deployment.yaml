@@ -7,6 +7,7 @@ metadata:
   namespace: app-prod
 spec:
   replicas: 2
+  minReadySeconds: 5
   selector:
     matchLabels:
       app: web
@@ -78,6 +79,10 @@ spec:
               port: 3000
             initialDelaySeconds: 5
             periodSeconds: 10
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sleep", "5"]
       volumes:
         - name: tmp
           emptyDir:

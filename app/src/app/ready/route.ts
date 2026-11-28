@@ -3,6 +3,8 @@ import { pingRedis } from "@/lib/redis";
 
 export async function GET() {
   await connection();
+  const version = process.env.APP_VERSION || "local";
+  const pod = process.env.HOSTNAME || "localhost";
   const redis = await pingRedis();
 
   if (!redis.ok) {
@@ -10,6 +12,8 @@ export async function GET() {
       {
         status: "not_ready",
         redis: "error",
+        version,
+        pod,
         error: redis.error ?? "Redis unreachable",
         timestamp: new Date().toISOString(),
       },
@@ -21,6 +25,8 @@ export async function GET() {
     {
       status: "ready",
       redis: "ok",
+      version,
+      pod,
       latencyMs: redis.latencyMs,
       timestamp: new Date().toISOString(),
     },
